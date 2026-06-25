@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>启航教育 - 我的收藏</title>
+    <script src="js/auth.js"></script>
+	<script src="js/day-night_script.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; background-color: #f8f9fb; }
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+
+<body class="flex flex-col min-h-screen">
+
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <a href="/" class="flex items-center space-x-2 cursor-pointer">
+                    <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white">
+                        <i class="fas fa-compass"></i>
+                    </div>
+                    <span class="text-xl font-bold text-gray-800">启航教育在线</span>
+                </a>
+            </div>
+            <nav class="hidden md:flex space-x-8 text-gray-600 font-medium text-sm">
+                <a href="/" class="hover:text-blue-600 transition">首页</a>
+                <a href="/courses" class="hover:text-blue-600 transition">课程中心</a>
+                
+                <a href="comment.html" class="hover:text-blue-600 transition">论坛</a>
+                <a href="Transition.html" class="text-gray-900 font-bold border-b-2 border-blue-600 pb-1">学习中心</a>
+				<a href="resources.html" class="hover:text-blue-600 transition">资源中心</a>
+            </nav>
+            <div class="flex items-center space-x-6">
+                <div id="header-auth-area"></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-8 fade-in">
+        
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">我的收藏夹</h1>
+                <p class="text-gray-500 text-sm mt-1">管理你关注的课程与书籍，随时开始学习。</p>
+            </div>
+            <a href="Transition.html" class="text-blue-600 text-sm hover:underline"><i class="fas fa-arrow-left mr-1"></i> 返回学习中心</a>
+        </div>
+
+        <!-- ================= 1. 课程部分 ================= -->
+        <div id="course-section" class="mb-12">
+            <div class="flex items-center space-x-2 mb-6">
+                <div class="w-1 h-6 bg-blue-600 rounded-full"></div>
+                <h2 class="text-xl font-bold text-gray-800">收藏的课程</h2>
+            </div>
+            
+            <div id="collection-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- JS 生成课程卡片 -->
+            </div>
+            
+            <!-- 课程空状态提示 -->
+            <div id="empty-course-hint" class="hidden bg-gray-50 rounded-lg p-6 text-center border border-dashed border-gray-300">
+                <p class="text-gray-500 text-sm">暂无收藏的课程</p>
+                <a href="/courses" class="text-blue-600 text-sm hover:underline mt-2 inline-block">去选课 &rarr;</a>
+            </div>
+        </div>
+
+        <!-- ================= 2. 书籍部分 ================= -->
+        <div id="book-section">
+            <div class="flex items-center space-x-2 mb-6">
+                <div class="w-1 h-6 bg-purple-600 rounded-full"></div>
+                <h2 class="text-xl font-bold text-gray-800">收藏的书籍</h2>
+            </div>
+
+            <div id="book-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                <!-- JS 生成书籍卡片 -->
+            </div>
+
+            <!-- 书籍空状态提示 -->
+            <div id="empty-book-hint" class="hidden bg-gray-50 rounded-lg p-6 text-center border border-dashed border-gray-300">
+                <p class="text-gray-500 text-sm">暂无收藏的书籍</p>
+                <a href="resources.html" class="text-purple-600 text-sm hover:underline mt-2 inline-block">去淘书 &rarr;</a>
+            </div>
+        </div>
+
+        <!-- ================= 全局空状态 (两个都没收藏时显示) ================= -->
+        <div id="empty-all" class="hidden text-center py-20 bg-white rounded-xl border border-gray-100 shadow-sm mt-8">
+            <div class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
+                <i class="far fa-folder-open text-4xl"></i>
+            </div>
+            <h2 class="text-xl font-bold text-gray-800 mb-2">收藏夹空空如也</h2>
+            <p class="text-gray-500 mb-6">去发现一些有趣的内容吧！</p>
+            <div class="space-x-4">
+                <a href="/courses" class="bg-blue-600 text-white px-6 py-2.5 rounded-full font-bold hover:bg-blue-700 transition shadow-md">去选课</a>
+                <a href="resources.html" class="bg-white text-gray-700 border border-gray-300 px-6 py-2.5 rounded-full font-bold hover:bg-gray-50 transition shadow-sm">去淘书</a>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="bg-white border-t border-gray-200 py-8 mt-auto">
+        <div class="container mx-auto px-4 text-center text-gray-500 text-sm">
+            <p class="mb-2">&copy; 2025 启航教育在线. 保留所有权利.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            renderAllCollections();
+        });
+
+        function renderAllCollections() {
+            // 读取数据
+            const courseCollection = JSON.parse(localStorage.getItem('myCollection') || '[]');
+            const bookCollection = JSON.parse(localStorage.getItem('myBookCollection') || '[]');
+            
+            // 获取 DOM 元素
+            const courseGrid = document.getElementById('collection-grid');
+            const bookGrid = document.getElementById('book-grid');
+            const emptyCourseHint = document.getElementById('empty-course-hint');
+            const emptyBookHint = document.getElementById('empty-book-hint');
+            const emptyAll = document.getElementById('empty-all');
+            const courseSection = document.getElementById('course-section');
+            const bookSection = document.getElementById('book-section');
+
+            // 1. 判断全局空状态
+            if (courseCollection.length === 0 && bookCollection.length === 0) {
+                courseSection.classList.add('hidden');
+                bookSection.classList.add('hidden');
+                emptyAll.classList.remove('hidden');
+                return;
+            } else {
+                courseSection.classList.remove('hidden');
+                bookSection.classList.remove('hidden');
+                emptyAll.classList.add('hidden');
+            }
+
+            // 2. 渲染课程
+            if (courseCollection.length > 0) {
+                emptyCourseHint.classList.add('hidden');
+                courseGrid.classList.remove('hidden');
+                courseGrid.innerHTML = courseCollection.map(course => `
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition duration-300 group cursor-pointer relative" onclick="window.location.href='${course.link}'">
+                        <button onclick="removeCourse(event, '${course.id}')" class="absolute top-2 right-2 z-10 w-8 h-8 bg-black/30 hover:bg-red-500 rounded-full text-white flex items-center justify-center transition backdrop-blur-sm" title="移除课程">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <div class="h-32 ${course.color} flex items-center justify-center relative">
+                            <i class="${course.icon} text-white text-5xl opacity-80 group-hover:scale-110 transition"></i>
+                        </div>
+                        <div class="p-5">
+                            <h3 class="font-bold text-gray-800 text-lg mb-2 line-clamp-2 h-14">${course.title}</h3>
+                            <div class="text-xs text-gray-400 mb-4">收藏于: ${course.date}</div>
+                            <div class="w-full bg-blue-50 text-blue-600 text-center py-2 rounded-lg font-bold text-sm group-hover:bg-blue-600 group-hover:text-white transition">
+                                继续学习
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                courseGrid.classList.add('hidden');
+                emptyCourseHint.classList.remove('hidden');
+            }
+
+            // 3. 渲染书籍
+            if (bookCollection.length > 0) {
+                emptyBookHint.classList.add('hidden');
+                bookGrid.classList.remove('hidden');
+                bookGrid.innerHTML = bookCollection.map(book => `
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition duration-300 group relative">
+                        <button onclick="removeBook(event, '${book.id}')" class="absolute top-2 right-2 z-10 w-7 h-7 bg-black/40 hover:bg-red-500 rounded-full text-white flex items-center justify-center transition backdrop-blur-sm opacity-0 group-hover:opacity-100" title="移出书架">
+                            <i class="fas fa-times text-xs"></i>
+                        </button>
+                        <div class="h-48 overflow-hidden bg-gray-200">
+                            <img src="${book.cover}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-bold text-gray-800 text-sm mb-1 line-clamp-2 h-10">${book.title}</h3>
+                            <p class="text-xs text-gray-500 mb-3">${book.author}</p>
+                            <button class="w-full bg-purple-50 text-purple-600 py-1.5 rounded font-bold text-xs hover:bg-purple-600 hover:text-white transition">
+                                阅读 PDF
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                bookGrid.classList.add('hidden');
+                emptyBookHint.classList.remove('hidden');
+            }
+        }
+
+        // 移除课程
+        window.removeCourse = function(event, id) {
+            event.stopPropagation();
+            if(confirm("确定要移除这门课程吗？")) {
+                let collection = JSON.parse(localStorage.getItem('myCollection') || '[]');
+                collection = collection.filter(c => c.id !== id);
+                localStorage.setItem('myCollection', JSON.stringify(collection));
+                renderAllCollections(); // 重新渲染
+            }
+        }
+
+        // 移除书籍
+        window.removeBook = function(event, id) {
+            event.stopPropagation(); // 防止触发点击（如果有的话）
+            if(confirm("要把这本书移出书架吗？")) {
+                let books = JSON.parse(localStorage.getItem('myBookCollection') || '[]');
+                books = books.filter(b => b.id !== id);
+                localStorage.setItem('myBookCollection', JSON.stringify(books));
+                renderAllCollections(); // 重新渲染
+            }
+        }
+    </script>
+
+</body>
+</html>

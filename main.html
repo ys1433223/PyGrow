@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="zh-CN"><head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>启航教育在线 - 首页</title>
+<script src="js/auth.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+ <style>
+        body {
+            font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background-color: #f8f9fb;
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+        
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+        .animate-spin-slow { animation: spin 3s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<!-- Vue 挂载点 -->
+<div id="app">
+   
+    <div v-if="loading" class="fixed inset-0 z-[100] bg-blue-600 flex flex-col items-center justify-center text-white transition-opacity duration-500">
+        <div class="relative mb-8 animate-bounce">
+            <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center text-blue-600 shadow-xl">
+                <span class="text-3xl font-bold">@</span>
+            </div>
+        </div>
+        <h2 class="text-3xl font-bold mb-2 tracking-widest">启航教育</h2>
+        <p class="text-blue-100 mb-8 text-sm">正在前往知识宇宙...</p>
+        <div class="w-64 h-2 bg-blue-800 rounded-full overflow-hidden relative">
+            <div class="h-full bg-white transition-all duration-100 ease-out shadow-[0_0_10px_rgba(255,255,255,0.5)]" :style="{ width: progress + '%' }"></div>
+        </div>
+        <div class="mt-2 font-mono text-xs opacity-70">{{ progress }}%</div>
+    </div>
+    
+    <header class="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 transition-all duration-300">
+        <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+            <!-- Logo -->
+            <a href="main.html" class="flex items-center space-x-2 group">
+                <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white group-hover:rotate-12 transition-transform duration-300">
+                    <i data-lucide="compass" width="18"></i>
+                </div>
+                <span class="text-xl font-bold text-gray-800 tracking-wide group-hover:text-blue-600 transition-colors">启航教育在线</span>
+            </a>
+            
+            <nav class="hidden md:flex space-x-8 text-gray-600 font-medium text-sm">
+                <a href="main.html" class="text-blue-600 font-bold border-b-2 border-blue-600 pb-1">首页</a>
+                <a href="clscenter.html" class="hover:text-blue-600 hover:-translate-y-0.5 transition-all">课程中心</a>
+                <a href="comment.html" @click.prevent="checkLogin('comment.html')" class="hover:text-blue-600 hover:-translate-y-0.5 transition-all">论坛</a>
+                <a href="Transition.html" @click.prevent="checkLogin('Transition.html')" class="hover:text-blue-600 hover:-translate-y-0.5 transition-all">学习中心</a>
+                <a href="resources.html" class="hover:text-blue-600 hover:-translate-y-0.5 transition-all">资源中心</a>
+            </nav>
+
+            <div class="flex items-center space-x-6">
+                
+                <!-- ✅ 这里的 div 是为了给按钮占位的，防止它乱跑 -->
+                <div class="relative w-16 h-8 flex items-center justify-center">
+                     <!-- 调整 size="0.6"，这是比较合适的导航栏尺寸 -->
+                    <theme-button id="theme-toggle" size="0.6" style="cursor: pointer;"></theme-button>
+                </div>
+
+                <!-- 登录状态判断 -->
+                <div v-if="user" class="relative group flex items-center space-x-3 cursor-pointer">
+                    <div class="text-right hidden sm:block">
+                        <p class="text-xs text-gray-500">欢迎回来,</p>
+                        <p class="text-sm font-bold text-gray-800 leading-none">{{ user.name }}</p>
+                    </div>
+                    <img :src="user.avatar" class="w-9 h-9 rounded-full border-2 border-blue-100 shadow-sm">
+                    
+                    <div class="absolute right-0 top-full pt-2 w-48 hidden group-hover:block z-50">
+                        <div class="bg-white rounded-xl shadow-xl border border-gray-100 p-2 overflow-hidden">
+                            <a href="profile.html" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-lg mb-1">
+                                <i data-lucide="user" width="14" class="mr-2"></i> 个人中心
+                            </a>
+                            <button @click="logout" class="w-full flex items-center px-4 py-2 text-sm text-red-500 hover:bg-red-50 rounded-lg">
+                                <i data-lucide="log-out" width="14" class="mr-2"></i> 退出登录
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <a v-else href="login.html" class="bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-blue-700 hover:shadow-lg transition-all flex items-center">
+                    登录 / 注册
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow">
+        <!-- ================= 首页 Hero 区域 ================= -->
+        <section class="container mx-auto px-4 mt-8 mb-12">
+            <div class="bg-white rounded-[2rem] shadow-sm p-8 md:p-16 flex flex-col md:flex-row items-center justify-between relative overflow-hidden border border-gray-100">
+                <div class="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-blue-50 rounded-full opacity-50 blur-3xl pointer-events-none"></div>
+                <div class="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 bg-purple-50 rounded-full opacity-50 blur-3xl pointer-events-none"></div>
+
+                <div class="md:w-1/2 z-10 relative">
+                    <div class="inline-block bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full mb-6">🐍 Python 全栈体系升级</div>
+                    <h1 class="text-4xl md:text-6xl font-extrabold text-gray-900 leading-tight mb-6">
+                        人生苦短，<br />
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">我用 Python。</span>
+                    </h1>
+                    <p class="text-gray-500 text-lg mb-8 max-w-lg">从语法基础到人工智能，启航教育带你掌握这门“万能语言”，解锁数据时代的无限可能。</p>
+                    <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                        <a href="clscenter.html" class="flex items-center justify-center bg-blue-600 text-white px-8 py-3.5 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg hover:-translate-y-1">
+                            开始学习 <i data-lucide="arrow-right" width="18" class="ml-2"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="md:w-1/2 mt-12 md:mt-0 relative flex justify-center md:justify-end">
+                    <div class="relative w-full max-w-md aspect-[4/3]">
+                        <img src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=800&auto=format&fit=crop" class="rounded-2xl shadow-2xl object-cover w-full h-full z-10 relative">
+                        <div class="absolute -left-6 top-10 bg-white p-4 rounded-xl shadow-lg z-20 animate-float border border-gray-50">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600">
+                                    <i data-lucide="code-2" width="20"></i>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-gray-400">正在构建</div>
+                                    <div class="font-bold text-gray-800">Python 爬虫</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- ================= 精品课程推荐 ================= -->
+        <section class="container mx-auto px-4 mt-16">
+            <div class="flex justify-between items-end mb-10">
+                <div>
+                   <h2 class="text-3xl font-bold text-gray-900">精品课程推荐</h2>
+                   <p class="text-gray-500 mt-2">点击卡片，立即开始你的学习之旅</p>
+                </div>
+                <a href="clscenter.html" class="text-blue-600 font-semibold hover:underline hidden sm:block">查看全部 &rarr;</a>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div v-for="course in courses" :key="course.id" @click="checkLogin(course.link)"
+                     class="group bg-white rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 overflow-hidden border border-gray-100 cursor-pointer flex flex-col h-full">
+                    <div :class="['h-36 flex flex-col items-center justify-center relative overflow-hidden', course.categoryColor]">
+                        <span class="text-4xl font-black opacity-20 transform scale-150 group-hover:scale-125 transition-transform duration-500">{{ course.category }}</span>
+                        <span class="relative z-10 text-2xl font-bold">{{ course.category }}</span>
+                    </div>
+                    <div class="p-6 flex flex-col flex-grow">
+                        <h3 class="font-bold text-lg text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">{{ course.title }}</h3>
+                        <p class="text-xs text-gray-500 mb-4 line-clamp-2">{{ course.description }}</p>
+                        <div class="pt-4 border-t border-gray-100 flex justify-between items-center mt-auto">
+                           
+                           
+                            <span class="text-blue-600 text-xs font-bold flex items-center group-hover:translate-x-1 transition-transform">
+                                去学习 <i data-lucide="arrow-right" width="12" class="ml-1"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- ================= 我的学习中心 ================= -->
+        <section v-if="user" class="container mx-auto px-4 mt-16 mb-20 animate-fade-in-up">
+            <div class="flex items-center space-x-3 mb-8">
+                <div class="w-2 h-8 bg-blue-600 rounded-full"></div>
+                <h2 class="text-2xl font-bold text-gray-900">我的学习中心</h2>
+            </div>
+            
+            <div class="bg-white rounded-[2rem] shadow-lg border border-gray-100 p-8 md:p-12 text-center">
+                <h3 class="text-2xl font-bold text-gray-800 mb-2">欢迎回来，{{ user.name }} 👋</h3>
+                <p class="text-gray-500 mb-10">继续你的编程进阶之路，请选择入口：</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+                    <!-- 入口 1：我的课程 -->
+                    <div @click="checkLogin('my_courses.html')" class="group cursor-pointer bg-blue-50 rounded-2xl p-8 border border-blue-100 hover:shadow-lg hover:-translate-y-1 transition-all">
+                        <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-3xl mb-4 mx-auto group-hover:scale-110 transition-transform">
+                            <i class="fas fa-book-open"></i>
+                        </div>
+                        <h4 class="text-xl font-bold text-gray-800 mb-2">我的课程 & 书架</h4>
+                        <p class="text-gray-500 text-sm">查看已收藏的视频课程和电子书资源</p>
+                    </div>
+
+                    <!-- 入口 2：实战练习 -->
+                    <div @click="checkLogin('practice.html')" class="group cursor-pointer bg-purple-50 rounded-2xl p-8 border border-purple-100 hover:shadow-lg hover:-translate-y-1 transition-all">
+                        <div class="w-16 h-16 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-3xl mb-4 mx-auto group-hover:scale-110 transition-transform">
+                            <i class="fas fa-code"></i>
+                        </div>
+                        <h4 class="text-xl font-bold text-gray-800 mb-2">实战练习场</h4>
+                        <p class="text-gray-500 text-sm">在线运行 Python 代码，完成编程挑战</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 未登录状态的锁定展示 -->
+        <section v-else class="container mx-auto px-4 mt-16 mb-20 text-center py-16 bg-white rounded-[2rem] shadow-sm border border-gray-100 relative overflow-hidden group">
+            <div class="absolute inset-0 bg-blue-600 opacity-0 group-hover:opacity-5 transition-opacity pointer-events-none"></div>
+            <div class="text-6xl mb-4">🔒</div>
+            <h3 class="text-2xl font-bold text-gray-800 mb-2">学习中心已锁定</h3>
+            <p class="text-gray-500 mb-6">登录后解锁我的课程、实战练习与专属书架</p>
+            
+            <a href="login.html" class="inline-block bg-blue-600 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:scale-105 transition-transform">
+                立即登录 / 注册
+            </a>
+        </section>
+
+        <!-- ================= 讨论区 ================= -->
+        <section class="container mx-auto px-4 mt-20">
+            <div class="flex items-center justify-between mb-8">
+                <div @click="checkLogin('comment.html')" class="cursor-pointer group">
+                  <h2 class="text-3xl font-bold text-gray-900 flex items-center group-hover:text-blue-600 transition-colors">
+                      <span class="mr-2">💬</span> 讨论区
+                      <i data-lucide="arrow-right" class="ml-2 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                  </h2>
+                  <p class="text-gray-500 mt-2">不仅是学习，更是交流与成长的社区</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div v-for="topic in topics" :key="topic.id" 
+                     @click="checkLogin('comment.html')" 
+                     class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-1 transition-all relative overflow-hidden group cursor-pointer">
+                    
+                    <div v-if="topic.isHot" class="absolute top-0 right-0 bg-red-100 text-red-600 text-xs px-3 py-1 rounded-bl-xl font-bold flex items-center">HOT</div>
+                    <div class="flex items-start space-x-4">
+                        <img :src="topic.avatar" class="w-12 h-12 rounded-full bg-gray-100 border border-white shadow-sm">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-2 mb-1">
+                                <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded flex items-center"># {{ topic.tag }}</span>
+                                <span class="text-gray-400 text-xs">@{{ topic.author }}</span>
+                            </div>
+                            <h3 class="font-bold text-gray-800 text-lg mb-3 line-clamp-1 group-hover:text-blue-600 transition-colors">{{ topic.title }}</h3>
+                            <div class="flex items-center space-x-6 text-gray-400 text-sm">
+                                <span class="flex items-center"><i data-lucide="message-square" width="16" class="mr-1"></i> {{ topic.replies }}</span>
+                                <span class="flex items-center"><i data-lucide="heart" width="16" class="mr-1"></i> {{ topic.likes }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 工具推荐 ================= -->
+        <section class="container mx-auto px-4 mt-20 mb-20">
+            <div class="bg-gray-900 rounded-[2.5rem] p-8 md:p-12 relative overflow-hidden text-white">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-blue-600 rounded-full blur-[100px] opacity-30 pointer-events-none"></div>
+                <div class="absolute bottom-0 left-0 w-64 h-64 bg-purple-600 rounded-full blur-[100px] opacity-30 pointer-events-none"></div>
+
+                <div class="relative z-10 text-center mb-10">
+                    <h2 class="text-3xl font-bold mb-4 flex items-center justify-center">
+                        <i data-lucide="zap" class="mr-2 text-yellow-400 fill-current"></i> 学习工具补给站
+                    </h2>
+                    <p class="text-gray-400">工欲善其事，必先利其器。</p>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <a v-for="tool in tools" :key="tool.id" href="resources.html" :class="['block p-4 rounded-2xl border bg-white/5 backdrop-blur-sm hover:bg-white/10 transition-all hover:-translate-y-1 hover:shadow-lg group text-center', tool.color]">
+                        <div class="text-4xl mb-3 transform group-hover:scale-110 transition-transform">{{ tool.icon }}</div>
+                        <h3 class="font-bold text-gray-200 mb-1">{{ tool.name }}</h3>
+                        <p class="text-xs text-gray-500 line-clamp-1">{{ tool.desc }}</p>
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-white border-t border-gray-100 py-10 mt-auto">
+        <div class="container mx-auto px-4 text-center">
+            <h4 class="font-bold text-gray-900 text-lg mb-1">启航教育在线</h4>
+            <p class="text-gray-400 text-sm mb-8">赋能未来，终身学习。</p>
+            <div class="text-xs text-gray-400">&copy; 2025 Qihang Education. 保留所有权利.</div>
+        </div>
+    </footer>
+</div>
+<script src="https://cdn.staticfile.org/vue/3.3.4/vue.global.prod.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<!-- 引入按钮组件脚本，确保在 body 结束前引入 -->
+<script src="js/day-night_script.js"></script>
+
+<script>
+    const { createApp, ref, onMounted, onUpdated } = Vue;
+
+    createApp({
+        setup() {
+            const loading = ref(true);
+            const progress = ref(0);
+            const user = ref(null);
+            
+            // --- 数据定义 ---
+            const courses = ref([
+                { id: 1, category: 'Basic', categoryColor: 'bg-blue-100 text-blue-500', title: 'Python 3.11 零基础快速入门', description: '从变量到面向对象，夯实编程根基。',  link: 'stdcenter.html' },
+                { id: 2, category: 'Spider', categoryColor: 'bg-pink-100 text-pink-500', title: 'Python 网络爬虫与逆向实战', description: '数据采集、自动化脚本与反爬攻防。',  link: 'course2.html' },
+                { id: 3, category: 'Data', categoryColor: 'bg-purple-100 text-purple-500', title: 'Pandas 数据分析与可视化', description: '像处理 Excel 一样高效处理海量数据。',  link: 'course4.html' },
+                { id: 4, category: 'AI', categoryColor: 'bg-orange-100 text-orange-500', title: 'PyTorch 深度学习与神经网络', description: '迈入人工智能大门，实战图像识别。',   link: 'course6.html' }
+            ]);
+            
+            const lessons = ref([
+                { id: '1-1', title: '1-1 Python 环境搭建与 PyCharm 安装', duration: '12:30', isCompleted: true },
+                { id: '2-1', title: '2-1 变量、字符串与数字类型', duration: '15:45', isCompleted: false, isPlaying: true },
+                { id: '2-2', title: '2-2 列表(List)与字典(Dict)详解', duration: '22:05', isCompleted: false },
+            ]);
+            
+            const activeLesson = ref(lessons.value[1]);
+            
+            const topics = ref([
+                { id: 1, title: '【求助】Python 的缩进报错 IndentationError 怎么解？', author: 'Newbie', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Code', replies: 34, likes: 5, tag: '报错', isHot: true },
+                { id: 2, title: '大家觉得是用 Django 好还是 Flask 好？', author: 'WebDev', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Dev', replies: 128, likes: 45, tag: '讨论', isHot: false }
+            ]);
+
+            const tools = ref([
+                { id: '1', name: 'PyCharm', icon: '🐍', desc: '专业IDE', color: 'bg-blue-50 border-blue-200' },
+                { id: '2', name: 'VS Code', icon: '💻', desc: '轻量编辑器', color: 'bg-blue-50 border-blue-200' },
+                { id: '3', name: 'Jupyter', icon: '📓', desc: '数据分析神器', color: 'bg-orange-50 border-orange-200' },
+                { id: '4', name: 'Anaconda', icon: '🟢', desc: '环境管理', color: 'bg-green-50 border-green-200' },
+                { id: '5', name: 'Pip', icon: '📦', desc: '包管理工具', color: 'bg-yellow-50 border-yellow-200' },
+                { id: '6', name: 'Docker', icon: '🐳', desc: '容器部署', color: 'bg-blue-50 border-blue-200' }
+            ]);
+
+            // --- 生命周期 ---
+            onMounted(() => {
+                console.log("Vue App 已启动...");
+
+                const isLogin = localStorage.getItem('isLogin');
+                const savedUser = localStorage.getItem('userInfo');
+
+                if (isLogin === 'true' && savedUser) {
+                    try {
+                        user.value = JSON.parse(savedUser);
+                        if (!user.value.avatar) {
+                            user.value.avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=" + (user.value.name || 'User');
+                        }
+                    } catch (e) {
+                        console.error("用户数据解析失败", e);
+                        user.value = null;
+                    }
+                } else {
+                    console.log("未登录状态");
+                    user.value = null;
+                }
+
+                const timer = setInterval(() => {
+                    progress.value += 10;
+                    if (progress.value >= 100) {
+                        clearInterval(timer);
+                        setTimeout(() => { loading.value = false; }, 300);
+                    }
+                }, 30);
+                
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+                
+            });
+
+            onUpdated(() => {
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            });
+
+            // --- 功能函数 ---
+            const logout = () => {
+                if(confirm("确定退出登录？")) {
+                    user.value = null;
+                    localStorage.removeItem('isLogin');
+                    localStorage.removeItem('userInfo');
+                    window.location.reload();
+                }
+            };
+
+            const checkLogin = (targetUrl) => {
+                if (user.value) {
+                    window.location.href = targetUrl;
+                } else {
+                    alert("该功能需要登录后才能访问哦！");
+                    window.location.href = "login.html";
+                }
+            };
+            
+            const handleLessonClick = (lesson) => {
+                activeLesson.value = lesson;
+                window.location.href = "stdcenter.html";
+            };
+
+            return { 
+                loading, progress, user, courses, lessons, activeLesson, topics, tools, 
+                logout, checkLogin, handleLessonClick 
+            };
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>

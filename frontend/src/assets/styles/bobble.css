@@ -1,0 +1,157 @@
+/* Login/Register page bobble character styles - exact copy from style.css */
+
+@property --eye-size-y {
+  syntax: '<length>';
+  initial-value: 1em;
+  inherits: true;
+}
+
+@property --x {
+  syntax: '<number>';
+  initial-value: 0;
+  inherits: true;
+}
+
+@property --y {
+  syntax: '<number>';
+  initial-value: 0;
+  inherits: true;
+}
+
+@keyframes blink {
+  0%, 4%, 100% { --eye-size-y: 1em; }
+  2% { --eye-size-y: 0em; }
+}
+
+.bobbles {
+  --eye-size-y: 1em;
+  width: 80%;
+  height: 60%;
+  align-self: end;
+  justify-self: center;
+  position: relative;
+  min-height: 300px;
+  transform: translateY(0.5em);
+  pointer-events: none;
+}
+
+.bobble-1 {
+  animation: blink 9s -6.5s infinite linear;
+  position: absolute;
+  bottom: 0;
+  left: 24%;
+  width: 32%;
+  height: 90%;
+  background: linear-gradient(#0000 30%, #934eff 0);
+  transform-origin: 50% 100%;
+}
+
+.bobble-1::before {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 30.33%;
+  top: 0;
+  left: 0;
+  transform-origin: 50% 100%;
+  background:
+    radial-gradient(1em var(--eye-size-y) at calc(35% + var(--x) * 0.3%) calc(70% - var(--y) * 1%), #000 0.3em, #0000 0.31em),
+    radial-gradient(1em var(--eye-size-y) at calc(65% + var(--x) * 0.3%) calc(70% - var(--y) * 1%), #000 0.3em, #0000 0.31em),
+    #934eff;
+}
+
+.bobble-1::after {
+  content: "";
+  width: calc(15% + var(--y) * 0.1%);
+  height: 0%;
+  border-radius: 0%;
+  border: 0em solid #0000;
+  border-bottom: 0.35em solid #000;
+  position: absolute;
+  top: calc(27% + var(--y) * -0.25%);
+  left: calc(50% + var(--x) * 0.35%);
+  transform: translate(-50%, 0);
+}
+
+.bobble-2 {
+  animation: blink 11s -5s infinite linear;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 28%;
+  height: 90%;
+  background:
+    radial-gradient(1em var(--eye-size-y) at calc(38% + var(--x) * 0.3%) calc(20% - var(--y) * 0.25%), #000 0.3em, #0000 0.31em),
+    radial-gradient(1em var(--eye-size-y) at calc(62% + var(--x) * 0.3%) calc(20% - var(--y) * 0.27%), #000 0.3em, #0000 0.31em),
+    hotpink;
+  transform-origin: 50% 100%;
+}
+
+.bobble-2::before {
+  content: "";
+  width: calc(15% + var(--y) * 0.1%);
+  height: 0%;
+  border-radius: 0%;
+  border: 0em solid #0000;
+  border-bottom: 0.35em solid #000;
+  position: absolute;
+  top: calc(25% - var(--y) * 0.1%);
+  left: calc(50% + var(--x) * 0.2%);
+  transform: translate(-50%, 0);
+}
+
+.bobble-3 {
+  animation: blink 9s -1.5s infinite linear;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 60%;
+  height: 45%;
+  border-radius: 50% / 100% calc(100% - var(--x) * 0.3%) 0 0;
+  background:
+    radial-gradient(1em var(--eye-size-y) at calc(40% + var(--x) * 0.3%) calc(35% - var(--y) * 1%), #000 0.3em, #0000 0.31em),
+    radial-gradient(1em var(--eye-size-y) at calc(60% + var(--x) * 0.3%) calc(35% - var(--y) * 1%), #000 0.3em, #0000 0.31em),
+    #fe8f3a;
+  transform-origin: 50% 100%;
+}
+
+.bobble-3::before {
+  content: "";
+  width: calc(10% + var(--y) * 0.1%);
+  height: 0%;
+  border-radius: 0%;
+  border: 0em solid #0000;
+  border-bottom: 0.35em solid;
+  position: absolute;
+  top: calc(43% - var(--y) * 1.4%);
+  left: calc(50% + var(--x) * 0.325%);
+  transform: translate(-50%, 0);
+}
+
+.bobble-4 {
+  animation: blink 10s infinite linear;
+  width: 30%;
+  height: 50%;
+  bottom: 0;
+  right: 5%;
+  position: absolute;
+  background:
+    radial-gradient(1em var(--eye-size-y) at calc(25% + var(--x) * 1%) calc(25% - var(--y) * 1%), #000 0.3em, #0000 0.31em),
+    radial-gradient(1em var(--eye-size-y) at calc(75% + var(--x) * 1%) calc(25% - var(--y) * 1%), #000 0.3em, #0000 0.31em),
+    #e9d105;
+  border-radius: 100vmax 100vmax 0 0;
+  transform-origin: 50% 100%;
+}
+
+.bobble-4::before {
+  content: "";
+  width: 50%;
+  height: 0%;
+  border-radius: 0%;
+  border: 0em solid #0000;
+  border-bottom: 0.35em solid;
+  position: absolute;
+  top: calc(40% - var(--y) * 1%);
+  left: calc(50% + var(--x) * 1%);
+  transform: translate(-50%, 0);
+}

@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Build output
+dist/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+
+# Environment
+.env
+*.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+nohup.out
+
+# Docker
+docker-data/
+
+# Large assets (keep tracked in git-lfs or external)
+*.mp4
+*.zip
+*.tar.gz
+Chapter Resources/
+
+# Database files
+*.db

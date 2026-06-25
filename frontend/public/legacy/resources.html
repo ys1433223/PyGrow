@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>启航教育 - 资源中心</title>
+    <script src="js/auth.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入白天黑夜组件脚本 -->
+    <script src="js/day-night_script.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; background-color: #f8f9fb; }
+        .hover-card { transition: all 0.3s ease; }
+        .hover-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
+        .star-btn { transition: all 0.3s; }
+        .star-btn:hover { transform: scale(1.2); }
+        .star-btn.active { color: #facc15; text-shadow: 0 0 5px rgba(250, 204, 21, 0.5); }
+    </style>
+</head>
+
+<body class="flex flex-col min-h-screen">
+
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <a href="/" class="flex items-center space-x-2 cursor-pointer">
+                    <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white">
+                        <i class="fas fa-compass"></i>
+                    </div>
+                    <span class="text-xl font-bold text-gray-800">启航教育在线</span>
+                </a>
+            </div>
+            <nav class="hidden md:flex space-x-8 text-gray-600 font-medium text-sm">
+                <a href="/" class="hover:text-blue-600 transition">首页</a>
+                <a href="/courses" class="hover:text-blue-600 transition">课程中心</a>
+                <!-- 新增：资源中心高亮 -->
+                <a href="resources.html" class="text-gray-900 font-bold border-b-2 border-blue-600 pb-1">资源中心</a>
+                <a href="comment.html" class="hover:text-blue-600 transition">论坛</a>
+                <a href="Transition.html" class="hover:text-blue-600 transition">学习中心</a>
+            </nav>
+            <div class="flex items-center space-x-6">
+                <!-- 白天黑夜切换按钮 -->
+                <div class="relative w-16 h-8 flex items-center justify-center mr-2">
+                     <theme-button id="theme-toggle" size="0.6" style="cursor: pointer;"></theme-button>
+                </div>
+                <div id="header-auth-area"></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-8">
+        
+        <!-- 1. 开发者工具箱 (已配置好官网链接) -->
+        <section class="mb-16">
+            <div class="flex items-center space-x-3 mb-8">
+                <div class="w-1.5 h-8 bg-blue-600 rounded-full"></div>
+                <h2 class="text-2xl font-bold text-gray-900">必备开发工具</h2>
+                <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">官方正版下载渠道</span>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <!-- 工具卡片 -->
+                <a href="https://www.jetbrains.com/pycharm/download/" target="_blank" class="block p-6 rounded-2xl bg-white border border-gray-100 hover:border-blue-200 hover:shadow-lg transition-all hover:-translate-y-1 group text-center">
+                    <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">🐍</div>
+                    <h3 class="font-bold text-gray-800 mb-1">PyCharm</h3>
+                    <p class="text-xs text-gray-400">Python 专业 IDE</p>
+                </a>
+                <a href="https://code.visualstudio.com/" target="_blank" class="block p-6 rounded-2xl bg-white border border-gray-100 hover:border-blue-200 hover:shadow-lg transition-all hover:-translate-y-1 group text-center">
+                    <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">💻</div>
+                    <h3 class="font-bold text-gray-800 mb-1">VS Code</h3>
+                    <p class="text-xs text-gray-400">轻量级编辑器</p>
+                </a>
+                <a href="https://jupyter.org/" target="_blank" class="block p-6 rounded-2xl bg-white border border-gray-100 hover:border-orange-200 hover:shadow-lg transition-all hover:-translate-y-1 group text-center">
+                    <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">📓</div>
+                    <h3 class="font-bold text-gray-800 mb-1">Jupyter</h3>
+                    <p class="text-xs text-gray-400">数据分析利器</p>
+                </a>
+                <a href="https://www.anaconda.com/download" target="_blank" class="block p-6 rounded-2xl bg-white border border-gray-100 hover:border-green-200 hover:shadow-lg transition-all hover:-translate-y-1 group text-center">
+                    <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">🟢</div>
+                    <h3 class="font-bold text-gray-800 mb-1">Anaconda</h3>
+                    <p class="text-xs text-gray-400">科学计算包管理</p>
+                </a>
+                <a href="https://git-scm.com/downloads" target="_blank" class="block p-6 rounded-2xl bg-white border border-gray-100 hover:border-red-200 hover:shadow-lg transition-all hover:-translate-y-1 group text-center">
+                    <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">🔧</div>
+                    <h3 class="font-bold text-gray-800 mb-1">Git</h3>
+                    <p class="text-xs text-gray-400">版本控制系统</p>
+                </a>
+                <a href="https://www.docker.com/products/docker-desktop/" target="_blank" class="block p-6 rounded-2xl bg-white border border-gray-100 hover:border-blue-200 hover:shadow-lg transition-all hover:-translate-y-1 group text-center">
+                    <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">🐳</div>
+                    <h3 class="font-bold text-gray-800 mb-1">Docker</h3>
+                    <p class="text-xs text-gray-400">容器化部署</p>
+                </a>
+            </div>
+        </section>
+
+        <!-- 2. 经典书籍推荐 (全中文版) -->
+        <section>
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center space-x-3">
+                    <div class="w-1.5 h-8 bg-purple-600 rounded-full"></div>
+                    <h2 class="text-2xl font-bold text-gray-900">Python 经典中文书单</h2>
+                </div>
+                <!-- 链接到我的书架 -->
+                <a href="my_courses.html" class="text-blue-600 font-bold hover:underline text-sm">
+                    我的书架 <i class="fas fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+
+            <!-- 使用 3 列布局 (在大屏上) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+                
+                <!-- 书籍 1: 入门 -->
+                <div class="book-card group bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover-card relative"
+                     data-id="b1"
+                     data-title="Python编程：从入门到实践"
+                     data-author="[美] Eric Matthes"
+                     data-cover="https://images.unsplash.com/photo-1532012197267-da84d127e765?q=80&w=400&auto=format&fit=crop">
+                    <button class="star-btn absolute top-3 right-3 z-20 text-gray-300 hover:text-yellow-400 bg-white/80 p-1.5 rounded-full shadow-sm backdrop-blur-sm" onclick="toggleBook(this)">
+                        <i class="fas fa-bookmark text-xl"></i>
+                    </button>
+                    <div class="h-40 bg-gray-100 overflow-hidden relative">
+                        <img src="https://images.unsplash.com/photo-1532012197267-da84d127e765?q=80&w=400&auto=format&fit=crop" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                    </div>
+                    <div class="p-4">
+                        <span class="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded mb-2 inline-block">新手首选</span>
+                        <h3 class="font-bold text-gray-800 text-sm mb-1 line-clamp-2 h-10">Python编程：从入门到实践</h3>
+                        <p class="text-xs text-gray-500 mb-3">Eric Matthes / 袁国忠 译</p>
+                        <!-- 链接到图灵社区官方页 -->
+                        <a href="https://www.ituring.com.cn/book/3036" target="_blank" class="text-blue-600 text-xs font-bold hover:underline block text-right">查看中文版介绍 &rarr;</a>
+                    </div>
+                </div>
+
+                <!-- 书籍 2: 进阶 -->
+                <div class="book-card group bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover-card relative"
+                     data-id="b2"
+                     data-title="流畅的 Python (第2版)"
+                     data-author="[巴西] Luciano Ramalho"
+                     data-cover="https://images.unsplash.com/photo-1589829085413-56de8ae18c73?q=80&w=400&auto=format&fit=crop">
+                    <button class="star-btn absolute top-3 right-3 z-20 text-gray-300 hover:text-yellow-400 bg-white/80 p-1.5 rounded-full shadow-sm backdrop-blur-sm" onclick="toggleBook(this)">
+                        <i class="fas fa-bookmark text-xl"></i>
+                    </button>
+                    <div class="h-40 bg-gray-100 overflow-hidden relative">
+                        <img src="https://images.unsplash.com/photo-1589829085413-56de8ae18c73?q=80&w=400&auto=format&fit=crop" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                    </div>
+                    <div class="p-4">
+                        <span class="text-[10px] font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded mb-2 inline-block">进阶必读</span>
+                        <h3 class="font-bold text-gray-800 text-sm mb-1 line-clamp-2 h-10">流畅的 Python (第2版)</h3>
+                        <p class="text-xs text-gray-500">Luciano Ramalho / 安道 译</p>
+                        <a href="https://book.douban.com/subject/36423528/" target="_blank" class="text-blue-600 text-xs font-bold hover:underline block text-right">豆瓣高分 9.6 &rarr;</a>
+                    </div>
+                </div>
+
+                <!-- 书籍 3: 爬虫 -->
+                <div class="book-card group bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover-card relative"
+                     data-id="b3"
+                     data-title="Python3网络爬虫开发实战"
+                     data-author="崔庆才"
+                     data-cover="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=400&auto=format&fit=crop">
+                    <button class="star-btn absolute top-3 right-3 z-20 text-gray-300 hover:text-yellow-400 bg-white/80 p-1.5 rounded-full shadow-sm backdrop-blur-sm" onclick="toggleBook(this)">
+                        <i class="fas fa-bookmark text-xl"></i>
+                    </button>
+                    <div class="h-40 bg-gray-100 overflow-hidden relative">
+                        <img src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=400&auto=format&fit=crop" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                    </div>
+                    <div class="p-4">
+                        <span class="text-[10px] font-bold text-pink-600 bg-pink-50 px-2 py-0.5 rounded mb-2 inline-block">爬虫权威</span>
+                        <h3 class="font-bold text-gray-800 text-sm mb-1 line-clamp-2 h-10">Python3网络爬虫开发实战</h3>
+                        <p class="text-xs text-gray-500 mb-3">崔庆才 著</p>
+                        <a href="https://python3webspider.cuiqingcai.com/" target="_blank" class="text-green-600 text-xs font-bold hover:underline block text-right">免费在线阅读 &rarr;</a>
+                    </div>
+                </div>
+
+                <!-- 书籍 4: 数据分析 -->
+                <div class="book-card group bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover-card relative"
+                     data-id="b4"
+                     data-title="利用 Python 进行数据分析"
+                     data-author="[美] Wes McKinney"
+                     data-cover="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=400&auto=format&fit=crop">
+                    <button class="star-btn absolute top-3 right-3 z-20 text-gray-300 hover:text-yellow-400 bg-white/80 p-1.5 rounded-full shadow-sm backdrop-blur-sm" onclick="toggleBook(this)">
+                        <i class="fas fa-bookmark text-xl"></i>
+                    </button>
+                    <div class="h-40 bg-gray-100 overflow-hidden relative">
+                        <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=400&auto=format&fit=crop" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                    </div>
+                    <div class="p-4">
+                        <span class="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded mb-2 inline-block">数据分析</span>
+                        <h3 class="font-bold text-gray-800 text-sm mb-1 line-clamp-2 h-10">利用 Python 进行数据分析</h3>
+                        <p class="text-xs text-gray-500 mb-3">Wes McKinney</p>
+                        <a href="https://www.jianshu.com/p/04d180d90a3f" target="_blank" class="text-blue-600 text-xs font-bold hover:underline block text-right">中文笔记与导读 &rarr;</a>
+                    </div>
+                </div>
+
+                <!-- 书籍 5: 趣味编程 -->
+                <div class="book-card group bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover-card relative"
+                     data-id="b5"
+                     data-title="父与子的编程之旅：与小卡特一起学Python"
+                     data-author="[美] Warren Sande"
+                     data-cover="https://images.unsplash.com/photo-1509228468518-180dd4864904?q=80&w=400&auto=format&fit=crop">
+                    <button class="star-btn absolute top-3 right-3 z-20 text-gray-300 hover:text-yellow-400 bg-white/80 p-1.5 rounded-full shadow-sm backdrop-blur-sm" onclick="toggleBook(this)">
+                        <i class="fas fa-bookmark text-xl"></i>
+                    </button>
+                    <div class="h-40 bg-gray-100 overflow-hidden relative">
+                        <img src="https://images.unsplash.com/photo-1509228468518-180dd4864904?q=80&w=400&auto=format&fit=crop" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                    </div>
+                    <div class="p-4">
+                        <span class="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded mb-2 inline-block">趣味启蒙</span>
+                        <h3 class="font-bold text-gray-800 text-sm mb-1 line-clamp-2 h-10">父与子的编程之旅</h3>
+                        <p class="text-xs text-gray-500 mb-3">Warren Sande 著</p>
+                        <a href="https://book.douban.com/subject/25840615/" target="_blank" class="text-blue-600 text-xs font-bold hover:underline block text-right">适合零基础 &rarr;</a>
+                    </div>
+                </div>
+
+                <!-- 书籍 6: 自动化办公 -->
+                <div class="book-card group bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover-card relative"
+                     data-id="b6"
+                     data-title="Python编程快速上手——让繁琐工作自动化"
+                     data-author="[美] Al Sweigart"
+                     data-cover="https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=400&auto=format&fit=crop">
+                    <button class="star-btn absolute top-3 right-3 z-20 text-gray-300 hover:text-yellow-400 bg-white/80 p-1.5 rounded-full shadow-sm backdrop-blur-sm" onclick="toggleBook(this)">
+                        <i class="fas fa-bookmark text-xl"></i>
+                    </button>
+                    <div class="h-40 bg-gray-100 overflow-hidden relative">
+                        <img src="https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=400&auto=format&fit=crop" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                    </div>
+                    <div class="p-4">
+                        <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded mb-2 inline-block">办公自动化</span>
+                        <h3 class="font-bold text-gray-800 text-sm mb-1 line-clamp-2 h-10">Python编程快速上手</h3>
+                        <p class="text-xs text-gray-500 mb-3">Al Sweigart / 王海鹏 译</p>
+                        <a href="https://automatetheboringstuff.com/" target="_blank" class="text-green-600 text-xs font-bold hover:underline block text-right">英文版免费读 &rarr;</a>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-white border-t border-gray-200 py-8 mt-auto">
+        <div class="container mx-auto px-4 text-center text-gray-500 text-sm">
+            <p class="mb-2">&copy; 2025 启航教育在线. 保留所有权利.</p>
+        </div>
+    </footer>
+
+    <!-- 书籍收藏逻辑 -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            initBookStars();
+        });
+
+        // 1. 点击收藏/取消
+        function toggleBook(btn) {
+            // 检查登录
+            if(localStorage.getItem('isLogin') !== 'true') {
+                alert("请先登录后再收藏书籍哦！");
+                window.location.href = "login.html";
+                return;
+            }
+
+            const card = btn.closest('.book-card');
+            const bookId = card.getAttribute('data-id');
+            const bookTitle = card.getAttribute('data-title');
+            const bookAuthor = card.getAttribute('data-author');
+            const bookCover = card.getAttribute('data-cover');
+
+            // 读取 'myBookCollection' (注意这里是新的 Key)
+            let books = JSON.parse(localStorage.getItem('myBookCollection') || '[]');
+            const index = books.findIndex(b => b.id === bookId);
+
+            if (index === -1) {
+                // 添加
+                books.push({
+                    id: bookId,
+                    title: bookTitle,
+                    author: bookAuthor,
+                    cover: bookCover,
+                    date: new Date().toLocaleDateString()
+                });
+                btn.classList.add('active');
+                btn.querySelector('i').classList.add('text-yellow-400');
+            } else {
+                // 取消
+                books.splice(index, 1);
+                btn.classList.remove('active');
+                btn.querySelector('i').classList.remove('text-yellow-400');
+            }
+
+            localStorage.setItem('myBookCollection', JSON.stringify(books));
+        }
+
+        // 2. 初始化高亮
+        function initBookStars() {
+            const books = JSON.parse(localStorage.getItem('myBookCollection') || '[]');
+            document.querySelectorAll('.book-card').forEach(card => {
+                const id = card.getAttribute('data-id');
+                if (books.some(b => b.id === id)) {
+                    const btn = card.querySelector('.star-btn');
+                    btn.classList.add('active');
+                    btn.querySelector('i').classList.add('text-yellow-400');
+                }
+            });
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>启航教育 - 学习中心</title>
+    <script src="js/auth.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; background-color: #f8f9fb; }
+        .hover-scale { transition: transform 0.2s; }
+        .hover-scale:hover { transform: scale(1.02); }
+        
+        /* 选中课程的高亮样式 */
+        .active-lesson { 
+            background-color: #ffffff; 
+            color: #2563eb; 
+            border-left: 4px solid #2563eb;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        /* 滚动条美化 */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+
+<body class="flex flex-col min-h-screen">
+    
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <a href="main.html" class="flex items-center space-x-2 cursor-pointer">
+                    <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white">
+                        <i class="fas fa-compass"></i>
+                    </div>
+                    <span class="text-xl font-bold text-gray-800">启航教育在线</span>
+                </a>
+            </div>
+            <nav class="hidden md:flex space-x-8 text-gray-600 foznt-medium text-sm">
+                <a href="main.html" class="hover:text-blue-600 transition">首页</a>
+                <a href="clscenter.html" class="hover:text-blue-600 transition">课程中心</a>
+                <a href="comment.html" class="hover:text-blue-600 transition">论坛</a>
+                <a href="Transition.html" class="text-gray-900 font-bold border-b-2 border-blue-600 pb-1">学习中心</a>
+				<a href="resources.html" class="hover:text-blue-600 transition">资源中心</a>
+            </nav>
+            <div class="flex items-center space-x-6">
+                <div id="header-auth-area"></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="bg-[#f8f9fb] flex-grow py-6">
+    <div class="container mx-auto px-4">
+        
+        <!-- 面包屑导航 -->
+        <div class="text-sm text-gray-500 mb-4 flex items-center">
+            <a href="clscenter.html" class="hover:text-blue-600">课程中心</a>
+            <i class="fas fa-chevron-right text-xs mx-2"></i>
+            <span class="text-gray-800 font-bold" id="course-title">Scrapy分布式爬虫实战</span>
+        </div>
+
+        <div class="flex flex-col lg:flex-row gap-6">
+
+            <!-- 左侧：播放器与详情 -->
+            <div class="lg:w-3/4">
+                
+                <!-- 📺 视频播放器 (B站源 BV1uN4y1W7Du) -->
+                <div class="bg-black rounded-xl overflow-hidden shadow-lg relative group aspect-video">
+                    <iframe id="bilibili-player"
+                            src="//player.bilibili.com/player.html?bvid=BV1uN4y1W7Du&page=1&high_quality=1&danmaku=0" 
+                            allowfullscreen="allowfullscreen" 
+                            width="100%" 
+                            height="100%" 
+                            scrolling="no" 
+                            frameborder="0" 
+                            sandbox="allow-top-navigation allow-same-origin allow-forms allow-scripts">
+                    </iframe>
+                </div>
+
+                <!-- 视频信息栏 -->
+                <div class="bg-white p-6 rounded-b-xl shadow-sm border-x border-b border-gray-100 mb-6">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-800 mb-2" id="current-lesson-title">1-.爬虫概述-1</h1>
+                            <p class="text-gray-500 text-sm">
+                                
+                                <i class="far fa-clock mr-1"></i> 课程时长：09:34
+                            </p>
+                        </div>
+                        <div class="flex space-x-3">
+                            
+                            <button id="collection-btn" onclick="toggleCollection()" class="flex items-center space-x-1 text-gray-500 hover:text-yellow-500 transition bg-gray-50 px-3 py-1.5 rounded-lg text-sm">
+                                <i class="far fa-star"></i> <span>收藏</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 底部 Tab 区域 -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 min-h-[300px]">
+                    <div class="flex border-b border-gray-200">
+                        <button onclick="switchTab('intro')" class="tab-btn active px-6 py-4 text-sm font-bold text-blue-600 border-b-2 border-blue-600 hover:bg-gray-50 transition">
+                            课程简介
+                        </button>
+                        <button onclick="switchTab('note')" class="tab-btn px-6 py-4 text-sm font-medium text-gray-500 hover:text-blue-600 hover:bg-gray-50 transition">
+                            我的笔记
+                        </button>
+                        <button onclick="switchTab('qa')" class="tab-btn px-6 py-4 text-sm font-medium text-gray-500 hover:text-blue-600 hover:bg-gray-50 transition">
+                            问答 (45)
+                        </button>
+                    </div>
+
+                    <div class="p-6">
+                        <div id="tab-intro" class="tab-content">
+                            <h3 class="font-bold text-gray-800 mb-3">课程介绍</h3>
+                            <p class="text-gray-600 leading-relaxed text-sm mb-4">
+                                本课程从零开始讲解Python爬虫技术，涵盖 Requests 库基础、数据解析（Re/Xpath/Bs4）、Scrapy 框架、分布式爬虫以及反爬虫策略应对。通过实战案例（豆瓣、电影天堂、梨视频等），带你掌握获取网络数据的核心技能。
+                            </p>
+                            <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                                <h4 class="font-bold text-blue-800 text-sm mb-2">💡 核心知识点</h4>
+                                <ul class="list-disc list-inside text-sm text-blue-700 space-y-1">
+                                    <li>Requests & Http 协议详解</li>
+                                    <li>数据解析：正则、Xpath、BeautifulSoup</li>
+                                    <li>Scrapy 框架与分布式爬虫</li>
+                                    <li>反爬攻防：Cookie、代理、验证码</li>
+                                    <li>异步爬虫与多线程/多进程</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div id="tab-note" class="tab-content hidden">
+                            <textarea class="w-full h-32 p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 resize-none" placeholder="在这里记录你的学习笔记，系统会自动保存..."></textarea>
+                            <div class="mt-3 flex justify-end">
+                                <button class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">保存笔记</button>
+                            </div>
+                        </div>
+
+                        <div id="tab-qa" class="tab-content hidden">
+                            <div class="space-y-4">
+                                <div class="flex space-x-3">
+                                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Bob" class="w-8 h-8 rounded-full bg-gray-100">
+                                    <div>
+                                        <div class="text-sm font-bold text-gray-800">爬虫新手</div>
+                                        <p class="text-sm text-gray-600 mt-1">老师，XPath 提取出来的数据是空的，但是网页上明明有，是不是反爬了？</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- 右侧：目录侧边栏 (84节课完整版) -->
+            <div class="lg:w-1/4">
+                
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-24 flex flex-col h-[600px]">
+                    <!-- 目录头部 -->
+                    <div class="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+                        <h3 class="font-bold text-gray-800">视频选集</h3>
+                        <span class="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded-full">共 84 节</span>
+                    </div>
+
+                    <!-- 目录列表 (超长可滚动) -->
+                    <div class="flex-1 overflow-y-auto custom-scrollbar bg-gray-50/30">
+                        
+                        <div class="px-4 py-2 bg-gray-100/50 text-xs font-bold text-gray-500 uppercase tracking-wider">第一章：基础与请求</div>
+                        
+                        <div>
+                            <a href="javascript:void(0)" onclick="changeVideo(1, this, '1-.爬虫概述-1')" class="lesson-item active-lesson block px-4 py-3 text-sm border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P01</span>
+                                <span class="group-hover:text-blue-600 flex-1">爬虫概述-1</span>
+                                <span class="text-xs text-gray-400 ml-2">09:34</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(2, this, '2.本课程使用的软件-1')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P02</span>
+                                <span class="group-hover:text-blue-600 flex-1">本课程使用的软件-1</span>
+                                <span class="text-xs text-gray-400 ml-2">09:41</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(3, this, '3.手刃一个小爬虫（上）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P03</span>
+                                <span class="group-hover:text-blue-600 flex-1">手刃一个小爬虫（上）</span>
+                                <span class="text-xs text-gray-400 ml-2">07:31</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(4, this, '4.手刃一个小爬虫（下）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P04</span>
+                                <span class="group-hover:text-blue-600 flex-1">手刃一个小爬虫（下）</span>
+                                <span class="text-xs text-gray-400 ml-2">04:16</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(5, this, '5.Web请求过程剖析（上）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P05</span>
+                                <span class="group-hover:text-blue-600 flex-1">Web请求过程剖析（上）</span>
+                                <span class="text-xs text-gray-400 ml-2">11:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(6, this, '6.Web请求过程剖析（下）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P06</span>
+                                <span class="group-hover:text-blue-600 flex-1">Web请求过程剖析（下）</span>
+                                <span class="text-xs text-gray-400 ml-2">06:07</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(7, this, '7.Http协议（上）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P07</span>
+                                <span class="group-hover:text-blue-600 flex-1">Http协议（上）</span>
+                                <span class="text-xs text-gray-400 ml-2">07:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(8, this, '8.Http协议（下）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P08</span>
+                                <span class="group-hover:text-blue-600 flex-1">Http协议（下）</span>
+                                <span class="text-xs text-gray-400 ml-2">06:18</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(9, this, '9.Requests入门（上）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P09</span>
+                                <span class="group-hover:text-blue-600 flex-1">Requests入门（上）</span>
+                                <span class="text-xs text-gray-400 ml-2">07:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(10, this, '10.Requests入门（下）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P10</span>
+                                <span class="group-hover:text-blue-600 flex-1">Requests入门（下）</span>
+                                <span class="text-xs text-gray-400 ml-2">08:20</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(11, this, '11.Requests入门-1')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P11</span>
+                                <span class="group-hover:text-blue-600 flex-1">Requests入门-1</span>
+                                <span class="text-xs text-gray-400 ml-2">06:21</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(12, this, '12.Requests入门（上）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P12</span>
+                                <span class="group-hover:text-blue-600 flex-1">Requests入门（上）</span>
+                                <span class="text-xs text-gray-400 ml-2">08:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(13, this, '13.Requests入门（下）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P13</span>
+                                <span class="group-hover:text-blue-600 flex-1">Requests入门（下）</span>
+                                <span class="text-xs text-gray-400 ml-2">08:37</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(14, this, '14.补充 关闭resp-1')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P14</span>
+                                <span class="group-hover:text-blue-600 flex-1">补充 关闭resp-1</span>
+                                <span class="text-xs text-gray-400 ml-2">02:16</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(15, this, '15.补充_py基础_字符集的问题')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P15</span>
+                                <span class="group-hover:text-blue-600 flex-1">补充_py基础_字符集的问题</span>
+                                <span class="text-xs text-gray-400 ml-2">05:56</span>
+                            </a>
+                        </div>
+
+                        <div class="px-4 py-2 bg-gray-100/50 text-xs font-bold text-gray-500 uppercase tracking-wider mt-2">第二章：数据解析</div>
+
+                        <div>
+                            <a href="javascript:void(0)" onclick="changeVideo(16, this, '16.数据解析概述-1')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P16</span>
+                                <span class="group-hover:text-blue-600 flex-1">数据解析概述-1</span>
+                                <span class="text-xs text-gray-400 ml-2">02:19</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(17, this, '17.Re解析 正则表达式 01（上）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P17</span>
+                                <span class="group-hover:text-blue-600 flex-1">Re解析 正则表达式 01（上）</span>
+                                <span class="text-xs text-gray-400 ml-2">10:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(18, this, '18.Re解析 正则表达式 01（下）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P18</span>
+                                <span class="group-hover:text-blue-600 flex-1">Re解析 正则表达式 01（下）</span>
+                                <span class="text-xs text-gray-400 ml-2">09:17</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(19, this, '19.Re解析 正则表达式 02（上）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P19</span>
+                                <span class="group-hover:text-blue-600 flex-1">Re解析 正则表达式 02（上）</span>
+                                <span class="text-xs text-gray-400 ml-2">08:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(20, this, '20.Re解析 正则表达式 02（下）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P20</span>
+                                <span class="group-hover:text-blue-600 flex-1">Re解析 正则表达式 02（下）</span>
+                                <span class="text-xs text-gray-400 ml-2">09:28</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(21, this, '21.Python的re模块使用（1）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P21</span>
+                                <span class="group-hover:text-blue-600 flex-1">Python的re模块使用（1）</span>
+                                <span class="text-xs text-gray-400 ml-2">10:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(22, this, '22.Python的re模块使用（2）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P22</span>
+                                <span class="group-hover:text-blue-600 flex-1">Python的re模块使用（2）</span>
+                                <span class="text-xs text-gray-400 ml-2">11:00</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(23, this, '23.手刃豆瓣top250电影排行（1）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P23</span>
+                                <span class="group-hover:text-blue-600 flex-1">手刃豆瓣top250电影排行（1）</span>
+                                <span class="text-xs text-gray-400 ml-2">10:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(24, this, '24.手刃豆瓣top250电影排行（2）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P24</span>
+                                <span class="group-hover:text-blue-600 flex-1">手刃豆瓣top250电影排行（2）</span>
+                                <span class="text-xs text-gray-400 ml-2">09:32</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(25, this, '25.屠戮盗版天堂电影信息（1）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P25</span>
+                                <span class="group-hover:text-blue-600 flex-1">屠戮盗版天堂电影信息（1）</span>
+                                <span class="text-xs text-gray-400 ml-2">10:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(26, this, '26.屠戮盗版天堂电影信息（2）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P26</span>
+                                <span class="group-hover:text-blue-600 flex-1">屠戮盗版天堂电影信息（2）</span>
+                                <span class="text-xs text-gray-400 ml-2">10:15</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(27, this, '27.屠戮盗版天堂电影信息（3）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P27</span>
+                                <span class="group-hover:text-blue-600 flex-1">屠戮盗版天堂电影信息（3）</span>
+                                <span class="text-xs text-gray-400 ml-2">10:57</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(28, this, '28.Bs4解析前戏-Html语法规则-1')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P28</span>
+                                <span class="group-hover:text-blue-600 flex-1">Bs4解析前戏-Html语法规则-1</span>
+                                <span class="text-xs text-gray-400 ml-2">11:55</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(29, this, '29.Bs4解析入门-搞搞菜价（1）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P29</span>
+                                <span class="group-hover:text-blue-600 flex-1">Bs4解析入门-搞搞菜价（1）</span>
+                                <span class="text-xs text-gray-400 ml-2">10:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(30, this, '30.Bs4解析入门-搞搞菜价（2）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P30</span>
+                                <span class="group-hover:text-blue-600 flex-1">Bs4解析入门-搞搞菜价（2）</span>
+                                <span class="text-xs text-gray-400 ml-2">10:09</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(31, this, '31.Bs4解析案例-抓取优美图库图片（1）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P31</span>
+                                <span class="group-hover:text-blue-600 flex-1">Bs4解析案例-抓取优美图库图片（1）</span>
+                                <span class="text-xs text-gray-400 ml-2">12:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(32, this, '32.Bs4解析案例-抓取优美图库图片（2）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P32</span>
+                                <span class="group-hover:text-blue-600 flex-1">Bs4解析案例-抓取优美图库图片（2）</span>
+                                <span class="text-xs text-gray-400 ml-2">12:36</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(33, this, '33.Xpath入门 01（1）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P33</span>
+                                <span class="group-hover:text-blue-600 flex-1">Xpath入门 01（1）</span>
+                                <span class="text-xs text-gray-400 ml-2">08:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(34, this, '34.Xpath入门 01（2）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P34</span>
+                                <span class="group-hover:text-blue-600 flex-1">Xpath入门 01（2）</span>
+                                <span class="text-xs text-gray-400 ml-2">08:50</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(35, this, '35.Xpath入门 02（1）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P35</span>
+                                <span class="group-hover:text-blue-600 flex-1">Xpath入门 02（1）</span>
+                                <span class="text-xs text-gray-400 ml-2">07:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(36, this, '36.Xpath入门 02（2）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P36</span>
+                                <span class="group-hover:text-blue-600 flex-1">Xpath入门 02（2）</span>
+                                <span class="text-xs text-gray-400 ml-2">09:10</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(37, this, '37.Xpath实战 抓取猪八戒网信息（1）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P37</span>
+                                <span class="group-hover:text-blue-600 flex-1">Xpath实战 抓取猪八戒网信息（1）</span>
+                                <span class="text-xs text-gray-400 ml-2">10:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(38, this, '38.Xpath实战 抓取猪八戒网信息（2）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P38</span>
+                                <span class="group-hover:text-blue-600 flex-1">Xpath实战 抓取猪八戒网信息（2）</span>
+                                <span class="text-xs text-gray-400 ml-2">10:13</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(39, this, '39.Xpath实战 抓取猪八戒网信息（3）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P39</span>
+                                <span class="group-hover:text-blue-600 flex-1">Xpath实战 抓取猪八戒网信息（3）</span>
+                                <span class="text-xs text-gray-400 ml-2">06:29</span>
+                            </a>
+                        </div>
+
+                        <div class="px-4 py-2 bg-gray-100/50 text-xs font-bold text-gray-500 uppercase tracking-wider mt-2">第三章：进阶</div>
+
+                        <div>
+                            <a href="javascript:void(0)" onclick="changeVideo(40, this, '40.Requests进阶概述-1')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P40</span>
+                                <span class="group-hover:text-blue-600 flex-1">Requests进阶概述-1</span>
+                                <span class="text-xs text-gray-400 ml-2">02:55</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(41, this, '41.处理cookie 登录小说网（1）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P41</span>
+                                <span class="group-hover:text-blue-600 flex-1">处理cookie 登录小说网（1）</span>
+                                <span class="text-xs text-gray-400 ml-2">10:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(42, this, '42.处理cookie 登录小说网（2）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P42</span>
+                                <span class="group-hover:text-blue-600 flex-1">处理cookie 登录小说网（2）</span>
+                                <span class="text-xs text-gray-400 ml-2">08:59</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(43, this, '43.防盗链 抓取梨视频（1）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P43</span>
+                                <span class="group-hover:text-blue-600 flex-1">防盗链 抓取梨视频（1）</span>
+                                <span class="text-xs text-gray-400 ml-2">12:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(44, this, '44.防盗链 抓取梨视频（2）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P44</span>
+                                <span class="group-hover:text-blue-600 flex-1">防盗链 抓取梨视频（2）</span>
+                                <span class="text-xs text-gray-400 ml-2">13:04</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(45, this, '45.代理-1')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P45</span>
+                                <span class="group-hover:text-blue-600 flex-1">代理-1</span>
+                                <span class="text-xs text-gray-400 ml-2">09:59</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(46, this, '46.综合训练 抓取网易云音乐评论信息（1）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P46</span>
+                                <span class="group-hover:text-blue-600 flex-1">综合训练 抓取网易云音乐评论信息（1）</span>
+                                <span class="text-xs text-gray-400 ml-2">10:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(47, this, '47.综合训练 抓取网易云音乐评论信息（2）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P47</span>
+                                <span class="group-hover:text-blue-600 flex-1">综合训练 抓取网易云音乐评论信息（2）</span>
+                                <span class="text-xs text-gray-400 ml-2">10:07</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(48, this, '48.综合训练 抓取网易云音乐评论信息（3）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P48</span>
+                                <span class="group-hover:text-blue-600 flex-1">综合训练 抓取网易云音乐评论信息（3）</span>
+                                <span class="text-xs text-gray-400 ml-2">10:12</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(49, this, '49.综合训练 抓取网易云音乐评论信息（4）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P49</span>
+                                <span class="group-hover:text-blue-600 flex-1">综合训练 抓取网易云音乐评论信息（4）</span>
+                                <span class="text-xs text-gray-400 ml-2">10:11</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(50, this, '50.综合训练 抓取网易云音乐评论信息（5）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P50</span>
+                                <span class="group-hover:text-blue-600 flex-1">综合训练 抓取网易云音乐评论信息（5）</span>
+                                <span class="text-xs text-gray-400 ml-2">10:10</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(51, this, '51.综合训练 抓取网易云音乐评论信息（6）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P51</span>
+                                <span class="group-hover:text-blue-600 flex-1">综合训练 抓取网易云音乐评论信息（6）</span>
+                                <span class="text-xs text-gray-400 ml-2">10:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(52, this, '52.综合训练 抓取网易云音乐评论信息（7）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P52</span>
+                                <span class="group-hover:text-blue-600 flex-1">综合训练 抓取网易云音乐评论信息（7）</span>
+                                <span class="text-xs text-gray-400 ml-2">06:38</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(53, this, '53.第四章概述-1')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P53</span>
+                                <span class="group-hover:text-blue-600 flex-1">第四章概述-1</span>
+                                <span class="text-xs text-gray-400 ml-2">04:50</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(54, this, '54.多线程（1）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P54</span>
+                                <span class="group-hover:text-blue-600 flex-1">多线程（1）</span>
+                                <span class="text-xs text-gray-400 ml-2">08:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(55, this, '55.多线程（2）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P55</span>
+                                <span class="group-hover:text-blue-600 flex-1">多线程（2）</span>
+                                <span class="text-xs text-gray-400 ml-2">07:17</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(56, this, '56.多进程-1')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P56</span>
+                                <span class="group-hover:text-blue-600 flex-1">多进程-1</span>
+                                <span class="text-xs text-gray-400 ml-2">06:13</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(57, this, '57.线程池和进程池入门')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P57</span>
+                                <span class="group-hover:text-blue-600 flex-1">线程池和进程池入门</span>
+                                <span class="text-xs text-gray-400 ml-2">07:00</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(58, this, '58.线程池案例_抓取新发地菜价（上）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P58</span>
+                                <span class="group-hover:text-blue-600 flex-1">线程池案例_抓取新发地菜价（上）</span>
+                                <span class="text-xs text-gray-400 ml-2">09:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(59, this, '59.线程池案例_抓取新发地菜价（下）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P59</span>
+                                <span class="group-hover:text-blue-600 flex-1">线程池案例_抓取新发地菜价（下）</span>
+                                <span class="text-xs text-gray-400 ml-2">09:42</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(60, this, '60.协程概念')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P60</span>
+                                <span class="group-hover:text-blue-600 flex-1">协程概念</span>
+                                <span class="text-xs text-gray-400 ml-2">11:32</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(61, this, '61.多任务异步协程（上）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P61</span>
+                                <span class="group-hover:text-blue-600 flex-1">多任务异步协程（上）</span>
+                                <span class="text-xs text-gray-400 ml-2">12:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(62, this, '62.多任务异步协程（下）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P62</span>
+                                <span class="group-hover:text-blue-600 flex-1">多任务异步协程（下）</span>
+                                <span class="text-xs text-gray-400 ml-2">11:55</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(63, this, '63.补充-关于异步协程-过时警告')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P63</span>
+                                <span class="group-hover:text-blue-600 flex-1">补充-关于异步协程-过时警告</span>
+                                <span class="text-xs text-gray-400 ml-2">07:10</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(64, this, '64.异步http请求aiohttp模块讲解（上）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P64</span>
+                                <span class="group-hover:text-blue-600 flex-1">异步http请求aiohttp模块讲解（上）</span>
+                                <span class="text-xs text-gray-400 ml-2">08:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(65, this, '65.异步http请求aiohttp模块讲解（下）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P65</span>
+                                <span class="group-hover:text-blue-600 flex-1">异步http请求aiohttp模块讲解（下）</span>
+                                <span class="text-xs text-gray-400 ml-2">07:45</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(66, this, '66.异步爬虫实战-扒光一部小说（上）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P66</span>
+                                <span class="group-hover:text-blue-600 flex-1">异步爬虫实战-扒光一部小说（上）</span>
+                                <span class="text-xs text-gray-400 ml-2">12:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(67, this, '67.异步爬虫实战-扒光一部小说（下）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P67</span>
+                                <span class="group-hover:text-blue-600 flex-1">异步爬虫实战-扒光一部小说（下）</span>
+                                <span class="text-xs text-gray-400 ml-2">12:15</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(68, this, '68.综合训练_视频网站的工作原理（上）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P68</span>
+                                <span class="group-hover:text-blue-600 flex-1">综合训练_视频网站的工作原理（上）</span>
+                                <span class="text-xs text-gray-400 ml-2">09:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(69, this, '69.综合训练_视频网站的工作原理（下）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P69</span>
+                                <span class="group-hover:text-blue-600 flex-1">综合训练_视频网站的工作原理（下）</span>
+                                <span class="text-xs text-gray-400 ml-2">10:03</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(70, this, '70.抓取91看剧_简单版（上）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P70</span>
+                                <span class="group-hover:text-blue-600 flex-1">抓取91看剧_简单版（上）</span>
+                                <span class="text-xs text-gray-400 ml-2">07:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(71, this, '71.抓取91看剧_简单版（下）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P71</span>
+                                <span class="group-hover:text-blue-600 flex-1">抓取91看剧_简单版（下）</span>
+                                <span class="text-xs text-gray-400 ml-2">07:40</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(72, this, '72.抓取91看剧_简单版（上）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P72</span>
+                                <span class="group-hover:text-blue-600 flex-1">抓取91看剧_简单版（上）</span>
+                                <span class="text-xs text-gray-400 ml-2">10:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(73, this, '73.抓取91看剧_简单版（下）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P73</span>
+                                <span class="group-hover:text-blue-600 flex-1">抓取91看剧_简单版（下）</span>
+                                <span class="text-xs text-gray-400 ml-2">11:14</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(74, this, '74.抓取91看剧_复杂版_1_概述（上）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P74</span>
+                                <span class="group-hover:text-blue-600 flex-1">抓取91看剧_复杂版_1_概述（上）</span>
+                                <span class="text-xs text-gray-400 ml-2">06:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(75, this, '75.抓取91看剧_复杂版_1_概述（下）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P75</span>
+                                <span class="group-hover:text-blue-600 flex-1">抓取91看剧_复杂版_1_概述（下）</span>
+                                <span class="text-xs text-gray-400 ml-2">07:41</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(76, this, '76.抓取91看剧_复杂版_2_拿到m3u8路径')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P76</span>
+                                <span class="group-hover:text-blue-600 flex-1">抓取91看剧_复杂版_2_拿到m3u8路径</span>
+                                <span class="text-xs text-gray-400 ml-2">11:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(77, this, '77.看剧_复杂版_3_下载m3u8（上）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P77</span>
+                                <span class="group-hover:text-blue-600 flex-1">看剧_复杂版_3_下载m3u8（上）</span>
+                                <span class="text-xs text-gray-400 ml-2">08:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(78, this, '78.看剧_复杂版_3_下载m3u8（下）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P78</span>
+                                <span class="group-hover:text-blue-600 flex-1">看剧_复杂版_3_下载m3u8（下）</span>
+                                <span class="text-xs text-gray-400 ml-2">07:37</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(79, this, '79.抓取91看剧_复杂版_4_下载视频（上）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P79</span>
+                                <span class="group-hover:text-blue-600 flex-1">抓取91看剧_复杂版_4_下载视频（上）</span>
+                                <span class="text-xs text-gray-400 ml-2">09:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(80, this, '80.抓取91看剧_复杂版_4_下载视频（下）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P80</span>
+                                <span class="group-hover:text-blue-600 flex-1">抓取91看剧_复杂版_4_下载视频（下）</span>
+                                <span class="text-xs text-gray-400 ml-2">09:02</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(81, this, '81.抓取91看剧_复杂版_5_解密（上）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P81</span>
+                                <span class="group-hover:text-blue-600 flex-1">抓取91看剧_复杂版_5_解密（上）</span>
+                                <span class="text-xs text-gray-400 ml-2">08:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(82, this, '82.抓取91看剧_复杂版_5_解密（下）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P82</span>
+                                <span class="group-hover:text-blue-600 flex-1">抓取91看剧_复杂版_5_解密（下）</span>
+                                <span class="text-xs text-gray-400 ml-2">08:17</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(83, this, '83.抓取91看剧_复杂版_6_合并视频（上）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P83</span>
+                                <span class="group-hover:text-blue-600 flex-1">抓取91看剧_复杂版_6_合并视频（上）</span>
+                                <span class="text-xs text-gray-400 ml-2">06:01</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(84, this, '84.抓取91看剧_复杂版_6_合并视频（下）')" class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P84</span>
+                                <span class="group-hover:text-blue-600 flex-1">抓取91看剧_复杂版_6_合并视频（下）</span>
+                                <span class="text-xs text-gray-400 ml-2">07:32</span>
+                            </a>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</main>
+
+<script>
+    // 1. Tab 切换功能
+    function switchTab(tabName) {
+        const contents = document.querySelectorAll('.tab-content');
+        contents.forEach(content => content.classList.add('hidden'));
+        
+        const btns = document.querySelectorAll('.tab-btn');
+        btns.forEach(btn => {
+            btn.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600', 'font-bold');
+            btn.classList.add('text-gray-500', 'font-medium');
+        });
+        
+        document.getElementById('tab-' + tabName).classList.remove('hidden');
+        const activeBtn = event.currentTarget;
+        activeBtn.classList.remove('text-gray-500', 'font-medium');
+        activeBtn.classList.add('text-blue-600', 'border-b-2', 'border-blue-600', 'font-bold');
+    }
+
+    // 2. 视频切集功能
+    function changeVideo(page, element, title) {
+        // A. 替换 Iframe 的 src，跳转到指定 P数 (page)
+        const iframe = document.getElementById('bilibili-player');
+        // 注意：这里保留了你的视频ID BV1uN4y1W7Du
+        iframe.src = `//player.bilibili.com/player.html?bvid=BV1uN4y1W7Du&page=${page}&high_quality=1&danmaku=0`;
+
+        // B. 更新标题
+        if(title) {
+            document.getElementById('current-lesson-title').innerText = title;
+        }
+
+        // C. 处理目录高亮样式
+        // 先移除所有选中状态
+        const items = document.querySelectorAll('.lesson-item');
+        items.forEach(item => {
+            item.classList.remove('active-lesson');
+            item.classList.add('text-gray-600', 'border-transparent');
+        });
+
+        // 给当前点击的加高亮
+        if (element) {
+            element.classList.remove('text-gray-600', 'border-transparent');
+            element.classList.add('active-lesson');
+        }
+    }
+// ===================================
+    // 🌟 收藏功能核心逻辑
+    // ===================================
+    // 当前课程信息 (静态配置，因为是独立页面)
+    const currentCourse = {
+        id: 'c2', // 这里的ID必须和 clscenter.html 里的 data-id 一致！
+        title: 'Scrapy分布式爬虫',
+        link: 'course2.html',
+        icon: 'fas fa-spider',
+        color: 'bg-gradient-to-r from-purple-500 to-pink-500',
+        date: new Date().toLocaleDateString()
+    };
+
+    document.addEventListener("DOMContentLoaded", function() {
+        initCollectionState();
+    });
+
+    function toggleCollection() {
+        const btn = document.getElementById('collection-btn');
+        
+        // 检查登录
+        const isLogin = localStorage.getItem('isLogin');
+        if(isLogin !== 'true') {
+            alert("请先登录后再收藏课程哦！");
+            window.location.href = "login.html";
+            return;
+        }
+
+        // 读取收藏
+        let collection = JSON.parse(localStorage.getItem('myCollection') || '[]');
+        const index = collection.findIndex(c => c.id === currentCourse.id);
+
+        if (index === -1) {
+            // 添加收藏
+            collection.push(currentCourse);
+            btn.classList.add('collected');
+            btn.classList.add('text-yellow-500');
+            btn.classList.remove('text-gray-500');
+            btn.querySelector('i').classList.remove('far');
+            btn.querySelector('i').classList.add('fas');
+            btn.querySelector('span').innerText = "已收藏";
+        } else {
+            // 取消收藏
+            collection.splice(index, 1);
+            btn.classList.remove('collected');
+            btn.classList.remove('text-yellow-500');
+            btn.classList.add('text-gray-500');
+            btn.querySelector('i').classList.remove('fas');
+            btn.querySelector('i').classList.add('far');
+            btn.querySelector('span').innerText = "收藏";
+        }
+
+        // 保存
+        localStorage.setItem('myCollection', JSON.stringify(collection));
+    }
+
+    function initCollectionState() {
+        const btn = document.getElementById('collection-btn');
+        let collection = JSON.parse(localStorage.getItem('myCollection') || '[]');
+        
+        if (collection.some(c => c.id === currentCourse.id)) {
+            btn.classList.add('collected');
+            btn.classList.add('text-yellow-500');
+            btn.classList.remove('text-gray-500');
+            btn.querySelector('i').classList.remove('far');
+            btn.querySelector('i').classList.add('fas');
+            btn.querySelector('span').innerText = "已收藏";
+        }
+    }
+</script>
+	
+<footer class="bg-white border-t border-gray-200 py-8 mt-auto">
+    <div class="container mx-auto px-4 text-center text-gray-500 text-sm">
+        <p class="mb-2">&copy; 2025 启航教育在线. 保留所有权利.</p>
+        <div class="flex justify-center space-x-6 mt-4">
+            <a href="#" class="hover:text-blue-600">关于我们</a>
+            <a href="#" class="hover:text-blue-600">联系我们</a>
+            <a href="#" class="hover:text-blue-600">隐私政策</a>
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>

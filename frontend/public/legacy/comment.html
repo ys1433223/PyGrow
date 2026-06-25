@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>启航教育 - 互动交流</title>
+    <script src="js/auth.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入白天黑夜组件脚本 -->
+    <script src="js/day-night_script.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; background-color: #f8f9fb; }
+        .hover-scale { transition: transform 0.2s; }
+        .hover-scale:hover { transform: scale(1.02); }
+		/* --- ❤️ 点赞心跳动画 --- */
+		@keyframes heartBeat {
+			0% { transform: scale(1); }
+			50% { transform: scale(1.4); } /* 放大 */
+			100% { transform: scale(1); }
+		}
+
+		.like-animate {
+			animation: heartBeat 0.3s ease-in-out;
+		}
+
+		/* 点赞后的红色实心状态 */
+		.liked {
+			color: #ef4444; /* text-red-500 */
+		}
+        
+        /* 侧边栏平滑过渡 */
+        #moreTopics { transition: all 0.3s ease-in-out; }
+    </style>
+</head>
+
+<body class="flex flex-col min-h-screen">
+
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <a href="/" class="flex items-center space-x-2 cursor-pointer">
+                    <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white">
+                        <i class="fas fa-compass"></i>
+                    </div>
+                    <span class="text-xl font-bold text-gray-800">启航教育在线</span>
+                </a>
+            </div>
+            <nav class="hidden md:flex space-x-8 text-gray-600 font-medium text-sm">
+                <a href="/" class="hover:text-blue-600 transition">首页</a>
+                <a href="/courses" class="hover:text-blue-600 transition">课程中心</a>
+                
+                <a href="#" class="text-gray-900 font-bold border-b-2 border-blue-600 pb-1">论坛</a>
+                <a href="Transition.html" class="hover:text-blue-600 transition">学习中心</a>
+				<a href="resources.html" class="hover:text-blue-600 transition">资源中心</a>
+            </nav>
+            <div class="flex items-center space-x-6">
+                <!-- 白天黑夜切换按钮 -->
+                <div class="relative w-16 h-8 flex items-center justify-center mr-2">
+                     <theme-button id="theme-toggle" size="0.6" style="cursor: pointer;"></theme-button>
+                </div>
+                <div id="header-auth-area"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要内容区域 -->
+    <main class="container mx-auto px-4 py-8 flex-grow">
+        
+        <div class="flex flex-col lg:flex-row gap-8">
+            
+            <!-- 左侧：主要讨论区 (占 2/3 宽度) -->
+            <div class="lg:w-2/3">
+                
+                <!-- 1. 发布框 -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8 relative">
+                    <h2 class="text-lg font-bold text-gray-800 mb-4"><i class="fas fa-pen-nib text-blue-500 mr-2"></i>发起新话题</h2>
+                    
+                    <textarea id="commentInput" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-4 focus:outline-none focus:border-blue-500 transition resize-none" rows="3" placeholder="分享你的学习心得，或者提出问题..."></textarea>
+                    
+                    <!-- 标签选择菜单 (默认隐藏) -->
+                    <div id="tagSelectorMenu" class="hidden absolute left-6 bottom-16 bg-white border border-gray-200 shadow-xl rounded-lg p-3 z-20 w-64 animate-fade-in-up">
+                        <div class="text-xs text-gray-400 mb-2">选择一个话题标签：</div>
+                        <div class="flex flex-wrap gap-2">
+                            <span onclick="selectPostTag('Python基础', 'bg-blue-50 text-blue-600')" class="cursor-pointer px-2 py-1 rounded bg-blue-50 text-blue-600 text-xs hover:scale-105 transition">Python基础</span>
+                            <span onclick="selectPostTag('Web开发', 'bg-indigo-50 text-indigo-600')" class="cursor-pointer px-2 py-1 rounded bg-indigo-50 text-indigo-600 text-xs hover:scale-105 transition">Web开发</span>
+                            <span onclick="selectPostTag('爬虫', 'bg-purple-50 text-purple-600')" class="cursor-pointer px-2 py-1 rounded bg-purple-50 text-purple-600 text-xs hover:scale-105 transition">爬虫</span>
+                            <span onclick="selectPostTag('数据分析', 'bg-green-50 text-green-600')" class="cursor-pointer px-2 py-1 rounded bg-green-50 text-green-600 text-xs hover:scale-105 transition">数据分析</span>
+                            <span onclick="selectPostTag('求助', 'bg-red-50 text-red-600')" class="cursor-pointer px-2 py-1 rounded bg-red-50 text-red-600 text-xs hover:scale-105 transition">求助</span>
+                            <span onclick="selectPostTag('闲聊', 'bg-gray-100 text-gray-600')" class="cursor-pointer px-2 py-1 rounded bg-gray-100 text-gray-600 text-xs hover:scale-105 transition">闲聊</span>
+                        </div>
+                    </div>
+                
+                    <div class="flex justify-between items-center mt-4">
+                        <div class="text-gray-400 text-sm space-x-3 flex items-center">
+                            <span class="cursor-pointer hover:text-blue-500"><i class="far fa-image"></i> 图片</span>
+                            
+                            <!-- 点击展开标签菜单 -->
+                            <span onclick="toggleTagMenu()" class="cursor-pointer hover:text-blue-500 relative">
+                                <i class="fas fa-hashtag"></i> 
+                                <span id="selectedTagDisplay">话题</span>
+                            </span>
+                        </div>
+                        <button onclick="postComment()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition shadow-md shadow-blue-200">
+                            发布
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. 话题筛选栏 -->
+                <div class="mb-6">
+                    <div class="flex items-center space-x-2 overflow-x-auto pb-2 custom-scrollbar" id="tagFilterBar">
+                        <button onclick="filterPosts('all')" class="tag-filter-btn bg-blue-600 text-white px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap shadow-md transition">全部</button>
+                        <button onclick="filterPosts('Python基础')" class="tag-filter-btn bg-white text-gray-600 border border-gray-200 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap hover:border-blue-500 hover:text-blue-500 transition">Python基础</button>
+                        <button onclick="filterPosts('Web开发')" class="tag-filter-btn bg-white text-gray-600 border border-gray-200 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap hover:border-blue-500 hover:text-blue-500 transition">Web开发</button>
+                        <button onclick="filterPosts('爬虫')" class="tag-filter-btn bg-white text-gray-600 border border-gray-200 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap hover:border-blue-500 hover:text-blue-500 transition">爬虫</button>
+                        <button onclick="filterPosts('数据分析')" class="tag-filter-btn bg-white text-gray-600 border border-gray-200 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap hover:border-blue-500 hover:text-blue-500 transition">数据分析</button>
+                        <button onclick="filterPosts('求助')" class="tag-filter-btn bg-white text-gray-600 border border-gray-200 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap hover:border-blue-500 hover:text-blue-500 transition">求助</button>
+                        <button onclick="filterPosts('闲聊')" class="tag-filter-btn bg-white text-gray-600 border border-gray-200 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap hover:border-blue-500 hover:text-blue-500 transition">闲聊</button>
+                    </div>
+                </div>
+
+                <!-- 3. 帖子列表容器 -->
+                <div id="postList" class="space-y-6">
+                    
+                    <!-- 模拟帖子 1 -->
+                    <div class="post-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover-card transition" data-tag="Python基础">
+                        <div class="flex items-start">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User" class="w-12 h-12 rounded-full bg-gray-100 mr-4 border border-gray-200">
+                            <div class="flex-1">
+                                <div class="flex justify-between items-center mb-2">
+                                    <div>
+                                        <span class="font-bold text-gray-900">张同学</span>
+                                        <span class="text-xs text-gray-400 ml-2">2小时前</span>
+                                    </div>
+                                    <span class="bg-blue-50 text-blue-600 text-xs px-2 py-1 rounded">Python基础</span>
+                                </div>
+                                <p class="text-gray-600 mb-4">
+                                    刚才在学 Python 的列表推导式，感觉这个功能太强大了！以前写四五行代码，现在一行就搞定。大家觉得新手可以直接用这个吗？
+                                </p>
+                                <div class="flex items-center space-x-6 text-gray-400 text-sm">
+                                    <span class="cursor-pointer hover:text-blue-500" onclick="toggleReply(this)">
+                                        <i class="far fa-comment-alt mr-1"></i> <span class="comment-count">1</span>
+                                    </span>
+                                    <span class="cursor-pointer hover:text-red-500" onclick="toggleLike(this)">
+                                        <i class="far fa-heart mr-1"></i> <span class="like-count">34</span>
+                                    </span>
+                                    <span class="cursor-pointer hover:text-gray-600"><i class="fas fa-share mr-1"></i> 分享</span>
+                                </div>
+
+                                <!-- 回复框 -->
+                                <div class="reply-box hidden mt-4 pt-4 border-t border-gray-100">
+                                    <div class="reply-list space-y-3 mb-3">
+                                        <div class="flex items-start space-x-3">
+                                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Bob" class="w-8 h-8 rounded-full bg-gray-100">
+                                            <div class="bg-gray-50 p-3 rounded-lg flex-1 text-sm">
+                                                <div class="font-bold text-gray-800 mb-1">路人甲</div>
+                                                <div class="text-gray-600">确实，列表推导式写起来很爽！但要注意可读性哦。</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <input type="text" placeholder="回复一下..." class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
+                                        <button onclick="submitReply(this)" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">发送</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 模拟帖子 2 -->
+                    <div class="post-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover-card transition" data-tag="求助">
+                        <div class="flex items-start">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka" alt="User" class="w-12 h-12 rounded-full bg-gray-100 mr-4 border border-gray-200">
+                            <div class="flex-1">
+                                <div class="flex justify-between items-center mb-2">
+                                    <div>
+                                        <span class="font-bold text-gray-900">李同学</span>
+                                        <span class="text-xs text-gray-400 ml-2">昨天</span>
+                                    </div>
+                                    <span class="bg-red-50 text-red-600 text-xs px-2 py-1 rounded">求助</span>
+                                </div>
+                                <p class="text-gray-600 mb-4">
+                                    运行代码总是报 IndentationError，检查了好几遍没发现问题，是不是 Tab 和 空格 混用了？求大神指点！
+                                </p>
+                                <div class="flex items-center space-x-6 text-gray-400 text-sm">
+                                    <span class="cursor-pointer hover:text-blue-500" onclick="toggleReply(this)">
+                                        <i class="far fa-comment-alt mr-1"></i> <span class="comment-count">0</span>
+                                    </span>
+                                    <span class="cursor-pointer hover:text-red-500" onclick="toggleLike(this)">
+                                        <i class="far fa-heart mr-1"></i> <span class="like-count">88</span>
+                                    </span>
+                                </div>
+                                
+                                <div class="reply-box hidden mt-4 pt-4 border-t border-gray-100">
+                                    <div class="reply-list space-y-3 mb-3"></div>
+                                    <div class="flex space-x-2">
+                                        <input type="text" placeholder="回复一下..." class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
+                                        <button onclick="submitReply(this)" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">发送</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                
+                <div class="text-center mt-8">
+                    <button class="text-gray-500 hover:text-blue-600 text-sm">加载更多...</button>
+                </div>
+
+            </div>
+
+            <!-- 右侧：热门资源榜 (全中文/国内可用) -->
+            <aside class="lg:w-1/3 space-y-6 sticky top-24 h-fit">
+                
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="font-bold text-gray-800 mb-4 border-l-4 border-blue-500 pl-3 flex items-center justify-between">
+                        <span>🔥 热门资源榜</span>
+                        <span class="text-xs text-gray-400 font-normal">实时更新</span>
+                    </h3>
+                    
+                    <!-- Top 3 (常驻) -->
+                    <ul class="space-y-3">
+                        <li>
+                            <a href="https://docs.python.org/zh-cn/3/" target="_blank" class="flex items-center justify-between group cursor-pointer hover:bg-blue-50 p-2 rounded-lg transition border border-transparent hover:border-blue-100">
+                                <div class="flex items-center">
+                                    <span class="w-6 h-6 bg-red-100 text-red-600 rounded text-xs flex items-center justify-center mr-3 font-bold flex-shrink-0">1</span>
+                                    <div class="flex flex-col">
+                                        <span class="text-gray-700 group-hover:text-blue-700 text-sm font-bold">Python 3.12 官方中文文档</span>
+                                        <span class="text-[10px] text-gray-400">docs.python.org (官方汉化)</span>
+                                    </div>
+                                </div>
+                                <i class="fas fa-external-link-alt text-gray-300 text-xs group-hover:text-blue-400"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://www.liaoxuefeng.com/wiki/1016959663602400" target="_blank" class="flex items-center justify-between group cursor-pointer hover:bg-blue-50 p-2 rounded-lg transition border border-transparent hover:border-blue-100">
+                                <div class="flex items-center">
+                                    <span class="w-6 h-6 bg-orange-100 text-orange-600 rounded text-xs flex items-center justify-center mr-3 font-bold flex-shrink-0">2</span>
+                                    <div class="flex flex-col">
+                                        <span class="text-gray-700 group-hover:text-blue-700 text-sm font-bold">廖雪峰 Python 教程</span>
+                                        <span class="text-[10px] text-gray-400">liaoxuefeng.com (经典)</span>
+                                    </div>
+                                </div>
+                                <i class="fas fa-external-link-alt text-gray-300 text-xs group-hover:text-blue-400"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://www.runoob.com/python3/python3-tutorial.html" target="_blank" class="flex items-center justify-between group cursor-pointer hover:bg-blue-50 p-2 rounded-lg transition border border-transparent hover:border-blue-100">
+                                <div class="flex items-center">
+                                    <span class="w-6 h-6 bg-yellow-100 text-yellow-600 rounded text-xs flex items-center justify-center mr-3 font-bold flex-shrink-0">3</span>
+                                    <div class="flex flex-col">
+                                        <span class="text-gray-700 group-hover:text-blue-700 text-sm font-bold">菜鸟教程 (Runoob)</span>
+                                        <span class="text-[10px] text-gray-400">runoob.com (新手必备)</span>
+                                    </div>
+                                </div>
+                                <i class="fas fa-external-link-alt text-gray-300 text-xs group-hover:text-blue-400"></i>
+                            </a>
+                        </li>
+                    </ul>
+
+                    <!-- 隐藏的 4-8 名 -->
+                    <div id="moreTopics" class="hidden space-y-3 mt-3 pt-3 border-t border-gray-100">
+                        <a href="https://leetcode.cn/problemset/all/?labels=python" target="_blank" class="flex items-center justify-between group cursor-pointer hover:bg-gray-50 p-2 rounded transition">
+                            <div class="flex items-center">
+                                <span class="w-6 h-6 bg-gray-100 text-gray-500 rounded text-xs flex items-center justify-center mr-3 font-bold">4</span>
+                                <span class="text-gray-600 group-hover:text-blue-600 text-sm">力扣中国 (LeetCode CN)</span>
+                            </div>
+                        </a>
+                        <a href="https://juejin.cn/tag/Python" target="_blank" class="flex items-center justify-between group cursor-pointer hover:bg-gray-50 p-2 rounded transition">
+                            <div class="flex items-center">
+                                <span class="w-6 h-6 bg-gray-100 text-gray-500 rounded text-xs flex items-center justify-center mr-3 font-bold">5</span>
+                                <span class="text-gray-600 group-hover:text-blue-600 text-sm">掘金 - Python 社区</span>
+                            </div>
+                        </a>
+                        <a href="https://edu.csdn.net/skill/python" target="_blank" class="flex items-center justify-between group cursor-pointer hover:bg-gray-50 p-2 rounded transition">
+                            <div class="flex items-center">
+                                <span class="w-6 h-6 bg-gray-100 text-gray-500 rounded text-xs flex items-center justify-center mr-3 font-bold">6</span>
+                                <span class="text-gray-600 group-hover:text-blue-600 text-sm">CSDN - Python 技能树</span>
+                            </div>
+                        </a>
+                        <a href="https://developer.aliyun.com/group/python" target="_blank" class="flex items-center justify-between group cursor-pointer hover:bg-gray-50 p-2 rounded transition">
+                            <div class="flex items-center">
+                                <span class="w-6 h-6 bg-gray-100 text-gray-500 rounded text-xs flex items-center justify-center mr-3 font-bold">7</span>
+                                <span class="text-gray-600 group-hover:text-blue-600 text-sm">阿里云开发者社区</span>
+                            </div>
+                        </a>
+                        <a href="https://gitee.com/explore/python" target="_blank" class="flex items-center justify-between group cursor-pointer hover:bg-gray-50 p-2 rounded transition">
+                            <div class="flex items-center">
+                                <span class="w-6 h-6 bg-gray-100 text-gray-500 rounded text-xs flex items-center justify-center mr-3 font-bold">8</span>
+                                <span class="text-gray-600 group-hover:text-blue-600 text-sm">Gitee (码云) Python 项目</span>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- 展开/收起按钮 -->
+                    <button onclick="toggleHotTopics()" id="toggleTopicBtn" class="w-full mt-4 text-xs text-gray-400 hover:text-blue-600 flex items-center justify-center py-2 transition hover:bg-gray-50 rounded">
+                        <span>查看更多资源</span> <i class="fas fa-chevron-down ml-1 transition-transform" id="topicIcon"></i>
+                    </button>
+                </div>
+
+            </aside>
+
+        </div>
+    </main>
+
+    <footer class="bg-white border-t border-gray-200 py-8 mt-auto">
+        <div class="container mx-auto px-4 text-center text-gray-500 text-sm">
+            <p class="mb-2">&copy; 2025 启航教育在线. 保留所有权利.</p>
+        </div>
+    </footer>
+
+    <!-- 逻辑脚本 -->
+    <script>
+        // --- 变量：存储当前发布想要用的标签 ---
+        let currentPostTag = { name: '闲聊', class: 'bg-gray-100 text-gray-600' };
+
+        // 1. 切换标签菜单的显示/隐藏
+        function toggleTagMenu() {
+            const menu = document.getElementById('tagSelectorMenu');
+            menu.classList.toggle('hidden');
+        }
+
+        // 2. 选中一个标签 (发布用)
+        function selectPostTag(name, colorClass) {
+            currentPostTag = { name: name, class: colorClass };
+            const display = document.getElementById('selectedTagDisplay');
+            display.innerText = name;
+            display.className = "text-blue-600 font-bold";
+            document.getElementById('tagSelectorMenu').classList.add('hidden');
+        }
+
+        // 3. 发布帖子
+        function postComment() {
+            const input = document.getElementById('commentInput');
+            const content = input.value;
+            
+            if (content.trim() === "") {
+                alert("请先输入内容哦！");
+                return;
+            }
+
+            const userStr = localStorage.getItem('userInfo');
+            const user = userStr ? JSON.parse(userStr) : { name: '我自己', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Me' };
+
+            const newPostHTML = `
+                <div class="post-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover-card transition animate-fade-in" data-tag="${currentPostTag.name}">
+                    <div class="flex items-start">
+                        <img src="${user.avatar}" class="w-12 h-12 rounded-full bg-gray-100 mr-4 border border-gray-200">
+                        <div class="flex-1">
+                            <div class="flex justify-between items-center mb-2">
+                                <div>
+                                    <span class="font-bold text-gray-900">${user.name}</span>
+                                    <span class="text-xs text-gray-400 ml-2">刚刚</span>
+                                </div>
+                                <span class="${currentPostTag.class} text-xs px-2 py-1 rounded">${currentPostTag.name}</span>
+                            </div>
+                            <p class="text-gray-600 mb-4 leading-relaxed">${content}</p>
+                            
+                            <div class="flex items-center space-x-6 text-gray-400 text-sm">
+                                <span class="cursor-pointer hover:text-blue-500" onclick="toggleReply(this)">
+                                    <i class="far fa-comment-alt mr-1"></i> <span class="comment-count">0</span>
+                                </span>
+                                <span class="cursor-pointer hover:text-red-500" onclick="toggleLike(this)">
+                                    <i class="far fa-heart mr-1"></i> <span class="like-count">0</span>
+                                </span>
+                                <span class="cursor-pointer hover:text-gray-600"><i class="fas fa-trash-alt mr-1" onclick="this.closest('.post-card').remove()"></i> 删除</span>
+                            </div>
+
+                            <div class="reply-box hidden mt-4 pt-4 border-t border-gray-100">
+                                <div class="reply-list space-y-3 mb-3"></div>
+                                <div class="flex space-x-2">
+                                    <input type="text" placeholder="回复一下..." class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
+                                    <button onclick="submitReply(this)" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">发送</button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const list = document.getElementById('postList');
+            list.insertAdjacentHTML('afterbegin', newPostHTML);
+
+            input.value = "";
+            document.getElementById('selectedTagDisplay').innerText = "话题";
+            document.getElementById('selectedTagDisplay').className = "";
+            currentPostTag = { name: '闲聊', class: 'bg-gray-100 text-gray-600' };
+            filterPosts('all');
+        }
+
+        // 4. 筛选帖子
+        function filterPosts(tagName) {
+            const posts = document.querySelectorAll('#postList > div');
+            const btns = document.querySelectorAll('.tag-filter-btn');
+
+            btns.forEach(btn => {
+                if (btn.innerText.includes(tagName) || (tagName === 'all' && btn.innerText === '全部')) {
+                    btn.className = "tag-filter-btn bg-blue-600 text-white px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap shadow-md transition";
+                } else {
+                    btn.className = "tag-filter-btn bg-white text-gray-600 border border-gray-200 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap hover:border-blue-500 hover:text-blue-500 transition";
+                }
+            });
+
+            posts.forEach(post => {
+                const postTag = post.getAttribute('data-tag');
+                if (tagName === 'all') {
+                    post.style.display = 'block';
+                } else {
+                    if (postTag === tagName) {
+                        post.style.display = 'block';
+                    } else {
+                        post.style.display = 'none';
+                    }
+                }
+            });
+        }
+
+        // 5. 开关回复框
+        function toggleReply(btn) {
+            const card = btn.closest('.post-card');
+            const replyBox = card.querySelector('.reply-box');
+            replyBox.classList.toggle('hidden');
+        }
+
+        // 6. 提交回复
+        function submitReply(btn) {
+            const replyBox = btn.closest('.reply-box');
+            const input = replyBox.querySelector('input');
+            const content = input.value;
+
+
+            if (content.trim() === "") {
+                alert("写点什么再发送吧~");
+                return;
+            }
+
+            const userStr = localStorage.getItem('userInfo');
+            const user = userStr ? JSON.parse(userStr) : { name: '我自己', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Me' };
+
+            const replyHTML = `
+                <div class="flex items-start space-x-3 mt-3 animate-fade-in">
+                    <img src="${user.avatar}" class="w-8 h-8 rounded-full bg-gray-100">
+                    <div class="bg-gray-50 p-3 rounded-lg flex-1 text-sm">
+                        <div class="font-bold text-gray-800 mb-1 flex justify-between">
+                            ${user.name}
+                            <span class="text-xs text-gray-400 font-normal">刚刚</span>
+                        </div>
+                        <div class="text-gray-600">${content}</div>
+                    </div>
+                </div>
+            `;
+
+            const list = replyBox.querySelector('.reply-list');
+            list.insertAdjacentHTML('beforeend', replyHTML);
+
+            const card = btn.closest('.post-card');
+            const countSpan = card.querySelector('.comment-count');
+            let count = parseInt(countSpan.innerText);
+            countSpan.innerText = count + 1;
+            input.value = "";
+        }
+
+        // 7. 点赞功能
+        function toggleLike(btn) {
+            const icon = btn.querySelector('i');
+            const countSpan = btn.querySelector('.like-count');
+            let count = parseInt(countSpan.innerText);
+
+            if (icon.classList.contains('far')) {
+                icon.classList.remove('far');
+                icon.classList.add('fas');
+                btn.classList.add('liked');
+                count++;
+                
+                icon.classList.remove('like-animate');
+                void icon.offsetWidth;
+                icon.classList.add('like-animate');
+            } else {
+                icon.classList.remove('fas');
+                icon.classList.add('far');
+                btn.classList.remove('liked');
+                count--;
+            }
+            countSpan.innerText = count;
+        }
+
+        // 8. 热门资源榜展开/收起 (新功能)
+        function toggleHotTopics() {
+            const more = document.getElementById('moreTopics');
+            const btnSpan = document.querySelector('#toggleTopicBtn span');
+            const icon = document.getElementById('topicIcon');
+
+            more.classList.toggle('hidden');
+
+            if (more.classList.contains('hidden')) {
+                btnSpan.innerText = "查看更多资源";
+                icon.style.transform = "rotate(0deg)";
+            } else {
+                btnSpan.innerText = "收起列表";
+                icon.style.transform = "rotate(180deg)";
+            }
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>启航教育 - 学习中心</title>
+    <script src="js/auth.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; background-color: #f8f9fb; }
+        .hover-scale { transition: transform 0.2s; }
+        .hover-scale:hover { transform: scale(1.02); }
+        
+        /* 选中课程的高亮样式 (仿B站淡蓝风格) */
+        .active-lesson { 
+            background-color: #ffffff; 
+            color: #2563eb; 
+            border-left: 4px solid #2563eb;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        /* 滚动条美化 */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+
+<body class="flex flex-col min-h-screen">
+	
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <a href="/" class="flex items-center space-x-2 cursor-pointer">
+                    <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white">
+                        <i class="fas fa-compass"></i>
+                    </div>
+                    <span class="text-xl font-bold text-gray-800">启航教育在线</span>
+                </a>
+            </div>
+            <nav class="hidden md:flex space-x-8 text-gray-600 foznt-medium text-sm">
+                <a href="/" class="hover:text-blue-600 transition">首页</a>
+                <a href="/courses" class="hover:text-blue-600 transition">课程中心</a>
+                <a href="comment.html" class="hover:text-blue-600 transition">论坛</a>
+                <a href="Transition.html" class="text-gray-900 font-bold border-b-2 border-blue-600 pb-1">学习中心</a>
+				<a href="resources.html" class="hover:text-blue-600 transition">资源中心</a>
+            </nav>
+            <div class="flex items-center space-x-6">
+    			<div id="header-auth-area"></div>
+			</div>
+        </div>
+    </header>
+
+	<main class="bg-[#f8f9fb] flex-grow py-6">
+    <div class="container mx-auto px-4">
+        
+        <!-- 面包屑导航 -->
+        <div class="text-sm text-gray-500 mb-4 flex items-center">
+            <a href="/courses" class="hover:text-blue-600">课程中心</a>
+            <i class="fas fa-chevron-right text-xs mx-2"></i>
+            <span class="text-gray-800 font-bold" id="course-title">Python 零基础入门：从变量到项目实战</span>
+        </div>
+
+        <div class="flex flex-col lg:flex-row gap-6">
+
+            <!-- 左侧：播放器与详情 -->
+            <div class="lg:w-3/4">
+                
+                <!-- 📺 视频播放器 (B站源) -->
+                <div class="bg-black rounded-xl overflow-hidden shadow-lg relative group aspect-video">
+                    <iframe id="bilibili-player"
+                            src="//player.bilibili.com/player.html?bvid=BV1WD4y1v7uk&page=1&high_quality=1&danmaku=0" 
+                            allowfullscreen="allowfullscreen" 
+                            width="100%" 
+                            height="100%" 
+                            scrolling="no" 
+                            frameborder="0" 
+                            sandbox="allow-top-navigation allow-same-origin allow-forms allow-scripts">
+                    </iframe>
+                </div>
+
+                <!-- 视频信息栏 -->
+                <div class="bg-white p-6 rounded-b-xl shadow-sm border-x border-b border-gray-100 mb-6">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-800 mb-2" id="current-lesson-title">1-1 Python简介与环境搭建</h1>
+                            <p class="text-gray-500 text-sm">
+                                <i class="far fa-eye mr-1"></i> 12,304 次观看 &nbsp;|&nbsp; 
+                                <i class="far fa-clock mr-1"></i> 更新于 2025-01-15
+                            </p>
+                        </div>
+                        <div class="flex space-x-3">
+                            
+                            <button id="collection-btn" onclick="toggleCollection()" class="flex items-center space-x-1 text-gray-500 hover:text-yellow-500 transition bg-gray-50 px-3 py-1.5 rounded-lg text-sm">
+                                <i class="far fa-star"></i> <span>收藏</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 底部 Tab 区域 -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 min-h-[300px]">
+                    <div class="flex border-b border-gray-200">
+                        <button onclick="switchTab('intro')" class="tab-btn active px-6 py-4 text-sm font-bold text-blue-600 border-b-2 border-blue-600 hover:bg-gray-50 transition">
+                            课程简介
+                        </button>
+                        <button onclick="switchTab('note')" class="tab-btn px-6 py-4 text-sm font-medium text-gray-500 hover:text-blue-600 hover:bg-gray-50 transition">
+                            我的笔记
+                        </button>
+                        <button onclick="switchTab('qa')" class="tab-btn px-6 py-4 text-sm font-medium text-gray-500 hover:text-blue-600 hover:bg-gray-50 transition">
+                            问答 (32)
+                        </button>
+                    </div>
+
+                    <div class="p-6">
+                        <div id="tab-intro" class="tab-content">
+                            <h3 class="font-bold text-gray-800 mb-3">课程介绍</h3>
+                            <p class="text-gray-600 leading-relaxed text-sm mb-4">
+                                本课程专为零基础学员设计，从 Python 安装讲起，涵盖基础语法、数据结构、函数式编程、面向对象，最后通过实战项目巩固所学。
+                            </p>
+                            <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                                <h4 class="font-bold text-blue-800 text-sm mb-2">💡 学习提示</h4>
+                                <p class="text-sm text-blue-700">点击右侧目录可切换章节，视频将自动跳转到对应集数。</p>
+                            </div>
+                        </div>
+
+                        <div id="tab-note" class="tab-content hidden">
+                            <textarea class="w-full h-32 p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 resize-none" placeholder="在这里记录你的学习笔记，系统会自动保存..."></textarea>
+                            <div class="mt-3 flex justify-end">
+                                <button class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">保存笔记</button>
+                            </div>
+                        </div>
+
+                        <div id="tab-qa" class="tab-content hidden">
+                            <div class="space-y-4">
+                                <div class="flex space-x-3">
+                                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" class="w-8 h-8 rounded-full bg-gray-100">
+                                    <div>
+                                        <div class="text-sm font-bold text-gray-800">小白同学</div>
+                                        <p class="text-sm text-gray-600 mt-1">老师，请问 tuple 和 list 到底有什么本质区别？为什么要有元组？</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- 右侧：目录侧边栏 (已去除统计，更像B站选集) -->
+            <div class="lg:w-1/4">
+                
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-24 flex flex-col h-[600px]">
+                    <!-- 目录头部 -->
+                    <div class="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+                        <h3 class="font-bold text-gray-800">视频选集</h3>
+                        <span class="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded-full">共 15 节</span>
+                    </div>
+
+                    <!-- 目录列表 (超长可滚动) -->
+                    <div class="flex-1 overflow-y-auto custom-scrollbar bg-gray-50/30">
+                        
+                        <!-- 第一章 -->
+                        <div class="px-4 py-2 bg-gray-100/50 text-xs font-bold text-gray-500 uppercase tracking-wider">第一章：环境搭建</div>
+                        <div>
+                            <a href="javascript:void(0)" onclick="changeVideo(1, this, '1-1 Python简介与环境搭建')" 
+                               class="lesson-item active-lesson block px-4 py-3 text-sm border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P1</span>
+                                <span class="group-hover:text-blue-600">Python简介与环境搭建</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(2, this, '1-2 安装解释器与PyCharm')" 
+                               class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P2</span>
+                                <span class="group-hover:text-blue-600">安装解释器与PyCharm</span>
+                            </a>
+                        </div>
+
+                        <!-- 第二章 -->
+                        <div class="px-4 py-2 bg-gray-100/50 text-xs font-bold text-gray-500 uppercase tracking-wider mt-2">第二章：基础语法</div>
+                        <div>
+                            <a href="javascript:void(0)" onclick="changeVideo(5, this, '2-1 变量与基本数据类型')" 
+                               class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P3</span>
+                                <span class="group-hover:text-blue-600">数值类型</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(33, this, '2-2 逻辑判断与分支结构')" 
+                               class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P4</span>
+                                <span class="group-hover:text-blue-600">转义字符_原始字符串</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(34, this, '2-3 循环结构详解')" 
+                               class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P5</span>
+                                <span class="group-hover:text-blue-600">多行字符串</span>
+                            </a>
+							<a href="javascript:void(0)" onclick="changeVideo(40, this, '2-1 变量与基本数据类型')" 
+                               class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P6</span>
+                                <span class="group-hover:text-blue-600">模运算</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(41, this, '2-2 逻辑判断与分支结构')" 
+                               class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P7</span>
+                                <span class="group-hover:text-blue-600">赋值运算符_优先级</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(42, this, '2-3 循环结构详解')" 
+                               class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P8</span>
+                                <span class="group-hover:text-blue-600">bool_比较运算</span>
+                            </a>
+							<a href="javascript:void(0)" onclick="changeVideo(44, this, '2-1 变量与基本数据类型')" 
+                               class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P9</span>
+                                <span class="group-hover:text-blue-600">if_的基本使用</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(46, this, '2-2 逻辑判断与分支结构')" 
+                               class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P10</span>
+                                <span class="group-hover:text-blue-600">if else_基本使用</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(51, this, '2-3 循环结构详解')" 
+                               class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P11</span>
+                                <span class="group-hover:text-blue-600">条件表达式</span>
+                            </a>
+							<a href="javascript:void(0)" onclick="changeVideo(53, this, '2-1 变量与基本数据类型')" 
+                               class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P12</span>
+                                <span class="group-hover:text-blue-600">布尔运算基本使用</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(56, this, '2-2 逻辑判断与分支结构')" 
+                               class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P13</span>
+                                <span class="group-hover:text-blue-600">选择结构基本使用</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(61, this, '2-3 循环结构详解')" 
+                               class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P14</span>
+                                <span class="group-hover:text-blue-600">while基本使用</span>
+                            </a>
+							<a href="javascript:void(0)" onclick="changeVideo(68, this, '2-3 循环结构详解')" 
+                               class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P15</span>
+                                <span class="group-hover:text-blue-600">for基本使用</span>
+                            </a>
+							<a href="javascript:void(0)" onclick="changeVideo(61, this, '2-3 循环结构详解')" 
+                               class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P16</span>
+                                <span class="group-hover:text-blue-600">break_continue基本使用</span>
+                            </a>
+                        </div>
+
+                        <!-- 第三章 -->
+                        <div class="px-4 py-2 bg-gray-100/50 text-xs font-bold text-gray-500 uppercase tracking-wider mt-2">第三章：数据容器</div>
+                        <div>
+                            <a href="javascript:void(0)" onclick="changeVideo(79, this, '3-1 列表 (List) 的使用')" 
+                               class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P17</span>
+                                <span class="group-hover:text-blue-600">列表 (List) 的使用</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(7, this, '3-2 字典 (Dictionary) 详解')" 
+                               class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P18</span>
+                                <span class="group-hover:text-blue-600">字典 (Dictionary) 详解</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(8, this, '3-3 元组与集合')" 
+                               class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P19</span>
+                                <span class="group-hover:text-blue-600">元组与集合</span>
+                            </a>
+                        </div>
+
+                        <!-- 第四章 -->
+                        <div class="px-4 py-2 bg-gray-100/50 text-xs font-bold text-gray-500 uppercase tracking-wider mt-2">第四章：函数与模块</div>
+                        <div>
+                            <a href="javascript:void(0)" onclick="changeVideo(9, this, '4-1 函数定义与参数')" 
+                               class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P9</span>
+                                <span class="group-hover:text-blue-600">函数定义与参数</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(10, this, '4-2 模块导入与包管理')" 
+                               class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P10</span>
+                                <span class="group-hover:text-blue-600">模块导入与包管理</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(11, this, '4-3 异常处理 try-except')" 
+                               class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P11</span>
+                                <span class="group-hover:text-blue-600">异常处理 try-except</span>
+                            </a>
+                        </div>
+
+                        <!-- 第五章 -->
+                        <div class="px-4 py-2 bg-gray-100/50 text-xs font-bold text-gray-500 uppercase tracking-wider mt-2">第五章：面向对象</div>
+                        <div>
+                            <a href="javascript:void(0)" onclick="changeVideo(12, this, '5-1 类与对象')" 
+                               class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P12</span>
+                                <span class="group-hover:text-blue-600">类与对象基础</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(13, this, '5-2 继承与多态')" 
+                               class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P13</span>
+                                <span class="group-hover:text-blue-600">继承与多态</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(14, this, '5-3 魔术方法')" 
+                               class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P14</span>
+                                <span class="group-hover:text-blue-600">魔术方法详解</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="changeVideo(15, this, '5-4 总结与实战预告')" 
+                               class="lesson-item block px-4 py-3 text-sm text-gray-600 border-l-4 border-transparent hover:bg-white transition flex items-center group">
+                                <span class="mr-3 text-gray-400 font-mono text-xs">P15</span>
+                                <span class="group-hover:text-blue-600">总结与实战预告</span>
+                            </a>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</main>
+
+<script>
+    // 1. Tab 切换功能
+    function switchTab(tabName) {
+        const contents = document.querySelectorAll('.tab-content');
+        contents.forEach(content => content.classList.add('hidden'));
+        
+        const btns = document.querySelectorAll('.tab-btn');
+        btns.forEach(btn => {
+            btn.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600', 'font-bold');
+            btn.classList.add('text-gray-500', 'font-medium');
+        });
+        
+        document.getElementById('tab-' + tabName).classList.remove('hidden');
+        const activeBtn = event.currentTarget;
+        activeBtn.classList.remove('text-gray-500', 'font-medium');
+        activeBtn.classList.add('text-blue-600', 'border-b-2', 'border-blue-600', 'font-bold');
+    }
+
+    // 2. 视频切集功能
+    function changeVideo(page, element, title) {
+        // A. 替换 Iframe 的 src，跳转到指定 P数 (page)
+        const iframe = document.getElementById('bilibili-player');
+        // 注意：这里保留了你的视频ID BV1WD4y1v7uk
+        iframe.src = `//player.bilibili.com/player.html?bvid=BV1rpWjevEip&page=${page}&high_quality=1&danmaku=0`;
+
+        // B. 更新标题
+        if(title) {
+            document.getElementById('current-lesson-title').innerText = title;
+        }
+
+        // C. 处理目录高亮样式
+        // 先移除所有选中状态
+        const items = document.querySelectorAll('.lesson-item');
+        items.forEach(item => {
+            item.classList.remove('active-lesson');
+            item.classList.add('text-gray-600', 'border-transparent');
+        });
+
+        // 给当前点击的加高亮
+        if (element) {
+            element.classList.remove('text-gray-600', 'border-transparent');
+            element.classList.add('active-lesson');
+        }
+    }
+// ===================================
+    // 🌟 收藏功能核心逻辑
+    // ===================================
+    // 当前课程信息 (静态配置，因为是独立页面)
+    const currentCourse = {
+        id: 'c1', // 这里的ID必须和 clscenter.html 里的 data-id 一致！
+        title: 'Python3.11零基础快速入门',
+        link: 'course1.html',
+        icon: 'fab fa-python',
+        color: 'bg-gradient-to-r from-blue-500 to-cyan-400',
+        date: new Date().toLocaleDateString()
+    };
+
+    document.addEventListener("DOMContentLoaded", function() {
+        initCollectionState();
+    });
+
+    function toggleCollection() {
+        const btn = document.getElementById('collection-btn');
+        
+        // 检查登录
+        const isLogin = localStorage.getItem('isLogin');
+        if(isLogin !== 'true') {
+            alert("请先登录后再收藏课程哦！");
+            window.location.href = "login.html";
+            return;
+        }
+
+        // 读取收藏
+        let collection = JSON.parse(localStorage.getItem('myCollection') || '[]');
+        const index = collection.findIndex(c => c.id === currentCourse.id);
+
+        if (index === -1) {
+            // 添加收藏
+            collection.push(currentCourse);
+            btn.classList.add('collected');
+            btn.classList.add('text-yellow-500');
+            btn.classList.remove('text-gray-500');
+            btn.querySelector('i').classList.remove('far');
+            btn.querySelector('i').classList.add('fas');
+            btn.querySelector('span').innerText = "已收藏";
+        } else {
+            // 取消收藏
+            collection.splice(index, 1);
+            btn.classList.remove('collected');
+            btn.classList.remove('text-yellow-500');
+            btn.classList.add('text-gray-500');
+            btn.querySelector('i').classList.remove('fas');
+            btn.querySelector('i').classList.add('far');
+            btn.querySelector('span').innerText = "收藏";
+        }
+
+        // 保存
+        localStorage.setItem('myCollection', JSON.stringify(collection));
+    }
+
+    function initCollectionState() {
+        const btn = document.getElementById('collection-btn');
+        let collection = JSON.parse(localStorage.getItem('myCollection') || '[]');
+        
+        if (collection.some(c => c.id === currentCourse.id)) {
+            btn.classList.add('collected');
+            btn.classList.add('text-yellow-500');
+            btn.classList.remove('text-gray-500');
+            btn.querySelector('i').classList.remove('far');
+            btn.querySelector('i').classList.add('fas');
+            btn.querySelector('span').innerText = "已收藏";
+        }
+    }
+</script>
+	
+<footer class="bg-white border-t border-gray-200 py-8 mt-auto">
+    <div class="container mx-auto px-4 text-center text-gray-500 text-sm">
+        <p class="mb-2">&copy; 2025 启航教育在线. 保留所有权利.</p>
+        <div class="flex justify-center space-x-6 mt-4">
+            <a href="#" class="hover:text-blue-600">关于我们</a>
+            <a href="#" class="hover:text-blue-600">联系我们</a>
+            <a href="#" class="hover:text-blue-600">隐私政策</a>
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>

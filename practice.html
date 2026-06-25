@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>启航教育 - 实战练习</title>
+    <script src="js/auth.js"></script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Skulpt -->
+    <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; background-color: #1e1e1e; color: #d4d4d4; }
+        
+        /* 侧边栏滚动条 (浅色适配) */
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+        
+        /* 选中题目的样式 (白底风格) */
+        .active-problem { 
+            background-color: #eff6ff; /* blue-50 */
+            border-left: 4px solid #2563eb; 
+            color: #1e40af; /* blue-800 */
+            font-weight: bold;
+        }
+        
+        /* 目录折叠动画 */
+        .chapter-content { transition: max-height 0.3s ease-out; overflow: hidden; max-height: 1000px; }
+        .chapter-content.collapsed { max-height: 0; }
+        .rotate-icon { transition: transform 0.3s; }
+        .collapsed .rotate-icon { transform: rotate(-90deg); }
+
+        /* 侧边栏收缩动画 */
+        #sidebar { transition: width 0.3s ease, padding 0.3s ease, opacity 0.2s; overflow: hidden; }
+        .sidebar-closed { width: 0 !important; border: none !important; }
+    </style>
+</head>
+
+<body class="flex flex-col min-h-screen">
+
+    <!-- 导航栏 -->
+    <header class="bg-white shadow-sm sticky top-0 z-50 text-gray-800">
+        <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <a href="main.html" class="flex items-center space-x-2 cursor-pointer">
+                    <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white">
+                        <i class="fas fa-compass"></i>
+                    </div>
+                    <span class="text-xl font-bold text-gray-800">启航教育在线</span>
+                </a>
+            </div>
+            <nav class="hidden md:flex space-x-8 text-gray-600 font-medium text-sm">
+                <a href="main.html" class="hover:text-blue-600 transition">首页</a>
+                <a href="clscenter.html" class="hover:text-blue-600 transition">课程中心</a>
+                <a href="resources.html" class="hover:text-blue-600 transition">资源中心</a>
+                <a href="comment.html" class="hover:text-blue-600 transition">论坛</a>
+                <a href="Transition.html" class="text-blue-600 font-bold border-b-2 border-blue-600 pb-1">学习中心</a>
+				<a href="resources.html" class="hover:text-blue-600 transition">资源中心</a>
+            </nav>
+            <div class="flex items-center space-x-6">
+                <div id="header-auth-area"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主界面：IDE 布局 -->
+    <main class="flex-grow flex h-[calc(100vh-64px)] overflow-hidden relative"> 
+        
+        <!-- 👈 左侧：题目目录 (白色侧边栏) -->
+        <div id="sidebar" class="w-72 bg-white border-r border-gray-200 flex flex-col flex-shrink-0 z-20">
+            <div class="p-4 flex justify-between items-center border-b border-gray-100 bg-gray-50">
+                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Python 题库</span>
+                <!-- 收起按钮 -->
+                <button onclick="toggleSidebar()" class="text-gray-400 hover:text-blue-600 transition" title="收起目录">
+                    <i class="fas fa-angle-double-left"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto custom-scrollbar" id="problem-list">
+                <!-- JS 动态生成目录 -->
+            </div>
+        </div>
+
+        <!-- 展开按钮 -->
+        <button id="open-sidebar-btn" onclick="toggleSidebar()" class="absolute top-4 left-0 z-30 bg-white border border-gray-200 border-l-0 text-gray-500 p-2 rounded-r shadow-md hover:text-blue-600 hover:pl-3 transition-all hidden">
+            <i class="fas fa-list"></i>
+        </button>
+
+        <!-- 👉 中间：编辑器与描述 -->
+        <div class="flex-1 flex flex-col min-w-0 bg-[#1e1e1e]">
+            
+            <!-- 题目描述头 -->
+            <div class="bg-[#1e1e1e] p-6 border-b border-[#333]">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h1 class="text-2xl font-bold text-white mb-2" id="prob-title">加载中...</h1>
+                        <p class="text-gray-400 text-sm" id="prob-desc">请从左侧选择一道题目开始练习。</p>
+                    </div>
+                    <span class="bg-blue-900 text-blue-200 text-xs px-2 py-1 rounded border border-blue-700" id="prob-diff">入门</span>
+                </div>
+                
+                <!-- 提示区域 -->
+                <div class="mt-4 bg-[#2d2d30] p-3 rounded border-l-4 border-yellow-500 text-sm text-gray-300 mb-4" id="prob-hint">
+                    <i class="fas fa-lightbulb text-yellow-500 mr-2"></i> <span id="hint-text">提示信息将显示在这里</span>
+                </div>
+
+                <!-- 参考答案折叠区 -->
+                <div>
+                    <button onclick="toggleAnswer()" class="text-xs text-blue-400 hover:text-blue-300 flex items-center transition">
+                        <i class="far fa-eye mr-1"></i> <span id="ans-btn-text">查看参考答案</span>
+                    </button>
+                    <div id="answer-box" class="hidden mt-3 bg-[#252526] p-4 rounded border border-gray-700 text-gray-300 font-mono text-sm relative">
+                        <pre id="answer-code" class="whitespace-pre-wrap"></pre>
+                        <button onclick="copyAnswer()" class="absolute top-2 right-2 text-xs text-gray-500 hover:text-white" title="复制答案">
+                            <i class="far fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 编辑器区域 -->
+            <div class="flex-1 relative group bg-[#1e1e1e]">
+                <div class="absolute left-0 top-0 bottom-0 w-10 bg-[#1e1e1e] text-[#858585] text-right pr-2 pt-4 font-mono text-sm leading-6 border-r border-[#333] select-none opacity-50">
+                    1<br>2<br>3<br>4<br>5<br>6<br>7<br>8<br>9<br>10
+                </div>
+                <textarea id="codeEditor" class="w-full h-full bg-[#1e1e1e] text-[#d4d4d4] p-4 pl-12 font-mono text-sm leading-6 outline-none resize-none border-none focus:ring-0" spellcheck="false"></textarea>
+                
+                <button onclick="runPython()" class="absolute top-4 right-6 bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded shadow-lg text-sm font-bold flex items-center transition-all hover:scale-105 z-20">
+                    <i class="fas fa-play mr-2"></i> 运行代码
+                </button>
+            </div>
+        </div>
+
+        <!-- 👉 右侧：输出终端 & 绘图区 -->
+        <div class="w-80 bg-[#1e1e1e] border-l border-[#333] flex flex-col flex-shrink-0">
+            <div class="h-10 bg-[#252526] flex items-center px-4 text-xs text-gray-300 font-bold border-b border-[#333] justify-between">
+                <span><i class="fas fa-terminal mr-2"></i> 运行结果</span>
+                <button onclick="clearOutput()" class="hover:text-white" title="清空"><i class="fas fa-trash-alt"></i></button>
+            </div>
+            
+            <div id="output" class="flex-1 p-4 font-mono text-sm text-gray-300 overflow-y-auto border-b border-[#333] whitespace-pre-wrap"></div>
+            
+            <div class="h-64 bg-white relative flex items-center justify-center overflow-hidden">
+                <div id="mycanvas" class="w-full h-full"></div>
+                <span class="absolute bottom-2 right-2 text-xs text-gray-400 mix-blend-difference pointer-events-none select-none">绘图区</span>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- 逻辑脚本 -->
+    <script>
+        // ==========================================
+        // 1. 题库数据 (全新中国风主题)
+        // ==========================================
+        const questionBank = [
+            {
+                category: "一、基础语法与输出",
+                items: [
+                    { 
+                        id: 101, title: "1.1 Hello, Python!", diff: "简单", 
+                        desc: "向编程世界问好！请在屏幕上输出一行文字：Hello, Python!", 
+                        hint: "使用 print() 函数。", 
+                        code: "print(\"Hello, Python!\")",
+                        answer: "print(\"Hello, Python!\")"
+                    },
+                    { 
+                        id: 102, title: "1.2 个性化问候", diff: "简单", 
+                        desc: "定义变量 name='中国'，输出：Hello, 中国!", 
+                        hint: "字符串拼接可以使用 + 号。", 
+                        code: "name = \"中国\"\n# 请在下面补全代码\n",
+                        answer: "name = \"中国\"\nprint(\"Hello, \" + name + \"!\")"
+                    }
+                ]
+            },
+            {
+                category: "二、数据类型与运算",
+                items: [
+                    { 
+                        id: 201, title: "2.1 国旗尺寸计算器", diff: "中等", 
+                        desc: "根据《国旗法》，国旗长宽比为 3:2。已知国旗高度 height=192cm，请计算宽度 width 和面积 area。", 
+                        hint: "宽度 = 高度 * 1.5", 
+                        code: "height = 192\n# 计算 width 和 area\n",
+                        answer: "height = 192\nwidth = height * 1.5\narea = width * height\nprint(\"宽度:\", width)\nprint(\"面积:\", area)"
+                    },
+                    { 
+                        id: 202, title: "2.2 长征路程统计", diff: "中等", 
+                        desc: "长征路程 25000 里。已知 1 里 = 0.5 公里。若平均每天行军 70 里，计算走完长征需要多少天？(保留整数)", 
+                        hint: "总天数 = 总路程 / 每天路程，使用 int() 取整。", 
+                        code: "total_li = 25000\ndaily_li = 70\n# 计算天数\n",
+                        answer: "total_li = 25000\ndaily_li = 70\ndays = total_li / daily_li\nprint(\"需要天数:\", int(days))\nprint(\"总公里数:\", total_li * 0.5)"
+                    }
+                ]
+            },
+            {
+                category: "三、条件判断",
+                items: [
+                    { 
+                        id: 301, title: "3.1 奇数还是偶数", diff: "简单", 
+                        desc: "输入一个年份 year=2025，判断它是否为偶数年份。", 
+                        hint: "使用 % 2 == 0", 
+                        code: "year = 2025\nif year % 2 == 0:\n    print(\"是偶数年\")\nelse:\n    print(\"是奇数年\")",
+                        answer: "year = 2025\nif year % 2 == 0:\n    print(\"是偶数年\")\nelse:\n    print(\"是奇数年\")"
+                    },
+                    { 
+                        id: 302, title: "3.2 成绩评级系统", diff: "中等", 
+                        desc: "根据分数 score=88 评级：90以上A，80以上B，70以上C，60以上D，否则F。", 
+                        hint: "if-elif-else 结构", 
+                        code: "score = 88\n",
+                        answer: "score = 88\nif score >= 90:\n    print(\"A\")\nelif score >= 80:\n    print(\"B\")\nelif score >= 70:\n    print(\"C\")\nelif score >= 60:\n    print(\"D\")\nelse:\n    print(\"F\")"
+                    }
+                ]
+            },
+            {
+                category: "四、循环结构",
+                items: [
+                    { 
+                        id: 401, title: "4.1 五角星绘制计数", diff: "简单", 
+                        desc: "五星红旗有 1 颗大星和 4 颗小星。请用循环模拟打印过程。", 
+                        hint: "先打印1次大星，再循环4次小星。", 
+                        code: "print(\"绘制大五角星\")\nfor i in range(4):\n    # 打印绘制小五角星\n    pass",
+                        answer: "print(\"绘制大五角星\")\nfor i in range(4):\n    print(\"绘制小五角星\", i+1)"
+                    },
+                    { 
+                        id: 402, title: "4.2 数字接龙", diff: "简单", 
+                        desc: "使用循环打印从 1949 到 2025 的所有年份。", 
+                        hint: "range(1949, 2026)", 
+                        code: "# 请编写 for 循环\n",
+                        answer: "for year in range(1949, 2026):\n    print(year)"
+                    }
+                ]
+            },
+            {
+                category: "五、数据结构",
+                items: [
+                    { 
+                        id: 501, title: "5.1 56个民族列表", diff: "中等", 
+                        desc: "创建一个包含 '汉族', '壮族', '满族', '回族' 的列表，并追加 '苗族'，最后打印列表长度。", 
+                        hint: "list.append() 和 len()", 
+                        code: "nations = ['汉族', '壮族', '满族', '回族']\n# 请补全代码\n",
+                        answer: "nations = ['汉族', '壮族', '满族', '回族']\nnations.append('苗族')\nprint(\"当前民族数:\", len(nations))\nprint(nations)"
+                    },
+                    { 
+                        id: 502, title: "5.2 各省GDP统计", diff: "困难", 
+                        desc: "字典数据：{'广东': 13, '江苏': 12, '山东': 9} (单位:万亿)。计算总量和平均值。", 
+                        hint: "sum(data.values())", 
+                        code: "gdp = {'广东': 13, '江苏': 12, '山东': 9}\n# 计算总量和平均\n",
+                        answer: "gdp = {'广东': 13, '江苏': 12, '山东': 9}\ntotal = sum(gdp.values())\navg = total / len(gdp)\nprint(\"GDP总量:\", total)\nprint(\"平均GDP:\", avg)"
+                    },
+                    { 
+                        id: 503, title: "5.3 红色诗词分析", diff: "困难", 
+                        desc: "统计诗句 '北国风光，千里冰封，万里雪飘' 中每个字出现的次数。", 
+                        hint: "遍历字符串，存入字典计数。", 
+                        code: "poem = \"北国风光，千里冰封，万里雪飘\"\ncounts = {}\n# 编写循环统计\n",
+                        answer: "poem = \"北国风光，千里冰封，万里雪飘\"\ncounts = {}\nfor char in poem:\n    if char in ['，', '。']:\n        continue\n    counts[char] = counts.get(char, 0) + 1\nprint(counts)"
+                    }
+                ]
+            },
+            {
+                category: "六、有趣的库",
+                items: [
+                    { 
+                        id: 601, title: "6.1 节日倒计时", diff: "中等", 
+                        desc: "计算距离 2025年10月1日 国庆节还有多少天。", 
+                        hint: "import datetime, date(2025,10,1) - date.today()", 
+                        code: "import datetime\ntarget = datetime.date(2025, 10, 1)\n# 计算剩余天数\n",
+                        answer: "import datetime\ntarget = datetime.date(2025, 10, 1)\ntoday = datetime.date.today()\nleft = target - today\nprint(f\"距离国庆还有 {left.days} 天\")"
+                    },
+                    { 
+                        id: 602, title: "6.2 革命圣地随机", diff: "简单", 
+                        desc: "从列表 ['井冈山', '延安', '遵义', '西柏坡'] 中随机推荐一个旅游目的地。", 
+                        hint: "import random, random.choice()", 
+                        code: "import random\nplaces = ['井冈山', '延安', '遵义', '西柏坡']\n",
+                        answer: "import random\nplaces = ['井冈山', '延安', '遵义', '西柏坡']\nprint(\"推荐前往:\", random.choice(places))"
+                    }
+                ]
+            },
+            {
+                category: "七、综合实践项目",
+                items: [
+                    { 
+                        id: 701, title: "7.1 绘制五星红旗 (必做)", diff: "困难", 
+                        desc: "使用 turtle 库绘制五星红旗（简化版）。\n1. 红色背景\n2. 左上角一颗大黄星\n3. 环绕四颗小黄星", 
+                        hint: "请点击运行查看右侧绘图区效果！", 
+                        code: "import turtle\nt = turtle.Turtle()\nt.speed(10)\n\n# 1. 画红旗背景\nt.penup()\nt.goto(-150, 100)\nt.pendown()\nt.color('red')\nt.begin_fill()\nfor i in range(2):\n    t.forward(300)\n    t.right(90)\n    t.forward(200)\n    t.right(90)\nt.end_fill()\n\n# 定义画五角星函数\ndef draw_star(x, y, size):\n    t.penup()\n    t.goto(x, y)\n    t.pendown()\n    t.color('yellow')\n    t.begin_fill()\n    for i in range(5):\n        t.forward(size)\n        t.right(144)\n    t.end_fill()\n\n# 2. 画大星\ndraw_star(-130, 60, 30)\n\n# 3. 画小星\ndraw_star(-90, 80, 10)\ndraw_star(-70, 60, 10)\ndraw_star(-70, 40, 10)\ndraw_star(-90, 20, 10)\n\nt.hideturtle()\nt.done()",
+                        answer: "见编辑器默认代码"
+                    },
+                    { 
+                        id: 702, title: "7.2 国歌歌词播放器 (选做)", diff: "中等", 
+                        desc: "模拟播放器，每隔 1 秒打印一句国歌歌词。", 
+                        hint: "import time, time.sleep(1)", 
+                        code: "import time\nlyrics = [\n    \"起来！不愿做奴隶的人们！\",\n    \"把我们的血肉，筑成我们新的长城！\",\n    \"中华民族到了最危险的时候，\",\n    \"每个人被迫着发出最后的吼声。\"\n]\n\nprint(\"🎵 开始播放...\")\n# 编写循环打印\n",
+                        answer: "import time\nlyrics = [\n    \"起来！不愿做奴隶的人们！\",\n    \"把我们的血肉，筑成我们新的长城！\",\n    \"中华民族到了最危险的时候，\",\n    \"每个人被迫着发出最后的吼声。\"\n]\n\nprint(\"🎵 开始播放...\")\nfor line in lyrics:\n    print(line)\n    time.sleep(1.5) # 模拟节奏\nprint(\"🎵 播放结束\")"
+                    },
+                    { 
+                        id: 703, title: "7.3 知识问答系统 (选做)", diff: "困难", 
+                        desc: "做一个简单的问答：\n问题：'中国的首都是哪里？'\n如果输入'北京'，提示正确并加分。", 
+                        hint: "input() 获取输入，if 判断结果", 
+                        code: "score = 0\nprint(\"第一题：中国的首都是哪里？\")\n# 获取输入并判断\n",
+                        answer: "score = 0\nprint(\"第一题：中国的首都是哪里？\")\nans = input(\"请输入答案：\")\nif ans == \"北京\":\n    print(\"✅ 回答正确！+10分\")\n    score += 10\nelse:\n    print(\"❌ 回答错误，是北京。\")\nprint(\"当前得分:\", score)"
+                    }
+                ]
+            },
+            {
+                category: "八、额外挑战项目",
+                items: [
+                    { 
+                        id: 801, title: "8.1 中国地图轮廓 (高阶)", diff: "挑战", 
+                        desc: "使用 turtle 绘制简化的中国地图轮廓（使用坐标连线模拟）。", 
+                        hint: "turtle.goto(x, y)", 
+                        code: "import turtle\nt = turtle.Turtle()\nt.speed(5)\nt.penup()\nt.goto(-100, 0)\nt.pendown()\nt.color('black')\nt.write('这里是简略示意图', font=('Arial', 10, 'normal'))\n\n# 简易轮廓示意\ncoords = [(-100,0), (-50,50), (0,60), (50,40), (60,0), (40,-40), (-20,-50), (-80,-30), (-100,0)]\nfor x,y in coords:\n    t.goto(x,y)\n\nt.penup()\nt.goto(30, 40)\nt.dot(5, 'red')\nt.write(' 北京', font=('Arial', 8, 'bold'))\nt.hideturtle()\nt.done()",
+                        answer: "见编辑器默认代码"
+                    },
+                    { 
+                        id: 802, title: "8.2 传统文化日历 (高阶)", diff: "挑战", 
+                        desc: "打印未来 7 天的日期，并标记出是不是周末。", 
+                        hint: "datetime.timedelta(days=i)", 
+                        code: "import datetime\ntoday = datetime.date.today()\nfor i in range(7):\n    day = today + datetime.timedelta(days=i)\n    # 判断 weekday() \n    pass",
+                        answer: "import datetime\ntoday = datetime.date.today()\nprint(\"未来7天日程表：\")\nfor i in range(7):\n    day = today + datetime.timedelta(days=i)\n    # 5=周六, 6=周日\n    is_weekend = \"(周末休息)\" if day.weekday() >= 5 else \"(工作日)\"\n    print(f\"{day} {is_weekend}\")"
+                    },
+                    { 
+                        id: 803, title: "8.3 升起五星红旗 (动态)", diff: "挑战", 
+                        desc: "模拟国旗升起的动画效果（y坐标变化）。", 
+                        hint: "while 循环改变 turtle y 坐标，配合 time.sleep 刷新。", 
+                        code: "import turtle\nimport time\n\nt = turtle.Turtle()\nscreen = turtle.Screen()\nt.shape(\"square\")\nt.color(\"red\")\nt.shapesize(3, 4.5) # 模拟国旗比例\nt.penup()\n\n# 旗杆\np = turtle.Turtle()\np.hideturtle()\np.goto(-100, -150)\np.goto(-100, 150)\n\n# 升旗\ny = -140\nt.goto(-80, y)\nwhile y < 140:\n    y += 5\n    t.goto(-80, y)\n    # 简单的延时模拟\n    # time.sleep(0.05) \n\nt.write(\"  升旗完毕!\", font=(\"Arial\", 12, \"bold\"))\nt.done()",
+                        answer: "见编辑器默认代码"
+                    }
+                ]
+            }
+        ];
+
+        // ==========================================
+        // 2. 初始化与UI交互
+        // ==========================================
+        document.addEventListener("DOMContentLoaded", function() {
+            renderSidebar();
+            loadProblem(questionBank[0].items[0]); // 默认加载第一题
+        });
+
+        // 渲染侧边栏 (白色风格)
+        function renderSidebar() {
+            const list = document.getElementById('problem-list');
+            let html = '';
+
+            questionBank.forEach((chapter, index) => {
+                html += `
+                    <div class="border-b border-gray-100">
+                        <button onclick="toggleChapter(${index})" class="w-full px-4 py-3 flex items-center justify-between text-gray-700 hover:bg-gray-50 focus:outline-none text-left bg-white transition">
+                            <span class="font-bold text-xs truncate">${chapter.category}</span>
+                            <i class="fas fa-chevron-down text-xs rotate-icon text-gray-400" id="icon-${index}"></i>
+                        </button>
+                        <div id="chapter-${index}" class="chapter-content bg-gray-50/50">
+                            ${chapter.items.map(item => `
+                                <div onclick='loadProblemById(${item.id})' class="prob-item px-8 py-2.5 text-sm text-gray-500 cursor-pointer hover:text-blue-600 hover:bg-blue-50 transition-colors border-l-4 border-transparent" data-id="${item.id}">
+                                    <i class="far fa-file-code mr-2 text-xs opacity-70"></i> ${item.title}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+            list.innerHTML = html;
+        }
+
+        // 切换章节折叠
+        function toggleChapter(index) {
+            const content = document.getElementById(`chapter-${index}`);
+            const icon = document.getElementById(`icon-${index}`);
+            content.classList.toggle('collapsed');
+            if(content.classList.contains('collapsed')) {
+                icon.style.transform = 'rotate(-90deg)';
+            } else {
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        // 侧边栏展开/收起
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const openBtn = document.getElementById('open-sidebar-btn');
+            
+            if (sidebar.classList.contains('sidebar-closed')) {
+                // 展开
+                sidebar.classList.remove('sidebar-closed');
+                openBtn.classList.add('hidden');
+            } else {
+                // 收起
+                sidebar.classList.add('sidebar-closed');
+                openBtn.classList.remove('hidden');
+            }
+        }
+
+        // 加载题目
+        function loadProblemById(id) {
+            let foundItem = null;
+            questionBank.forEach(cat => {
+                const item = cat.items.find(i => i.id === id);
+                if(item) foundItem = item;
+            });
+            if(foundItem) loadProblem(foundItem);
+        }
+
+        function loadProblem(item) {
+            document.getElementById('prob-title').innerText = item.title;
+            document.getElementById('prob-desc').innerText = item.desc;
+            document.getElementById('prob-diff').innerText = item.diff;
+            document.getElementById('hint-text').innerText = item.hint;
+            
+            // 填充编辑器
+            const editor = document.getElementById('codeEditor');
+            editor.value = item.code || "# 请输入代码";
+
+            // 填充参考答案 (但默认隐藏)
+            const ansBox = document.getElementById('answer-box');
+            const ansCode = document.getElementById('answer-code');
+            const ansBtnText = document.getElementById('ans-btn-text');
+            
+            ansBox.classList.add('hidden'); // 每次切题都先隐藏
+            ansBtnText.innerText = "查看参考答案";
+            ansCode.innerText = item.answer || "暂无参考答案";
+
+            // 高亮侧边栏
+            document.querySelectorAll('.prob-item').forEach(el => {
+                if(parseInt(el.getAttribute('data-id')) === item.id) {
+                    el.classList.add('active-problem');
+                    el.classList.remove('text-gray-500');
+                } else {
+                    el.classList.remove('active-problem');
+                    el.classList.add('text-gray-500');
+                }
+            });
+
+            clearOutput();
+        }
+
+        // 参考答案开关
+        function toggleAnswer() {
+
+            const box = document.getElementById('answer-box');
+            const text = document.getElementById('ans-btn-text');
+            
+            if (box.classList.contains('hidden')) {
+                box.classList.remove('hidden');
+                text.innerText = "收起参考答案";
+            } else {
+                box.classList.add('hidden');
+                text.innerText = "查看参考答案";
+            }
+        }
+
+        function copyAnswer() {
+            const text = document.getElementById('answer-code').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert("答案已复制到剪贴板！");
+            });
+        }
+
+        function clearOutput() {
+            document.getElementById('output').innerText = "";
+            document.getElementById('mycanvas').innerHTML = ""; 
+        }
+
+        // ==========================================
+        // 3. 运行 Python 代码 (Skulpt)
+        // ==========================================
+        function runPython() {
+            const code = document.getElementById('codeEditor').value;
+            const outputArea = document.getElementById('output');
+            
+            clearOutput();
+            outputArea.innerText = "⏳ 正在运行...\n";
+
+            function outf(text) { outputArea.innerText += text; } 
+            function builtinRead(x) {
+                if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined)
+                        throw "File not found: '" + x + "'";
+                return Sk.builtinFiles["files"][x];
+            }
+
+            Sk.pre = "output";
+            Sk.configure({ 
+                output: outf, 
+                read: builtinRead,
+                // inputfun: function(prompt) { return window.prompt(prompt); } // 启用 input() 弹窗
+            });
+            (Sk.TurtleGraphics || (Sk.TurtleGraphics = {})).target = 'mycanvas';
+
+            var myPromise = Sk.misceval.asyncToPromise(function() {
+                return Sk.importMainWithBody("<stdin>", false, code, true);
+            });
+
+            myPromise.then(function(mod) {
+                console.log('success');
+                outputArea.innerText += "\n\n✅ 运行结束";
+            }, function(err) {
+                outputArea.innerText += "\n❌ 错误: " + err.toString();
+            });
+        }
+    </script>
+
+</body>
+</html>
