@@ -22,6 +22,7 @@ const routes = [
   { path: '/favorites', name: 'favorites', component: () => import('../views/FavoritesView.vue'), meta: { requiresAuth: true } },
   { path: '/adventure', name: 'adventure', component: () => import('../views/AdventureView.vue'), meta: { requiresAuth: true } },
   { path: '/profile/collection', name: 'collection', component: () => import('../views/CollectionView.vue'), meta: { requiresAuth: true } },
+  { path: '/leaderboard', name: 'leaderboard', component: () => import('../views/LeaderboardView.vue'), meta: { requiresAuth: true } },
 ]
 
 const router = createRouter({
