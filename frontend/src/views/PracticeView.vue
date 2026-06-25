@@ -35,6 +35,20 @@ const totalQuestions = computed(() => questions.value.length)
 const progressPct = computed(() => totalQuestions.value > 0 ? Math.round((currentIndex.value + 1) / totalQuestions.value * 100) : 0)
 const hintCounts = ref({}) // { questionId: hints_used count }
 
+// ---- Recommend metadata ----
+const recommendMeta = ref(null)
+const RECOMMEND_MODE_LABELS = {
+  foundation_consolidate: '基础巩固',
+  weakness_reinforce: '薄弱补强',
+  wrong_review: '错题复习',
+  ai_supplement: 'AI补充练习',
+  mixed: '混合推荐',
+}
+const recommendModeLabel = computed(() => {
+  if (!recommendMeta.value) return ''
+  return RECOMMEND_MODE_LABELS[recommendMeta.value.recommend_mode] || recommendMeta.value.recommend_mode || ''
+})
+
 // ---- Favorites (question-level) ----
 const favQuestionIds = ref(new Set())
 const favRecordIds = ref({}) // questionId → favorite record id
@@ -199,7 +213,16 @@ async function loadRecommend() {
   loading.value = true; questionError.value = ''
   try {
     const res = await practiceApi.getRecommend(8)
-    if (res.data.code === 200) { questions.value = res.data.data.questions; resetState() }
+    if (res.data.code === 200) {
+      questions.value = res.data.data.questions
+      recommendMeta.value = {
+        recommend_mode: res.data.data.recommend_mode,
+        reason: res.data.data.reason,
+        question_reasons: res.data.data.question_reasons || [],
+        learned_scope: res.data.data.learned_scope || {},
+      }
+      resetState()
+    }
   } catch (e) { questionError.value = '加载失败' }
   loading.value = false
 }
@@ -209,7 +232,7 @@ function onHintUsed(questionId, count) {
 }
 
 function resetState() {
-  userAnswers.value = {}; submitted.value = false; results.value = null; currentIndex.value = 0; hintCounts.value = {}
+  userAnswers.value = {}; submitted.value = false; results.value = null; currentIndex.value = 0; hintCounts.value = {}; recommendMeta.value = null
 }
 
 async function submitAnswers() {
@@ -331,8 +354,8 @@ onUnmounted(() => { setPetMode('active') })
               <div class="w-20 h-20 bg-indigo-100 text-indigo-600 rounded-[1.5rem] flex items-center justify-center text-4xl flex-shrink-0 group-hover:scale-110 transition-transform shadow-sm"><i class="fas fa-lightbulb"></i></div>
               <div>
                 <div class="flex items-center gap-2 mb-2"><h3 class="font-bold text-gray-800 text-2xl">智能推荐</h3><span class="text-[10px] px-2 py-0.5 rounded-full font-medium bg-indigo-100 text-indigo-600">AI 驱动</span></div>
-                <p class="text-gray-500 text-sm md:text-base mb-3">AI 分析薄弱知识点，从错题本中精准推荐强化练习题目</p>
-                <p class="text-xs text-gray-400"><i class="fas fa-info-circle mr-1"></i>推荐基于错题本数据，优先同类知识点、同章节、相近难度的未做题</p>
+                <p class="text-gray-500 text-sm md:text-base mb-3">多维分析掌握程度，智能评分匹配最佳练习题，题库不足时 AI 自动生成</p>
+                <p class="text-xs text-gray-400"><i class="fas fa-info-circle mr-1"></i>基于作答记录、正确率、AI提示使用、学习范围综合评分，优先补薄弱环节</p>
               </div>
               <i class="fas fa-chevron-right text-gray-300 group-hover:text-indigo-400 transition flex-shrink-0 mt-2 text-xl"></i>
             </div>
@@ -344,7 +367,15 @@ onUnmounted(() => { setPetMode('active') })
       <template v-if="auth.isLoggedIn && activeModule">
         <div class="flex items-center gap-4 mb-6">
           <button @click="goBack" class="w-10 h-10 bg-white rounded-full shadow-sm border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition"><i class="fas fa-arrow-left text-gray-500"></i></button>
-          <div><h2 class="text-xl font-bold text-gray-800">{{ moduleTitle }}</h2><p class="text-sm text-gray-400" v-if="!submitted && questions.length">{{ currentIndex + 1 }} / {{ totalQuestions }} 题</p></div>
+          <div class="flex items-center gap-3">
+            <h2 class="text-xl font-bold text-gray-800">{{ moduleTitle }}</h2>
+            <span v-if="activeModule === 'recommend' && recommendMeta && recommendModeLabel"
+              class="text-xs px-2.5 py-1 rounded-full font-medium"
+              :class="recommendMeta.recommend_mode === 'weakness_reinforce' ? 'bg-red-100 text-red-600' : recommendMeta.recommend_mode === 'ai_supplement' ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'">
+              {{ recommendModeLabel }}
+            </span>
+          </div>
+          <p class="text-sm text-gray-400" v-if="!submitted && questions.length">{{ currentIndex + 1 }} / {{ totalQuestions }} 题</p>
         </div>
 
         <div v-if="loading" class="text-center py-20 bg-white rounded-[2rem]"><i class="fas fa-spinner fa-spin text-4xl text-blue-400 mb-4 block"></i><p class="text-gray-400">加载题目中...</p></div>
@@ -430,6 +461,8 @@ onUnmounted(() => { setPetMode('active') })
               <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">{{ typeLabel(currentQuestion.type) }}</span>
               <span :class="['text-[10px] font-bold px-2 py-0.5 rounded-full', diffColor(currentQuestion.difficulty)]">{{ diffLabel(currentQuestion.difficulty) }}</span>
               <span v-if="currentQuestion.knowledge_tag" class="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">{{ currentQuestion.knowledge_tag }}</span>
+              <span v-if="currentQuestion.source === 'ai_generated'" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-600"><i class="fas fa-robot mr-0.5"></i>AI生成</span>
+              <span v-if="activeModule === 'recommend' && recommendMeta && recommendMeta.question_reasons[currentIndex]" class="text-[10px] text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full truncate max-w-[240px]">{{ recommendMeta.question_reasons[currentIndex] }}</span>
               <span v-if="currentQuestion.score" class="text-[10px] text-gray-400">{{ currentQuestion.score }} 分</span>
               <!-- Favorite toggle -->
               <button @click="toggleFavorite(currentQuestion)" class="ml-auto w-7 h-7 rounded-full flex items-center justify-center transition" :class="isFav(currentQuestion) ? 'bg-red-50 text-red-500' : 'text-gray-300 hover:text-red-400 hover:bg-red-50'" :title="isFav(currentQuestion) ? '取消收藏' : '收藏题目'">
@@ -511,7 +544,10 @@ onUnmounted(() => { setPetMode('active') })
                 <div :class="['w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5', getResultForQuestion(q.id)?.is_correct ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600']">{{ getResultForQuestion(q.id)?.is_correct ? '✓' : '✗' }}</div>
                 <div class="flex-grow min-w-0">
                   <div class="flex items-start justify-between gap-2">
-                    <p class="text-sm font-medium text-gray-800 mb-1">{{ idx + 1 }}. {{ q.title || q.content }}</p>
+                    <p class="text-sm font-medium text-gray-800 mb-1">
+                      {{ idx + 1 }}. {{ q.title || q.content }}
+                      <span v-if="q.source === 'ai_generated'" class="text-[10px] bg-purple-50 text-purple-500 px-1.5 py-0.5 rounded-full ml-1 align-middle"><i class="fas fa-robot mr-0.5"></i>AI</span>
+                    </p>
                     <button @click="toggleFavorite(q)" class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition" :class="isFav(q) ? 'bg-red-50 text-red-500' : 'text-gray-300 hover:text-red-400 hover:bg-red-50'">
                       <i :class="isFav(q) ? 'fas fa-heart' : 'far fa-heart'" class="text-xs"></i>
                     </button>

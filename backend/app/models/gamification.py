@@ -24,6 +24,7 @@ class Question(Base):
     test_cases = Column(JSON)
     starter_code = Column(Text)
     score = Column(Integer, default=5)
+    source = Column(String(20), default='question_bank')  # 'question_bank' or 'ai_generated'
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 

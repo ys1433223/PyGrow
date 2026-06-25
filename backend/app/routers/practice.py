@@ -122,6 +122,7 @@ async def format_question(q: Question) -> dict:
         "chapter_num": q.chapter_num,
         "score": q.score or 5,
         "starter_code": q.starter_code or "",
+        "source": getattr(q, "source", None) or "question_bank",
     }
 
 
@@ -598,116 +599,27 @@ async def get_recommend_questions(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Smart recommendation based on user's wrong questions.
-    Priority: same knowledge_tag > same chapter > similar difficulty > not done before.
-    If no wrong question history, return evenly sampled questions.
+    """Smart recommendation with mastery analysis, multi-dimensional scoring, and AI fallback.
+
+    Uses student practice records to compute per-knowledge-tag mastery levels,
+    scores candidate questions across 9 weighted criteria, selects with diversity
+    (weak tags 60% + review 30% + exploration 10%), and falls back to AI-generated
+    questions when the question bank is insufficient for weak areas.
+
+    Cold start (< 10 records): returns easy/medium questions from current stage only.
     """
-    wrong_counts = await get_wrong_question_ids(user.id, db)
+    from app.services.recommend_service import get_smart_recommend
 
-    if not wrong_counts:
-        # No wrong question history — return evenly sampled questions from user's stage
-        stage = await get_user_stage(user)
-        completed_ids = await get_completed_question_ids(user.id, db)
-
-        result = await db.execute(
-            select(Question).where(Question.stage == stage)
-        )
-        pool = [q for q in result.scalars().all() if q.id not in completed_ids]
-        if len(pool) < count:
-            result = await db.execute(select(Question))
-            pool = [q for q in result.scalars().all() if q.id not in completed_ids]
-
-        random.shuffle(pool)
-        return api_response(data={
-            "questions": [await format_question(q) for q in pool[:count]],
-            "total": min(count, len(pool)),
-            "recommendation_type": "uniform_sampling",
-        })
-
-    # Get wrong question IDs sorted by frequency
-    sorted_wrong = sorted(wrong_counts.items(), key=lambda x: x[1], reverse=True)
-    wrong_qids = [qid for qid, _ in sorted_wrong]
-
-    # Get the knowledge tags of wrong questions
-    result = await db.execute(
-        select(Question.knowledge_tag).where(Question.id.in_(wrong_qids))
-    )
-    wrong_tags = {}
-    for r in result.all():
-        tag = r[0] or ""
-        wrong_tags[tag] = wrong_tags.get(tag, 0) + 1
-
-    # Get all completed question IDs
-    completed_ids_result = await db.execute(
-        select(PracticeRecord.question_id).where(PracticeRecord.user_id == user.id)
-    )
-    completed_ids = {r[0] for r in completed_ids_result.all()}
-
-    recommended = []
-    seen = set()
-
-    # Priority 1: Same knowledge_tag as wrong questions
-    sorted_tags = sorted(wrong_tags.items(), key=lambda x: x[1], reverse=True)
-    for tag, _ in sorted_tags:
-        if not tag:
-            continue
-        result = await db.execute(
-            select(Question).where(
-                Question.knowledge_tag == tag,
-                Question.id.notin_(completed_ids),
-            )
-        )
-        for q in result.scalars().all():
-            if q.id not in seen:
-                seen.add(q.id)
-                recommended.append(q)
-        if len(recommended) >= count * 2:
-            break
-
-    # Priority 2: Same chapter
-    if len(recommended) < count:
-        wrong_chapters = set()
-        for qid in wrong_qids[:20]:
-            result = await db.execute(select(Question.chapter).where(Question.id == qid))
-            ch = result.scalar_one_or_none()
-            if ch:
-                wrong_chapters.add(ch)
-
-        result = await db.execute(
-            select(Question).where(
-                Question.chapter.in_(wrong_chapters),
-                Question.id.notin_(completed_ids),
-            )
-        )
-        for q in result.scalars().all():
-            if q.id not in seen:
-                seen.add(q.id)
-                recommended.append(q)
-
-    # Priority 3: Similar difficulty, not done
-    if len(recommended) < count:
-        stage = await get_user_stage(user)
-        result = await db.execute(
-            select(Question).where(
-                Question.stage == stage,
-                Question.id.notin_(completed_ids),
-            )
-        )
-        pool = [q for q in result.scalars().all() if q.id not in seen]
-        random.shuffle(pool)
-        for q in pool:
-            if q.id not in seen:
-                seen.add(q.id)
-                recommended.append(q)
-
-    random.shuffle(recommended)
-    selected = recommended[:count]
+    result = await get_smart_recommend(db, user.id, count)
 
     return api_response(data={
-        "questions": [await format_question(q) for q in selected],
-        "total": len(selected),
-        "recommendation_type": "smart",
-        "weak_tags": sorted_tags[:5] if sorted_tags else [],
+        "questions": [await format_question(q) for q in result["questions"]],
+        "total": len(result["questions"]),
+        "recommend_mode": result.get("recommend_mode", "mixed"),
+        "weak_tags": result.get("weak_tags", []),
+        "learned_scope": result.get("learned_scope", {}),
+        "reason": result.get("reason", ""),
+        "question_reasons": result.get("question_reasons", []),
     })
 
 

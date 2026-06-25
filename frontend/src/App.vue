@@ -37,8 +37,10 @@ if (typeof window !== 'undefined') {
   window.__openLoginPrompt = openLoginPrompt
 }
 
+// Run immediately (not in onMounted) so child components see restored auth state
+auth.checkAuth()
+
 onMounted(() => {
-  auth.checkAuth()
   initThemeSystem()
 })
 

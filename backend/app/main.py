@@ -7,12 +7,20 @@ from pathlib import Path
 
 from app.routers import auth, courses, users, assessment, practice, gamification, reports, home, code_runner, ai_mentor, projects, notes, community, leaderboard, admin, reviews, favorites, ai_notes, debug, pet
 from app.database import engine, Base
+from sqlalchemy import text
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Migration: add source column if it doesn't exist
+        try:
+            await conn.run_sync(lambda c: c.execute(text(
+                "ALTER TABLE questions ADD COLUMN source VARCHAR(20) DEFAULT 'question_bank'"
+            )))
+        except Exception:
+            pass
     from app.seed import seed
     import asyncio
     await seed()

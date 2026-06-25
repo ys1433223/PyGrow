@@ -22,13 +22,193 @@ body {
 .animate-spin-slow { animation: spin 3s linear infinite; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-/* Dark mode overrides */
-body.dark-mode { background-color: #1a202c !important; color: #e2e8f0 !important; }
-body.dark-mode header { background-color: rgba(26, 32, 44, 0.95) !important; border-bottom: 1px solid #2d3748 !important; }
-body.dark-mode .bg-white { background-color: #2d3748 !important; border-color: #4a5568 !important; color: #e2e8f0 !important; }
-body.dark-mode .text-gray-900, body.dark-mode .text-gray-800, body.dark-mode .text-black { color: #f7fafc !important; }
-body.dark-mode .text-gray-600, body.dark-mode .text-gray-500 { color: #a0aec0 !important; }
-body.dark-mode input, body.dark-mode textarea { background-color: #4a5568 !important; border-color: #718096 !important; color: white !important; }
+/* ================================================
+   Dark mode overrides
+   ================================================ */
+body.dark-mode {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+}
+body.dark-mode header {
+  background-color: rgba(15, 23, 42, 0.95) !important;
+  border-bottom: 1px solid #1e293b !important;
+}
+
+/* ---- Backgrounds ---- */
+body.dark-mode .bg-white {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+body.dark-mode .bg-gray-50 {
+  background-color: #0f172a !important;
+}
+body.dark-mode .bg-gray-100 {
+  background-color: #1e293b !important;
+}
+
+/* ---- Text colors (light → dark mode mapping) ---- */
+/* Headlines: near-white */
+body.dark-mode .text-gray-900,
+body.dark-mode .text-gray-800,
+body.dark-mode .text-black {
+  color: #f1f5f9 !important;
+}
+/* Body text: light gray */
+body.dark-mode .text-gray-700,
+body.dark-mode .text-gray-600 {
+  color: #cbd5e1 !important;
+}
+/* Secondary text: medium gray */
+body.dark-mode .text-gray-500 {
+  color: #94a3b8 !important;
+}
+/* Muted/hint text: darker medium */
+body.dark-mode .text-gray-400 {
+  color: #64748b !important;
+}
+body.dark-mode .text-gray-300 {
+  color: #475569 !important;
+}
+
+/* ---- Borders ---- */
+body.dark-mode .border-gray-50 {
+  border-color: #334155 !important;
+}
+body.dark-mode .border-gray-100 {
+  border-color: #334155 !important;
+}
+body.dark-mode .border-gray-200 {
+  border-color: #334155 !important;
+}
+body.dark-mode .border-gray-300 {
+  border-color: #475569 !important;
+}
+
+/* ---- Light gray backgrounds (non-white) ---- */
+body.dark-mode .bg-gray-200 {
+  background-color: #334155 !important;
+}
+body.dark-mode .bg-gray-300 {
+  background-color: #475569 !important;
+}
+
+/* ---- Shadows (reduce opacity for dark mode) ---- */
+body.dark-mode .shadow-sm {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3) !important;
+}
+body.dark-mode .shadow-md {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4) !important;
+}
+body.dark-mode .shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5) !important;
+}
+body.dark-mode .shadow-xl {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* ---- Inputs & selects ---- */
+body.dark-mode input,
+body.dark-mode textarea,
+body.dark-mode select {
+  background-color: #334155 !important;
+  border-color: #475569 !important;
+  color: #f1f5f9 !important;
+}
+body.dark-mode input::placeholder,
+body.dark-mode textarea::placeholder {
+  color: #64748b !important;
+}
+
+/* ---- Colored badge/tag backgrounds (light → dark variants) ---- */
+body.dark-mode .bg-blue-50 {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+}
+body.dark-mode .bg-blue-100 {
+  background-color: rgba(59, 130, 246, 0.2) !important;
+}
+body.dark-mode .bg-green-50 {
+  background-color: rgba(34, 197, 94, 0.15) !important;
+}
+body.dark-mode .bg-green-100 {
+  background-color: rgba(34, 197, 94, 0.2) !important;
+}
+body.dark-mode .bg-red-50 {
+  background-color: rgba(239, 68, 68, 0.15) !important;
+}
+body.dark-mode .bg-red-100 {
+  background-color: rgba(239, 68, 68, 0.2) !important;
+}
+body.dark-mode .bg-orange-50 {
+  background-color: rgba(249, 115, 22, 0.15) !important;
+}
+body.dark-mode .bg-orange-100 {
+  background-color: rgba(249, 115, 22, 0.2) !important;
+}
+body.dark-mode .bg-amber-50 {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+}
+body.dark-mode .bg-amber-100 {
+  background-color: rgba(245, 158, 11, 0.2) !important;
+}
+body.dark-mode .bg-indigo-50 {
+  background-color: rgba(99, 102, 241, 0.15) !important;
+}
+body.dark-mode .bg-indigo-100 {
+  background-color: rgba(99, 102, 241, 0.2) !important;
+}
+body.dark-mode .bg-purple-50 {
+  background-color: rgba(168, 85, 247, 0.15) !important;
+}
+body.dark-mode .bg-purple-100 {
+  background-color: rgba(168, 85, 247, 0.2) !important;
+}
+
+/* ---- Hover states that use light backgrounds ---- */
+body.dark-mode .hover\:bg-gray-50:hover {
+  background-color: #334155 !important;
+}
+body.dark-mode .hover\:bg-gray-100:hover {
+  background-color: #334155 !important;
+}
+body.dark-mode .hover\:bg-blue-50:hover {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+}
+
+/* ---- Dividers ---- */
+body.dark-mode .divide-gray-100 > * {
+  border-color: #334155 !important;
+}
+body.dark-mode .divide-gray-200 > * {
+  border-color: #334155 !important;
+}
+
+/* ---- Gradients that use light colors ---- */
+body.dark-mode .from-blue-50,
+body.dark-mode .from-indigo-50,
+body.dark-mode .from-amber-50,
+body.dark-mode .from-purple-50,
+body.dark-mode .from-orange-50 {
+  --tw-gradient-from: #1e293b;
+  --tw-gradient-from-position: 0%;
+}
+body.dark-mode .to-white {
+  --tw-gradient-to: #1e293b;
+  --tw-gradient-to-position: 100%;
+}
+/* Also handle the actual gradient result for non-Tailwind-v4 cases */
+body.dark-mode .bg-gradient-to-br.from-blue-50,
+body.dark-mode .bg-gradient-to-br.from-indigo-50,
+body.dark-mode .bg-gradient-to-br.from-amber-50,
+body.dark-mode .bg-gradient-to-br.from-orange-50,
+body.dark-mode .bg-gradient-to-br.from-purple-50 {
+  background-image: none !important;
+  background-color: #1e293b !important;
+}
+body.dark-mode .bg-gradient-to-r.from-blue-500.to-purple-600 {
+  --tw-gradient-from: #3b82f6;
+  --tw-gradient-to: #7c3aed;
+}
 
 /* ===== Bobble Character Animations (Login/Register pages) ===== */
 @property --eye-size-y {

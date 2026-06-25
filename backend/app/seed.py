@@ -367,6 +367,7 @@ def _question_to_model(q):
         test_cases=q.get("test_cases", []),
         starter_code=q.get("starter_code", ""),
         score=q.get("score", 5),
+        source=q.get("source", "question_bank"),
     )
 
 # ========== Badges (8 items) ==========
