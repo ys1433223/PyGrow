@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
-from app.routers import auth, courses, users, assessment, practice, gamification, reports, home, code_runner, ai_mentor, projects, notes, community, leaderboard, admin, reviews, favorites, ai_notes, debug, pet
+from app.routers import auth, courses, users, assessment, practice, gamification, reports, home, code_runner, ai_mentor, projects, notes, community, leaderboard, admin, reviews, favorites, ai_notes, debug, pet, promotion
 from app.database import engine, Base
 from sqlalchemy import text
 
@@ -61,3 +61,4 @@ app.include_router(favorites.router, prefix="/api/favorites", tags=["favorites"]
 app.include_router(ai_notes.router, prefix="/api", tags=["ai-notes"])
 app.include_router(debug.router, prefix="/api", tags=["debug"])
 app.include_router(pet.router, prefix="/api/pet", tags=["pet"])
+app.include_router(promotion.router, tags=["promotion"])

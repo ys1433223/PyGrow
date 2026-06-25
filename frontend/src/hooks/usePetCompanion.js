@@ -51,3 +51,29 @@ export function listenPetMessage(handler) {
   window.addEventListener(MSG_EVENT, cb)
   return () => window.removeEventListener(MSG_EVENT, cb)
 }
+
+// ---- Adventure animation coordination ----
+const ADVENTURE_START_EVENT = 'pet:adventure-start'
+const ADVENTURE_END_EVENT = 'pet:adventure-end'
+
+/** Tell pet to fly to center, scale up, and show happy GIF */
+export function triggerPetAdventureStart() {
+  window.dispatchEvent(new CustomEvent(ADVENTURE_START_EVENT))
+}
+
+/** Tell pet to return to original position and idle state */
+export function triggerPetAdventureEnd() {
+  window.dispatchEvent(new CustomEvent(ADVENTURE_END_EVENT))
+}
+
+export function listenPetAdventureStart(handler) {
+  const cb = () => handler()
+  window.addEventListener(ADVENTURE_START_EVENT, cb)
+  return () => window.removeEventListener(ADVENTURE_START_EVENT, cb)
+}
+
+export function listenPetAdventureEnd(handler) {
+  const cb = () => handler()
+  window.addEventListener(ADVENTURE_END_EVENT, cb)
+  return () => window.removeEventListener(ADVENTURE_END_EVENT, cb)
+}

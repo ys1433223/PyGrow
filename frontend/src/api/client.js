@@ -18,9 +18,16 @@ client.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      localStorage.removeItem('access_token')
-      localStorage.removeItem('userInfo')
-      router.push('/login')
+      // Only redirect if we're not already on the login page, and only if
+      // the token was actually present (not a missing-token 401 from an
+      // unauthenticated endpoint). This prevents redirect loops and spurious
+      // logout when the backend is temporarily unreachable.
+      const hadToken = localStorage.getItem('access_token')
+      if (hadToken && router.currentRoute.value.path !== '/login') {
+        localStorage.removeItem('access_token')
+        localStorage.removeItem('userInfo')
+        router.push('/login')
+      }
     }
     return Promise.reject(error)
   }

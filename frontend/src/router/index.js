@@ -23,6 +23,7 @@ const routes = [
   { path: '/adventure', name: 'adventure', component: () => import('../views/AdventureView.vue'), meta: { requiresAuth: true } },
   { path: '/profile/collection', name: 'collection', component: () => import('../views/CollectionView.vue'), meta: { requiresAuth: true } },
   { path: '/leaderboard', name: 'leaderboard', component: () => import('../views/LeaderboardView.vue'), meta: { requiresAuth: true } },
+  { path: '/promotion', name: 'promotion', component: () => import('../views/PromotionView.vue'), meta: { requiresAuth: true } },
 ]
 
 const router = createRouter({
@@ -34,7 +35,11 @@ router.beforeEach((to, from, next) => {
   if (to.meta.requiresAuth) {
     const token = localStorage.getItem('access_token')
     if (!token) {
-      return next('/login')
+      // Show login prompt popup instead of redirect
+      if (window.__openLoginPrompt) {
+        window.__openLoginPrompt()
+      }
+      return next(from.path || '/')
     }
   }
   next()

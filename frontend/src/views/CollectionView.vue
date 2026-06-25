@@ -17,6 +17,7 @@ const selectedReward = ref(null)
 const tabs = [
   { key: 'postcard', label: '明信片图鉴', icon: 'fa-image', emptyMsg: '还没有收集到明信片，快去探险吧！' },
   { key: 'knowledge_note', label: '知识点小纸条', icon: 'fa-lightbulb', emptyMsg: '还没有收集到知识点小纸条，快去探险吧！' },
+  { key: 'blessing', label: '祝福收集册', icon: 'fa-heart', emptyMsg: '还没有收到祝福，快去探险吧！' },
 ]
 
 const filteredRewards = computed(() => rewards.value.filter(r => r.reward_type === activeTab.value))
@@ -55,7 +56,7 @@ onMounted(async () => {
     return
   }
   // Set initial tab from query param
-  if (route.query.type && ['postcard', 'knowledge_note'].includes(route.query.type)) {
+  if (route.query.type && ['postcard', 'knowledge_note', 'blessing'].includes(route.query.type)) {
     activeTab.value = route.query.type
   }
   await fetchRewards()
@@ -63,7 +64,7 @@ onMounted(async () => {
 })
 
 watch(() => route.query.type, (val) => {
-  if (val && ['postcard', 'knowledge_note'].includes(val)) {
+  if (val && ['postcard', 'knowledge_note', 'blessing'].includes(val)) {
     activeTab.value = val
   }
 })
@@ -83,7 +84,7 @@ watch(() => route.query.type, (val) => {
           </div>
           <div>
             <h1 class="text-2xl font-bold text-gray-800">我的图鉴</h1>
-            <p class="text-xs text-gray-400">收集探险中获得的明信片和知识点</p>
+            <p class="text-xs text-gray-400">收集探险中获得的明信片、知识点和祝福</p>
           </div>
         </div>
         <button @click="router.push('/adventure')"
@@ -166,12 +167,52 @@ watch(() => route.query.type, (val) => {
             class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
             @click="openDetail(reward)">
             <div class="flex items-start gap-3">
-              <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <i class="fas fa-lightbulb text-blue-500"></i>
-              </div>
+              <img
+                :src="'/pets/status/studying' + (Math.random() > 0.5 ? '2' : '') + '.png'"
+                class="w-20 h-20 object-contain flex-shrink-0"
+                alt="studying"
+              />
               <div class="flex-1 min-w-0">
                 <p class="text-xs font-bold text-gray-500 mb-2">{{ reward.reward_name }}</p>
                 <p class="text-sm text-gray-700 leading-relaxed line-clamp-2">{{ reward.reward_content }}</p>
+                <div class="flex items-center gap-3 mt-3">
+                  <span class="text-[10px] text-gray-400">
+                    <i class="fas fa-map-pin mr-0.5"></i>{{ reward.source_location || '未知' }}
+                  </span>
+                  <span class="text-[10px] text-gray-400">{{ reward.created_at?.slice(0, 10) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Blessings List -->
+      <div v-if="activeTab === 'blessing'">
+        <div v-if="filteredRewards.length === 0" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-16 text-center">
+          <div class="w-20 h-20 mx-auto mb-4 bg-pink-50 rounded-full flex items-center justify-center">
+            <i class="fas fa-heart text-pink-300 text-3xl"></i>
+          </div>
+          <p class="text-gray-500 font-medium mb-1">{{ tabs[2].emptyMsg }}</p>
+          <button @click="router.push('/adventure')"
+            class="mt-4 px-5 py-2 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-white text-sm font-bold shadow hover:shadow-lg transition">
+            <i class="fas fa-compass mr-1.5"></i>派宠物去探险
+          </button>
+        </div>
+
+        <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div v-for="reward in filteredRewards" :key="reward.id"
+            class="bg-white rounded-xl shadow-sm border border-pink-100 p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 cursor-pointer bg-gradient-to-br from-pink-50/30 to-rose-50/30"
+            @click="openDetail(reward)">
+            <div class="flex items-start gap-3">
+              <img
+                :src="'/pets/status/love' + (Math.random() > 0.5 ? '2' : '') + '.png'"
+                class="w-28 h-28 object-contain flex-shrink-0"
+                alt="love"
+              />
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-bold text-gray-500 mb-2">{{ reward.reward_name }}</p>
+                <p class="text-sm text-gray-700 leading-relaxed italic line-clamp-2">"{{ reward.reward_content }}"</p>
                 <div class="flex items-center gap-3 mt-3">
                   <span class="text-[10px] text-gray-400">
                     <i class="fas fa-map-pin mr-0.5"></i>{{ reward.source_location || '未知' }}
@@ -236,10 +277,50 @@ watch(() => route.query.type, (val) => {
             </div>
           </div>
           <div class="p-6">
+            <img
+              :src="'/pets/status/studying' + (Math.random() > 0.5 ? '2' : '') + '.png'"
+              class="w-36 h-36 mx-auto mb-4 object-contain"
+              alt="studying"
+            />
             <div class="bg-blue-50 rounded-xl p-5">
               <p class="text-sm text-gray-700 leading-relaxed">{{ selectedReward.reward_content }}</p>
             </div>
             <div class="flex items-center gap-4 mt-4 pt-4 border-t border-gray-100">
+              <span class="text-xs text-gray-400">
+                <i class="fas fa-map-pin mr-1"></i>{{ selectedReward.source_location || '未知地点' }}
+              </span>
+              <span class="text-xs text-gray-400">
+                <i class="fas fa-calendar mr-1"></i>{{ selectedReward.created_at?.slice(0, 10) }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Blessing detail -->
+        <div v-else-if="selectedReward.reward_type === 'blessing'"
+          class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-scale-in">
+          <button @click="closeDetail"
+            class="absolute top-3 right-3 z-10 w-8 h-8 bg-white/80 backdrop-blur rounded-full flex items-center justify-center hover:bg-white transition shadow">
+            <i class="fas fa-times text-gray-500 text-sm"></i>
+          </button>
+          <div class="bg-gradient-to-r from-pink-400 to-rose-500 px-6 py-5">
+            <div class="flex items-center gap-3 text-white">
+              <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur">
+                <i class="fas fa-heart text-lg"></i>
+              </div>
+              <span class="font-bold">{{ selectedReward.reward_name }}</span>
+            </div>
+          </div>
+          <div class="p-6 text-center">
+            <img
+              :src="'/pets/status/love' + (Math.random() > 0.5 ? '2' : '') + '.png'"
+              class="w-44 h-44 mx-auto mb-4 object-contain"
+              alt="love"
+            />
+            <div class="bg-pink-50 rounded-xl p-5">
+              <p class="text-sm text-gray-700 leading-relaxed italic">"{{ selectedReward.reward_content }}"</p>
+            </div>
+            <div class="flex items-center justify-center gap-4 mt-4 pt-4 border-t border-gray-100">
               <span class="text-xs text-gray-400">
                 <i class="fas fa-map-pin mr-1"></i>{{ selectedReward.source_location || '未知地点' }}
               </span>

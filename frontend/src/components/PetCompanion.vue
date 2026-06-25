@@ -2,7 +2,7 @@
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { pickGif, TMP_STATE_DEFAULTS } from '../data/petAnimationMap'
-import { listenPetState, listenPetMode, listenPetMessage } from '../hooks/usePetCompanion'
+import { listenPetState, listenPetMode, listenPetMessage, listenPetAdventureStart, listenPetAdventureEnd } from '../hooks/usePetCompanion'
 import PetMenu from './PetMenu.vue'
 import PetAssistantChat from './PetAssistantChat.vue'
 import PetMessagePanel from './PetMessagePanel.vue'
@@ -41,6 +41,13 @@ function loadPos() {
 const pos = ref(loadPos())
 const dragging = ref(false)
 const dragOffset = ref({ x: 0, y: 0 })
+
+// ---- adventure fly-to-center animation ----
+const adventureAnimating = ref(false)
+const savedPosition = ref(null)
+const adventureGif = ref(null)
+const adventureScale = ref(1)
+const adventureTransition = ref(false)
 
 function savePos() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({ x: pos.value.x, y: pos.value.y }))
@@ -271,6 +278,44 @@ function handleIncomingMessage(msg) {
   }
 }
 
+// ---- adventure animation helpers ----
+const HAPPY_ADVENTURE_GIFS = ['点赞.gif', '喜欢.gif', '喜欢2.gif', '鼓掌.gif', '举牌100分.gif']
+
+function startAdventureAnimation() {
+  // Save current position
+  savedPosition.value = { x: pos.value.x, y: pos.value.y }
+  adventureAnimating.value = true
+  // Pick random happy GIF
+  const gif = HAPPY_ADVENTURE_GIFS[Math.floor(Math.random() * HAPPY_ADVENTURE_GIFS.length)]
+  adventureGif.value = `/pets/default/${gif}`
+  // Move to center
+  const cx = (window.innerWidth - SIZE) / 2
+  const cy = (window.innerHeight - SIZE) / 2
+  adventureTransition.value = true
+  pos.value = { x: cx, y: cy }
+  adventureScale.value = 1.6
+  closeAllPanels()
+}
+
+function endAdventureAnimation() {
+  adventureTransition.value = true
+  adventureScale.value = 1
+  adventureGif.value = null
+  if (savedPosition.value) {
+    pos.value = { x: savedPosition.value.x, y: savedPosition.value.y }
+  }
+  adventureAnimating.value = false
+  savedPosition.value = null
+  // After transition, restore normal idle
+  setTimeout(() => {
+    adventureTransition.value = false
+    setState('idle')
+  }, 600)
+}
+
+let unlistenAdventureStart = null
+let unlistenAdventureEnd = null
+
 onMounted(() => {
   unlistenState = listenPetState((state, duration) => {
     triggerState(state, duration)
@@ -281,6 +326,12 @@ onMounted(() => {
   unlistenMsg = listenPetMessage((msg) => {
     handleIncomingMessage(msg)
   })
+  unlistenAdventureStart = listenPetAdventureStart(() => {
+    startAdventureAnimation()
+  })
+  unlistenAdventureEnd = listenPetAdventureEnd(() => {
+    endAdventureAnimation()
+  })
   setState('idle')
 })
 
@@ -288,6 +339,8 @@ onUnmounted(() => {
   if (unlistenState) unlistenState()
   if (unlistenMode) unlistenMode()
   if (unlistenMsg) unlistenMsg()
+  if (unlistenAdventureStart) unlistenAdventureStart()
+  if (unlistenAdventureEnd) unlistenAdventureEnd()
   clearTimeout(stateTimer)
   clearTimeout(clickTimer)
 })
@@ -299,8 +352,13 @@ onUnmounted(() => {
     <div
       v-if="!hidden"
       class="fixed z-[9999] select-none"
-      :class="{ 'pointer-events-none': petMode === 'silent' }"
-      :style="{ left: pos.x + 'px', top: pos.y + 'px' }"
+      :class="{ 'pointer-events-none': petMode === 'silent' || adventureAnimating }"
+      :style="{
+        left: pos.x + 'px',
+        top: pos.y + 'px',
+        transition: adventureTransition ? 'left 0.6s ease-in-out, top 0.6s ease-in-out, transform 0.6s ease-in-out' : 'none',
+        transform: 'scale(' + adventureScale + ')',
+      }"
       @mousedown="onDragStart"
       @touchstart.prevent="onDragStart"
       @mousemove="onDragMove"
@@ -412,11 +470,14 @@ onUnmounted(() => {
 
         <!-- GIF -->
         <img
-          :src="currentGif"
-          :alt="currentState"
+          :src="adventureGif || currentGif"
+          :alt="adventureAnimating ? 'adventure' : currentState"
           class="drop-shadow-lg transition-all duration-300 pointer-events-none"
           :style="{ width: SIZE + 'px', height: SIZE + 'px', objectFit: 'contain' }"
         />
+        <div v-if="!adventureAnimating" class="flex justify-center mt-1">
+          <span class="text-sm font-semibold select-none bg-white/90 backdrop-blur-sm text-blue-600 px-3.5 py-1.5 rounded-full shadow-sm border border-blue-100/80">有不懂的可以问我</span>
+        </div>
 
         <!-- Circular Adventure button (right side, entertainment) -->
         <div

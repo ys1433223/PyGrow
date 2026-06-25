@@ -6,35 +6,11 @@ import { coursesApi } from '../api/courses'
 import { homeApi } from '../api/home'
 import { gamificationApi } from '../api/gamification'
 import { getHotPosts } from '../api/community'
-import { courseLevels } from '../data/courseData.js'
 import { triggerPetState } from '../hooks/usePetCompanion'
 import AppHeader from '../components/layout/AppHeader.vue'
 import AppFooter from '../components/layout/AppFooter.vue'
 import PageLoader from '../components/layout/PageLoader.vue'
 import ExpBar from '../components/common/ExpBar.vue'
-
-// Featured chapters for 精品课程 section: [{level, chapterNum}]
-const featuredChapters = (() => {
-  const items = []
-  for (const level of courseLevels) {
-    for (const ch of level.chapters.slice(0, 4)) {
-      if (items.length >= 8) break
-      const lessonCount = ch.sections.reduce((s, sec) => s + sec.lessons.length, 0)
-      items.push({
-        level: level.level,
-        levelName: level.name,
-        chapterNum: ch.num,
-        title: ch.title,
-        lessonCount,
-        color: level.level === '初级' ? 'from-green-400 to-emerald-500' : level.level === '中级' ? 'from-blue-400 to-indigo-500' : 'from-orange-400 to-red-500',
-        bgClass: level.level === '初级' ? 'bg-green-50 text-green-600' : level.level === '中级' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600',
-        icon: level.level === '初级' ? 'fa-seedling' : level.level === '中级' ? 'fa-fire' : 'fa-crown',
-      })
-    }
-    if (items.length >= 8) return items
-  }
-  return items
-})()
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -43,6 +19,55 @@ const courses = ref([])
 const dashboard = ref(null)
 const dailyTasks = ref([])
 const hotPosts = ref([])
+
+// Course → CourseCenterView mapping (title, cover, level, chapter)
+const COURSE_MAP = [
+  {
+    title: 'Python3.11零基础快速入门',
+    cover: '/images/course-covers/Python3.11零基础快速入门.png',
+    level: '初级', chapter: 1,
+  },
+  {
+    title: 'Scrapy分布式爬虫',
+    cover: '/images/course-covers/Scrapy分布式爬虫.png',
+    level: '中级', chapter: 5,
+  },
+  {
+    title: 'Python操作Excel与邮件自动化',
+    cover: '/images/course-covers/ython操作Excel与邮件自动化.png',
+    level: '高级', chapter: 2,
+  },
+  {
+    title: 'Pandas &Matplotlib数据可视化',
+    cover: '/images/course-covers/Pandas &Matplotlib数据可视化.png',
+    level: '高级', chapter: 4,
+  },
+  {
+    title: 'Django/Flask企业级开发实战',
+    cover: '/images/course-covers/DjangoFlask开发.png',
+    level: '中级', chapter: 3,
+  },
+  {
+    title: 'PyTorch深度学习与神经网络',
+    cover: '/images/course-covers/PyTorch深度学习与神经网络.png',
+    level: '高级', chapter: 7,
+  },
+]
+
+function getCourseInfo(courseTitle) {
+  if (!courseTitle) return COURSE_MAP[0]
+  return COURSE_MAP.find(m =>
+    courseTitle === m.title || courseTitle.includes(m.title) || m.title.includes(courseTitle)
+  ) || COURSE_MAP[0]
+}
+
+function getCourseCover(courseTitle) {
+  return getCourseInfo(courseTitle).cover
+}
+
+function getCourseLevel(courseTitle) {
+  return getCourseInfo(courseTitle).level
+}
 
 const tools = ref([
   { id: '1', name: 'PyCharm', icon: '🐍', desc: '专业IDE', color: 'bg-blue-50 border-blue-200' },
@@ -120,12 +145,10 @@ function checkLogin(targetPath) {
 }
 
 function goToCourse(course) {
-  router.push(`/courses/${course.id}`)
+  const info = getCourseInfo(course.title)
+  router.push(`/courses?level=${encodeURIComponent(info.level)}&chapter=${info.chapter}`)
 }
 
-function goToChapter(item) {
-  router.push(`/courses?level=${encodeURIComponent(item.level)}&chapter=${item.chapterNum}`)
-}
 </script>
 
 <template>
@@ -158,16 +181,16 @@ function goToChapter(item) {
           </div>
 
           <div class="md:w-1/2 mt-12 md:mt-0 relative flex justify-center md:justify-end">
-            <div class="relative w-full max-w-md aspect-[4/3]">
-              <img src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=800&auto=format&fit=crop" class="rounded-2xl shadow-2xl object-cover w-full h-full z-10 relative">
-              <div class="absolute -left-6 top-10 bg-white p-4 rounded-xl shadow-lg z-20 animate-float border border-gray-50">
+            <div class="relative w-full max-w-lg">
+              <img src="/de-image/home-hero.png" alt="Python学习" class="w-full h-auto object-contain z-10 relative drop-shadow-2xl">
+              <div class="absolute -left-4 top-8 bg-white p-4 rounded-xl shadow-lg z-20 animate-float border border-gray-50">
                 <div class="flex items-center gap-3">
                   <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600">
                     <i data-lucide="code-2" width="20"></i>
                   </div>
                   <div>
-                    <div class="text-xs text-gray-400">正在构建</div>
-                    <div class="font-bold text-gray-800">Python 爬虫</div>
+                    <div class="text-xs text-gray-400">正在学习</div>
+                    <div class="font-bold text-gray-800">Python 编程</div>
                   </div>
                 </div>
               </div>
@@ -224,34 +247,47 @@ function goToChapter(item) {
         </div>
       </section>
 
-      <!-- Featured Courses -->
-      <section class="container mx-auto px-4 mt-16">
+      <!-- Course Cover Cards -->
+      <section v-if="courses.length > 0" class="container mx-auto px-4 mt-16">
         <div class="flex justify-between items-end mb-10">
           <div>
-            <h2 class="text-3xl font-bold text-gray-900">精品课程推荐</h2>
-            <p class="text-gray-500 mt-2">点击卡片，立即开始你的学习之旅</p>
+            <h2 class="text-3xl font-bold text-gray-900">课程体系</h2>
+            <p class="text-gray-500 mt-2">从零基础到人工智能，系统掌握 Python 全栈技能</p>
           </div>
           <a href="/courses" @click.prevent="$router.push('/courses')" class="text-blue-600 font-semibold hover:underline hidden sm:block">查看全部 &rarr;</a>
         </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div v-for="item in featuredChapters" :key="`${item.level}-${item.chapterNum}`" @click="goToChapter(item)"
-               class="group bg-white rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 overflow-hidden border border-gray-100 cursor-pointer flex flex-col h-full">
-            <div :class="['h-28 flex items-center justify-center relative overflow-hidden bg-gradient-to-br', item.color]">
-              <span class="text-5xl font-black text-white/20 transform scale-150 group-hover:scale-125 transition-transform duration-500">{{ item.chapterNum }}</span>
-              <div class="absolute inset-0 flex items-center justify-center">
-                <i :class="['fas', item.icon, 'text-white/80 text-4xl group-hover:scale-110 transition-transform']"></i>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div v-for="course in courses.slice(0, 7)" :key="course.id"
+               @click="goToCourse(course)"
+               class="group relative bg-white rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 overflow-hidden border border-gray-100 cursor-pointer flex flex-col">
+            <!-- Cover image area -->
+            <div class="relative h-44 overflow-hidden bg-gray-100">
+              <img :src="getCourseCover(course.title)" :alt="course.title"
+                   class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                   loading="lazy">
+              <!-- Gradient overlay -->
+              <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/15 to-transparent"></div>
+              <!-- Level badge -->
+              <span :class="[
+                'absolute top-3 left-3 text-xs font-bold px-2.5 py-1 rounded-full backdrop-blur-sm',
+                getCourseLevel(course.title) === '初级' ? 'bg-green-500/80 text-white' :
+                getCourseLevel(course.title) === '中级' ? 'bg-blue-500/80 text-white' :
+                'bg-orange-500/80 text-white'
+              ]">{{ getCourseLevel(course.title) }}</span>
+              <!-- Title overlay -->
+              <div class="absolute bottom-3 left-4 right-4">
+                <h3 class="text-white font-bold text-lg leading-tight drop-shadow-sm">{{ course.title }}</h3>
               </div>
-              <span :class="['absolute top-3 left-3 text-xs font-bold px-2 py-0.5 rounded-full bg-white/20 text-white backdrop-blur-sm']">{{ item.levelName }}</span>
             </div>
-            <div class="p-5 flex flex-col flex-grow">
-              <h3 class="font-bold text-sm text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">第{{ item.chapterNum }}章 {{ item.title }}</h3>
-              <p class="text-xs text-gray-400 mb-4">{{ item.lessonCount }} 课时</p>
-              <div class="pt-3 border-t border-gray-100 flex justify-between items-center mt-auto">
-                <span class="text-blue-600 text-xs font-bold flex items-center group-hover:translate-x-1 transition-transform">
-                  开始学习 <i data-lucide="arrow-right" width="12" class="ml-1"></i>
-                </span>
+            <!-- Card footer -->
+            <div class="p-4 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span class="text-xs text-gray-400"><i class="fas fa-layer-group mr-1"></i>{{ course.chapters_count || 0 }} 章节</span>
+                <span v-if="course.students_count" class="text-xs text-gray-400"><i class="fas fa-users mr-1"></i>{{ course.students_count }} 人学习</span>
               </div>
+              <span class="text-blue-600 text-xs font-bold flex items-center group-hover:translate-x-1.5 transition-transform duration-300">
+                进入课程 <i data-lucide="arrow-right" width="12" class="ml-1"></i>
+              </span>
             </div>
           </div>
         </div>

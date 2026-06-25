@@ -74,25 +74,88 @@ async def get_daily_tasks(user: User = Depends(get_current_user), db: AsyncSessi
     return api_response(data=items)
 
 
+async def _verify_task_completion(db, user_id, task_type, today):
+    """Check if the user actually performed the task today. Returns True if completed."""
+    if task_type == "daily_checkin":
+        return True  # the act of claiming IS the check-in
+
+    if task_type == "watch_video":
+        from app.models.course import CourseProgress
+        result = await db.execute(
+            select(CourseProgress).where(
+                CourseProgress.user_id == user_id,
+                func.date(CourseProgress.updated_at) == today,
+            ).limit(1)
+        )
+        return result.scalar_one_or_none() is not None
+
+    if task_type == "do_practice":
+        result = await db.execute(
+            select(PracticeRecord).where(
+                PracticeRecord.user_id == user_id,
+                func.date(PracticeRecord.created_at) == today,
+            ).limit(1)
+        )
+        return result.scalar_one_or_none() is not None
+
+    if task_type == "write_note":
+        from app.models.ai_note import AINote
+        result = await db.execute(
+            select(AINote).where(
+                AINote.notes.isnot(None),
+                func.date(AINote.created_at) == today,
+            ).limit(1)
+        )
+        return result.scalar_one_or_none() is not None
+
+    if task_type == "community_interact":
+        from app.models.community import Post, Comment
+        p = await db.execute(
+            select(Post).where(Post.user_id == user_id, func.date(Post.created_at) == today).limit(1)
+        )
+        if p.scalar_one_or_none():
+            return True
+        c = await db.execute(
+            select(Comment).where(Comment.user_id == user_id, func.date(Comment.created_at) == today).limit(1)
+        )
+        return c.scalar_one_or_none() is not None
+
+    if task_type == "run_code":
+        # No code-run record table; skip verification for now
+        return True
+
+    return True  # unknown task types default to claimable
+
+
 @router.post("/claim-reward")
 async def claim_task_reward(
     req: ClaimReward,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Mark task complete and award XP."""
+    """Verify task completion and award XP + cookies."""
     today = date.today()
 
     task = (await db.execute(select(DailyTask).where(DailyTask.id == req.task_id))).scalar_one_or_none()
     if not task:
-        return api_response(404, "任务不存在")
+        return api_response(code=404, message="任务不存在")
 
     existing = (await db.execute(
         select(UserDailyTask).where(UserDailyTask.user_id == user.id, UserDailyTask.task_id == req.task_id, UserDailyTask.date == today)
     )).scalar_one_or_none()
 
     if existing and existing.is_completed:
-        return api_response(400, "今日已领取")
+        return api_response(code=400, message="今日已领取")
+
+    # Verify actual completion
+    if not await _verify_task_completion(db, user.id, task.task_type, today):
+        hints = {
+            "watch_video": "请先在课程中心观看视频至少5分钟",
+            "do_practice": "请先完成今日的每日一练",
+            "write_note": "请先在课程中生成AI笔记",
+            "community_interact": "请先在讨论区发帖或回复",
+        }
+        return api_response(code=400, message=hints.get(task.task_type, "请先完成对应任务"))
 
     if not existing:
         existing = UserDailyTask(user_id=user.id, task_id=req.task_id, date=today)
@@ -113,7 +176,6 @@ async def claim_task_reward(
         user.current_exp += xp_to_add
         user.total_exp += xp_to_add
         user.experience += xp_to_add
-    user.points += task.reward_points
 
     # Update rank
     old_rank = user.current_rank
@@ -129,13 +191,12 @@ async def claim_task_reward(
     earned = []
     if old_rank != user.current_rank:
         earned = await award_badge_if_earned(db, user.id, "level_reach", user.total_exp)
-    await award_badge_if_earned(db, user.id, "points_total", user.points)
 
     # Update last_login_at for streak tracking
     if user.last_login_at is None:
         user.last_login_at = func.now()
 
-    # Award cookies for daily tasks
+    # Award cookies: 1 cookie per task
     cookie_gained = await award_cookies(db, user, 1, "daily_task", f"完成每日任务: {task.title}")
 
     # Check if all daily tasks are completed -> bonus +5 cookies
@@ -144,12 +205,11 @@ async def claim_task_reward(
         select(UserDailyTask).where(UserDailyTask.user_id == user.id, UserDailyTask.date == today)
     )
     user_tasks = {ut.task_id: ut for ut in user_tasks_result.scalars().all()}
-    all_completed = all(len(user_tasks) == len(all_tasks) and all(
+    all_completed = all(
         user_tasks.get(t.id) and (user_tasks[t.id].is_completed or t.id == req.task_id)
         for t in all_tasks
-    ))
+    )
     if all_completed and len(all_tasks) > 0:
-        # Check we haven't already awarded the bonus
         from app.models.pet import PetCookieRecord
         bonus_exists = await db.execute(
             select(PetCookieRecord).where(
@@ -179,7 +239,6 @@ async def claim_task_reward(
 
     return api_response(data={
         "experience_gained": xp_to_add,
-        "points_gained": task.reward_points,
         "cookies_gained": cookie_gained,
         "total_cookies": user.cookies,
         "current_rank": user.current_rank,

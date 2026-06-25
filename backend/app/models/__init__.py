@@ -10,6 +10,7 @@ from app.models.review import CourseReview
 from app.models.favorite import Favorite
 from app.models.ai_note import AINoteTask, AINote
 from app.models.pet import PetProfile, PetAdventure, PetCookieRecord, PetReward
+from app.models.promotion import PromotionExam
 
 __all__ = [
     "User",
@@ -24,4 +25,5 @@ __all__ = [
     "Favorite",
     "AINoteTask", "AINote",
     "PetProfile", "PetAdventure", "PetCookieRecord", "PetReward",
+    "PromotionExam",
 ]

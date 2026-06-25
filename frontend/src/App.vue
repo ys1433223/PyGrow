@@ -1,25 +1,37 @@
 <script setup>
 import { ref, watch, onMounted, onUpdated } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from './stores/auth'
 import { initThemeSystem } from './utils/core'
 import AssessmentModal from './components/common/AssessmentModal.vue'
 import LoginPromptModal from './components/common/LoginPromptModal.vue'
 import PetCompanion from './components/PetCompanion.vue'
 
+const router = useRouter()
 const auth = useAuthStore()
 
-// Delayed assessment prompt — wait for page transition to finish
+// Delayed assessment prompt — wait for initial route to finish loading
 const showAssessment = ref(false)
 let assessTimer = null
+let routerReady = false
+
+// Wait for router to be ready before allowing assessment modal
+router.isReady().then(() => {
+  routerReady = true
+  // If assessment was already requested, start the timer now
+  if (auth.showAssessmentPrompt) {
+    assessTimer = setTimeout(() => { showAssessment.value = true }, 800)
+  }
+})
 
 watch(() => auth.showAssessmentPrompt, (val) => {
   clearTimeout(assessTimer)
-  if (val) {
+  if (val && routerReady) {
     assessTimer = setTimeout(() => { showAssessment.value = true }, 800)
   } else {
     showAssessment.value = false
   }
-}, { immediate: true })
+})
 
 // Login prompt modal
 const showLoginPrompt = ref(false)

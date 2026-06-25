@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { practiceApi } from '../../api/practice'
 
 const props = defineProps({
@@ -19,6 +19,7 @@ const visible = ref(false)
 const loading = ref(false)
 const hints = ref([]) // [{hint_level, hint_mode, title, content, examples, common_mistakes, keywords, still_no_answer}]
 const showRemediation = ref(false)
+const hintListRef = ref(null)
 const maxLevel = 3
 
 // ---- mode labels per knowledge type ----
@@ -78,6 +79,11 @@ async function requestHint(level) {
       } else {
         hints.value.push(data)
         emit('hint-used', hints.value.length)
+      }
+      // Auto-scroll hint list to bottom
+      await nextTick()
+      if (hintListRef.value) {
+        hintListRef.value.scrollTop = hintListRef.value.scrollHeight
       }
     }
   } catch {
@@ -144,8 +150,8 @@ function addToReview() {
         </button>
       </div>
 
-      <!-- Hint list -->
-      <div class="p-4 space-y-3 max-h-80 overflow-y-auto">
+      <!-- Hint list (scrollable) -->
+      <div class="px-4 pt-4 space-y-3 max-h-60 overflow-y-auto" ref="hintListRef">
         <div v-for="(hint, i) in hints" :key="i"
           class="rounded-xl border border-blue-100 bg-blue-50/50 overflow-hidden animate-slide-in">
           <div class="flex items-center gap-2 px-4 py-2.5 bg-blue-50 border-b border-blue-100">
@@ -163,33 +169,9 @@ function addToReview() {
         </div>
 
         <!-- Loading state -->
-        <div v-if="loading" class="flex items-center justify-center py-4 text-gray-400">
+        <div v-if="loading" class="flex items-center justify-center py-3 text-gray-400">
           <i class="fas fa-spinner fa-spin mr-2"></i>
           <span class="text-xs">AI 思考中...</span>
-        </div>
-
-        <!-- "Next level" button -->
-        <button
-          v-if="canRequestMore && !loading"
-          @click="requestHint(nextLevel)"
-          class="w-full py-2.5 rounded-xl text-xs font-medium transition flex items-center justify-center gap-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200"
-        >
-          <i class="fas fa-unlock-alt"></i>
-          展开第{{ nextLevel }}层 · {{ nextLabel }}
-        </button>
-
-        <!-- All hints shown, show "still don't know" -->
-        <div v-if="hints.length >= maxLevel && !showRemediation && !loading" class="space-y-2">
-          <p class="text-center text-xs text-gray-400 py-1">
-            <i class="fas fa-check-circle text-green-400 mr-1"></i>已展开全部 {{ maxLevel }} 层提示
-          </p>
-          <button
-            @click="requestStillDontKnow"
-            class="w-full py-2.5 rounded-xl text-xs font-medium transition flex items-center justify-center gap-1.5 bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200"
-          >
-            <i class="fas fa-hand"></i>
-            还是不会，查看知识点补救卡片
-          </button>
         </div>
 
         <!-- Remediation card -->
@@ -218,6 +200,49 @@ function addToReview() {
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Expand / actions area (always visible, outside scroll) -->
+      <div class="px-4 py-3 border-t border-blue-50 space-y-2">
+        <!-- State: no hints yet, waiting for first load -->
+        <button
+          v-if="hints.length === 0 && !loading && !showRemediation"
+          @click="requestHint(1)"
+          class="w-full py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600 shadow-md hover:shadow-lg transition flex items-center justify-center gap-2"
+        >
+          <i class="fas fa-robot"></i>
+          获取第1层提示 · {{ currentLabels[0] }}
+        </button>
+
+        <!-- State: has hints but not all 3 → show expand button -->
+        <button
+          v-if="canRequestMore && !loading"
+          @click="requestHint(nextLevel)"
+          class="w-full py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600 shadow-md hover:shadow-lg transition flex items-center justify-center gap-2"
+        >
+          <i class="fas fa-unlock-alt"></i>
+          展开第{{ nextLevel }}层 · {{ nextLabel }}
+          <span class="text-white/60 text-xs font-normal">(共{{ maxLevel }}层)</span>
+        </button>
+
+        <!-- State: loading -->
+        <div v-if="loading" class="text-center text-xs text-gray-400 py-2">
+          <i class="fas fa-spinner fa-spin mr-1"></i>AI 正在生成提示...
+        </div>
+
+        <!-- State: all 3 layers loaded → show "still don't know" -->
+        <template v-if="hints.length >= maxLevel && !showRemediation && !loading">
+          <p class="text-center text-xs text-gray-400 py-1">
+            <i class="fas fa-check-circle text-green-400 mr-1"></i>已展开全部 {{ maxLevel }} 层提示
+          </p>
+          <button
+            @click="requestStillDontKnow"
+            class="w-full py-2.5 rounded-xl text-sm font-medium bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 transition flex items-center justify-center gap-1.5"
+          >
+            <i class="fas fa-hand"></i>
+            还是不会，查看知识点补救卡片
+          </button>
+        </template>
       </div>
 
       <!-- Footer note -->

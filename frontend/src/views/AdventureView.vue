@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { adventureApi } from '../api/adventure'
-import { triggerPetState } from '../hooks/usePetCompanion'
+import { triggerPetState, triggerPetAdventureStart, triggerPetAdventureEnd } from '../hooks/usePetCompanion'
 import AppHeader from '../components/layout/AppHeader.vue'
 import AppFooter from '../components/layout/AppFooter.vue'
 import PageLoader from '../components/layout/PageLoader.vue'
@@ -135,6 +135,7 @@ async function handleStartAdventure() {
   if (!canAdventure.value) return
 
   triggerPetState('adventure')
+  triggerPetAdventureStart()
 
   try {
     const res = await adventureApi.startAdventure()
@@ -178,7 +179,7 @@ async function handleClaimReward() {
       const data = res.data.data
       claimedReward.value = data.reward
       adventureState.value = 'reward'
-      triggerPetState('returnReward', 4000)
+      triggerPetAdventureEnd()
 
       // Refresh profile and logs
       await fetchProfile()
@@ -195,7 +196,6 @@ async function handleClaimReward() {
 function closeRewardCard() {
   claimedReward.value = null
   adventureState.value = 'idle'
-  triggerPetState('idle')
 }
 
 function goToCollection(type) {
@@ -379,13 +379,9 @@ watch(countdown, (val) => {
                   </div>
                 </div>
                 <div class="flex justify-center gap-3 mt-4">
-                  <button @click="goToCollection('postcard')"
-                    class="px-5 py-2.5 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 text-white text-sm font-bold shadow hover:shadow-lg transition">
-                    <i class="fas fa-images mr-1.5"></i>去图鉴查看
-                  </button>
                   <button @click="closeRewardCard"
-                    class="px-5 py-2.5 rounded-full bg-gray-100 text-gray-600 text-sm font-bold hover:bg-gray-200 transition">
-                    知道啦
+                    class="px-6 py-3 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-white text-sm font-bold shadow-lg hover:shadow-xl transition">
+                    <i class="fas fa-bookmark mr-1.5"></i>收集到图鉴
                   </button>
                 </div>
               </div>
@@ -393,9 +389,11 @@ watch(countdown, (val) => {
               <!-- Knowledge Note -->
               <div v-else-if="claimedReward.reward_type === 'knowledge_note'" class="text-center">
                 <div class="max-w-sm mx-auto bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl shadow-lg border border-blue-100 p-6">
-                  <div class="w-16 h-16 mx-auto mb-3 bg-blue-100 rounded-full flex items-center justify-center">
-                    <i class="fas fa-lightbulb text-blue-400 text-2xl"></i>
-                  </div>
+                  <img
+                    :src="'/pets/status/studying' + (Math.random() > 0.5 ? '2' : '') + '.png'"
+                    class="w-36 h-36 mx-auto mb-3 object-contain"
+                    alt="studying"
+                  />
                   <h4 class="font-bold text-gray-800 mb-3">{{ claimedReward.reward_name }}</h4>
                   <div class="bg-white rounded-xl p-4 shadow-inner">
                     <p class="text-sm text-gray-600 leading-relaxed">{{ claimedReward.reward_content }}</p>
@@ -404,14 +402,10 @@ watch(countdown, (val) => {
                     <i class="fas fa-map-pin mr-1"></i>{{ claimedReward.source_location }}
                   </p>
                 </div>
-                <div class="flex justify-center gap-3 mt-4">
-                  <button @click="goToCollection('knowledge_note')"
-                    class="px-5 py-2.5 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 text-white text-sm font-bold shadow hover:shadow-lg transition">
-                    <i class="fas fa-lightbulb mr-1.5"></i>去图鉴查看
-                  </button>
+                <div class="flex justify-center mt-4">
                   <button @click="closeRewardCard"
-                    class="px-5 py-2.5 rounded-full bg-gray-100 text-gray-600 text-sm font-bold hover:bg-gray-200 transition">
-                    知道啦
+                    class="px-6 py-3 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-white text-sm font-bold shadow-lg hover:shadow-xl transition">
+                    <i class="fas fa-bookmark mr-1.5"></i>收集到图鉴
                   </button>
                 </div>
               </div>
@@ -419,9 +413,11 @@ watch(countdown, (val) => {
               <!-- Blessing -->
               <div v-else-if="claimedReward.reward_type === 'blessing'" class="text-center">
                 <div class="max-w-sm mx-auto bg-gradient-to-br from-pink-50 to-rose-50 rounded-2xl shadow-lg border border-pink-100 p-6">
-                  <div class="w-16 h-16 mx-auto mb-3 bg-pink-100 rounded-full flex items-center justify-center">
-                    <i class="fas fa-heart text-pink-400 text-2xl"></i>
-                  </div>
+                  <img
+                    :src="'/pets/status/love' + (Math.random() > 0.5 ? '2' : '') + '.png'"
+                    class="w-44 h-44 mx-auto mb-3 object-contain"
+                    alt="love"
+                  />
                   <h4 class="font-bold text-gray-800 mb-3">{{ claimedReward.reward_name }}</h4>
                   <p class="text-sm text-gray-600 leading-relaxed italic">"{{ claimedReward.reward_content }}"</p>
                   <p v-if="claimedReward.source_location" class="text-xs text-gray-400 mt-2">
@@ -430,8 +426,8 @@ watch(countdown, (val) => {
                 </div>
                 <div class="mt-4">
                   <button @click="closeRewardCard"
-                    class="px-8 py-2.5 rounded-full bg-gradient-to-r from-pink-400 to-rose-500 text-white text-sm font-bold shadow hover:shadow-lg transition">
-                    <i class="fas fa-heart mr-1.5"></i>知道啦
+                    class="px-6 py-3 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-white text-sm font-bold shadow-lg hover:shadow-xl transition">
+                    <i class="fas fa-bookmark mr-1.5"></i>收集到图鉴
                   </button>
                 </div>
               </div>

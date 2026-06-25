@@ -385,11 +385,11 @@ BADGES_DATA = [
 
 # ========== Daily Tasks (5 items, with new EXP values) ==========
 DAILY_TASKS_DATA = [
-    {"title": "签到打卡", "description": "每日签到领取经验奖励", "task_type": "daily_checkin", "reward_exp": 5, "reward_points": 5},
-    {"title": "观看课程视频", "description": "今天观看课程视频超过10分钟", "task_type": "watch_video", "reward_exp": 10, "reward_points": 5},
-    {"title": "完成每日一练", "description": "今天完成每日5道练习题", "task_type": "do_practice", "reward_exp": 20, "reward_points": 10},
-    {"title": "记录学习笔记", "description": "今天记录至少1条学习笔记", "task_type": "write_note", "reward_exp": 5, "reward_points": 5},
-    {"title": "社区有效互动", "description": "回复帖子或被回复、被点赞", "task_type": "community_interact", "reward_exp": 5, "reward_points": 5},
+    {"title": "签到打卡", "description": "每日签到领取经验奖励", "task_type": "daily_checkin", "reward_exp": 5, "reward_points": 0},
+    {"title": "观看课程视频", "description": "今天观看课程视频至少5分钟", "task_type": "watch_video", "reward_exp": 10, "reward_points": 0},
+    {"title": "完成每日一练", "description": "今天完成每日5道练习题", "task_type": "do_practice", "reward_exp": 20, "reward_points": 0},
+    {"title": "记录学习笔记", "description": "今天记录至少1条AI学习笔记", "task_type": "write_note", "reward_exp": 5, "reward_points": 0},
+    {"title": "社区有效互动", "description": "在讨论区发帖或回复", "task_type": "community_interact", "reward_exp": 5, "reward_points": 0},
 ]
 
 # ========== Load projects from JSON ==========
