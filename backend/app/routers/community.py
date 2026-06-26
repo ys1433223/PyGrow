@@ -1,3 +1,6 @@
+import re
+from collections import Counter
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc, or_
@@ -11,7 +14,14 @@ from app.schemas.common import api_response
 
 router = APIRouter()
 
-PROFANITY_WORDS = ["fuck", "shit", "damn", "傻逼", "操你", "日你", "他妈", "你妈", "混蛋", "白痴"]
+PROFANITY_WORDS = [
+    "fuck", "shit", "damn", "asshole", "bitch", "dick", "bastard",
+    "傻逼", "操你", "日你", "他妈", "你妈", "混蛋", "白痴",
+    "弱智", "脑残", "废物", "垃圾人", "狗日的", "去死",
+    "草泥马", "艹你", "妈的", "特么", "尼玛", "滚蛋",
+    "变态", "人渣", "贱人", "蠢货", "智障", "煞笔",
+    "sb", "nmsl", "cnm", "tmd", "woc", "nmd",
+]
 
 # Honor titles based on total likes received
 HONOR_TITLES = [
@@ -48,11 +58,42 @@ async def get_user_total_likes(db: AsyncSession, user_id: int) -> int:
     return post_likes.scalar() + comment_likes.scalar()
 
 
-def filter_profanity(text: str) -> str:
-    result = text
+def check_profanity(text: str) -> str | None:
+    """Return the first profanity word found, or None if clean."""
+    lower = text.lower()
     for w in PROFANITY_WORDS:
-        result = result.replace(w, "***")
-    return result
+        if w in lower:
+            return w
+    return None
+
+
+def validate_content_quality(text: str) -> str | None:
+    """Return error message if content quality is too low, or None if OK."""
+    stripped = text.strip()
+
+    # 1. Single-character spam: same char dominates (e.g. "啊啊啊啊啊啊" or "11111111")
+    if len(stripped) >= 8:
+        unique = set(stripped)
+        if len(unique) <= 2:
+            counts = Counter(stripped)
+            top_count = counts.most_common(1)[0][1]
+            if top_count / len(stripped) > 0.65:
+                return "内容不能是单一重复字符，请认真填写有意义的内容"
+
+    # 2. Meaningful character count: Chinese chars, English letters, digits
+    meaningful = len(re.findall(r'[一-鿿＀-￯a-zA-Z0-9]', stripped))
+    if meaningful < 5:
+        return "有效文字不足，请补充具体的描述或问题"
+
+    # 3. Repeated same phrase (e.g. "好的好的好的好的")
+    if len(stripped) >= 12:
+        for cs in [2, 3]:
+            if len(stripped) >= cs * 4:
+                pattern = stripped[:cs]
+                if pattern and stripped.count(pattern) * cs / len(stripped) > 0.7:
+                    return "请勿重复粘贴相同内容，请认真填写"
+
+    return None
 
 
 class PostCreate(BaseModel):
@@ -68,14 +109,24 @@ class PostCreate(BaseModel):
             raise ValueError("标题不能为空")
         if len(v.strip()) < 2:
             raise ValueError("标题至少 2 个字")
+        bad = check_profanity(v)
+        if bad:
+            raise ValueError("标题包含不文明用语，请修改后重新发布")
         return v.strip()
 
     @field_validator("content")
     @classmethod
-    def content_min_length(cls, v):
-        if len(v.strip()) < 10:
+    def content_validate(cls, v):
+        stripped = v.strip()
+        if len(stripped) < 10:
             raise ValueError("内容不少于 10 个字")
-        return v.strip()
+        bad = check_profanity(v)
+        if bad:
+            raise ValueError("内容包含不文明用语，请修改后重新发布")
+        quality_err = validate_content_quality(v)
+        if quality_err:
+            raise ValueError(quality_err)
+        return stripped
 
 
 class CommentCreate(BaseModel):
@@ -272,11 +323,8 @@ async def create_post(
     db: AsyncSession = Depends(get_db),
 ):
     """Create a new post."""
-    title = filter_profanity(req.title)
-    content = filter_profanity(req.content)
-
     post = Post(
-        user_id=user.id, title=title, content=content,
+        user_id=user.id, title=req.title, content=req.content,
         category=req.category, tags=req.tags,
     )
     db.add(post)
@@ -296,7 +344,13 @@ async def add_comment(
     if not p:
         return api_response(404, "帖子不存在")
 
-    content = filter_profanity(req.content)
+    content = req.content.strip()
+    bad = check_profanity(content)
+    if bad:
+        return api_response(400, "评论包含不文明用语，请修改后重新发布")
+    quality_err = validate_content_quality(content)
+    if quality_err:
+        return api_response(400, quality_err)
     comment = Comment(post_id=post_id, user_id=user.id, content=content)
     db.add(comment)
 
