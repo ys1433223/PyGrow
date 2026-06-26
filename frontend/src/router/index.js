@@ -13,7 +13,6 @@ const routes = [
   { path: '/daily-practice', name: 'dailyPractice', component: () => import('../views/DailyPracticeView.vue'), meta: { requiresAuth: true } },
   { path: '/report', name: 'report', component: () => import('../views/ReportView.vue'), meta: { requiresAuth: true } },
   { path: '/code-runner', name: 'codeRunner', component: () => import('../views/CodeRunnerView.vue'), meta: { requiresAuth: true } },
-  { path: '/ai-mentor', name: 'aiMentor', component: () => import('../views/AIMentorView.vue'), meta: { requiresAuth: true } },
   { path: '/projects', name: 'projects', component: () => import('../views/ProjectCenterView.vue'), meta: { requiresAuth: true } },
   { path: '/community', name: 'community', component: () => import('../views/CommunityView.vue'), meta: { requiresAuth: true } },
   { path: '/admin', name: 'admin', component: () => import('../views/AdminView.vue'), meta: { requiresAuth: true } },

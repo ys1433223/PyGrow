@@ -106,7 +106,7 @@ async function submitAssessment() {
         <div class="max-w-3xl mx-auto mb-8">
           <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <h1 class="text-2xl font-bold text-gray-900 mb-2">能力测评</h1>
-            <p class="text-gray-500 text-sm mb-4">共 {{ totalQuestions }} 题，预计 15 分钟。请认真作答，帮助我们了解你的 Python 水平。</p>
+            <p class="text-gray-500 text-sm mb-4">共 {{ totalQuestions }} 题、满分 100 分，覆盖 Python 基础到中级知识点。测评结果将为你匹配萌新小白~稳扎玩家四个初始段位。</p>
             <!-- Progress -->
             <div class="flex items-center gap-3">
               <div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -150,18 +150,18 @@ async function submitAssessment() {
             <div v-if="currentQuestion.type === 'single' || currentQuestion.type === 'tf'" class="space-y-3">
               <button
                 v-for="(opt, i) in currentQuestion.options" :key="i"
-                @click="selectAnswer(currentQuestion.id, opt)"
+                @click="selectAnswer(currentQuestion.id, typeof opt === 'object' ? opt.label : opt)"
                 :class="[
                   'w-full text-left px-5 py-3.5 rounded-xl border-2 transition-all font-medium',
-                  isSelected(currentQuestion.id, opt)
+                  isSelected(currentQuestion.id, typeof opt === 'object' ? opt.label : opt)
                     ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-md'
                     : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 text-gray-700'
                 ]"
               >
                 <span class="inline-flex items-center justify-center w-7 h-7 rounded-full border-2 text-sm font-bold mr-3"
-                  :class="isSelected(currentQuestion.id, opt) ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-300 text-gray-400'"
+                  :class="isSelected(currentQuestion.id, typeof opt === 'object' ? opt.label : opt) ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-300 text-gray-400'"
                 >{{ String.fromCharCode(65 + i) }}</span>
-                {{ opt }}
+                {{ typeof opt === 'object' ? opt.text : opt }}
               </button>
             </div>
 
@@ -170,21 +170,21 @@ async function submitAssessment() {
               <p class="text-xs text-orange-500 mb-2">多选题：请选择所有正确答案</p>
               <button
                 v-for="(opt, i) in currentQuestion.options" :key="i"
-                @click="selectAnswer(currentQuestion.id, opt)"
+                @click="selectAnswer(currentQuestion.id, typeof opt === 'object' ? opt.label : opt)"
                 :class="[
                   'w-full text-left px-5 py-3.5 rounded-xl border-2 transition-all font-medium',
-                  isSelected(currentQuestion.id, opt)
+                  isSelected(currentQuestion.id, typeof opt === 'object' ? opt.label : opt)
                     ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-md'
                     : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 text-gray-700'
                 ]"
               >
                 <span class="inline-flex items-center justify-center w-7 h-7 rounded-md border-2 text-sm font-bold mr-3"
-                  :class="isSelected(currentQuestion.id, opt) ? 'border-blue-500 bg-blue-500 text-white rounded-md' : 'border-gray-300 text-gray-400 rounded-md'"
+                  :class="isSelected(currentQuestion.id, typeof opt === 'object' ? opt.label : opt) ? 'border-blue-500 bg-blue-500 text-white rounded-md' : 'border-gray-300 text-gray-400 rounded-md'"
                 >
-                  <i v-if="isSelected(currentQuestion.id, opt)" class="fas fa-check text-xs"></i>
+                  <i v-if="isSelected(currentQuestion.id, typeof opt === 'object' ? opt.label : opt)" class="fas fa-check text-xs"></i>
                   <span v-else>{{ String.fromCharCode(65 + i) }}</span>
                 </span>
-                {{ opt }}
+                {{ typeof opt === 'object' ? opt.text : opt }}
               </button>
             </div>
 

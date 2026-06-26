@@ -42,7 +42,11 @@ def judge_answer(question, user_answer: str) -> bool:
 
     if q_type == "multiple_choice":
         # Compare as sets (order-independent)
-        expected_set = set(expected.replace(" ", "").replace("\n", "").upper().split(","))
+        # DB answers may be concatenated letters like "ABD" or comma-separated like "A,B,D"
+        if "," in expected:
+            expected_set = set(expected.replace(" ", "").replace("\n", "").upper().split(","))
+        else:
+            expected_set = set(expected.replace(" ", "").replace("\n", "").upper())
         actual_set = set(actual.replace(" ", "").replace("\n", "").upper().split(","))
         # Filter empty strings
         expected_set = {e for e in expected_set if e}

@@ -122,16 +122,26 @@ const stdout = ref('')
 const stderr = ref('')
 const loading = ref(false)
 const error = ref('')
+const execTime = ref(null)
+const images = ref([])
+const tables = ref([])
 
 async function handleRun() {
   loading.value = true
   error.value = ''
   stdout.value = ''
   stderr.value = ''
+  execTime.value = null
+  images.value = []
+  tables.value = []
   try {
     const res = await runCode(code.value)
-    stdout.value = res.data.stdout || ''
-    stderr.value = res.data.stderr || ''
+    const d = res.data?.data || res.data || {}
+    stdout.value = d.stdout || ''
+    stderr.value = d.stderr || ''
+    execTime.value = d.execution_time ?? null
+    images.value = d.images || []
+    tables.value = d.tables || []
   } catch (e) {
     error.value = e.response?.data?.message || e.message || '运行失败'
   } finally {
@@ -365,20 +375,76 @@ loadSavedList()
 
             <!-- Output -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-              <div class="px-4 py-2.5 border-b border-gray-100 bg-gray-50 flex-shrink-0">
+              <div class="px-4 py-2.5 border-b border-gray-100 bg-gray-50 flex-shrink-0 flex items-center justify-between">
                 <span class="text-sm font-medium text-gray-600">运行输出</span>
+                <span v-if="execTime !== null && !loading" class="text-xs text-gray-400">
+                  <i class="fas fa-clock mr-1"></i>{{ execTime }}s
+                </span>
               </div>
               <div class="flex-grow overflow-auto p-4 font-mono text-sm bg-gray-900 text-gray-200">
-                <div v-if="error" class="text-red-400 mb-2">{{ error }}</div>
-                <div v-if="stdout">
-                  <div class="text-gray-400 text-xs mb-1">stdout:</div>
-                  <pre class="text-green-400 whitespace-pre-wrap">{{ stdout }}</pre>
+                <!-- Error banner -->
+                <div v-if="error" class="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 mb-3 text-red-400 text-sm">
+                  <i class="fas fa-exclamation-triangle mr-2"></i>{{ error }}
                 </div>
-                <div v-if="stderr">
-                  <div class="text-gray-400 text-xs mb-1 mt-2">stderr:</div>
-                  <pre class="text-red-400 whitespace-pre-wrap">{{ stderr }}</pre>
+
+                <!-- Status badge -->
+                <div v-if="!loading && (stdout || stderr || images.length || tables.length || error)" class="flex items-center gap-2 mb-3">
+                  <span v-if="!stderr && !error" class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-500/10 text-green-400 border border-green-500/30">
+                    <i class="fas fa-check text-[10px]"></i>运行成功
+                  </span>
+                  <span v-else class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/30">
+                    <i class="fas fa-times text-[10px]"></i>运行失败
+                  </span>
                 </div>
-                <div v-if="!stdout && !stderr && !error && !loading" class="text-gray-500 italic">
+
+                <!-- stdout -->
+                <div v-if="stdout" class="mb-3">
+                  <div class="flex items-center gap-2 text-gray-400 text-xs mb-1.5">
+                    <i class="fas fa-terminal"></i>标准输出
+                  </div>
+                  <pre class="text-green-400 whitespace-pre-wrap bg-gray-950 rounded-lg p-3">{{ stdout }}</pre>
+                </div>
+
+                <!-- Images -->
+                <div v-if="images.length" class="mb-3">
+                  <div class="flex items-center gap-2 text-gray-400 text-xs mb-2">
+                    <i class="fas fa-chart-line"></i>图像输出 ({{ images.length }})
+                  </div>
+                  <div class="space-y-3">
+                    <div v-for="(img, i) in images" :key="'img-'+i" class="bg-white rounded-xl p-3 border border-gray-200">
+                      <div class="text-xs text-gray-400 mb-2 font-sans">图 {{ i + 1 }}</div>
+                      <img :src="img.data" :alt="'Chart '+(i+1)" class="max-w-full h-auto rounded-lg mx-auto" />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Tables -->
+                <div v-if="tables.length" class="mb-3">
+                  <div class="flex items-center gap-2 text-gray-400 text-xs mb-2">
+                    <i class="fas fa-table"></i>表格输出 ({{ tables.length }})
+                  </div>
+                  <div class="space-y-3">
+                    <div v-for="(tbl, i) in tables" :key="'tbl-'+i" class="bg-white rounded-xl p-3 border border-gray-200 overflow-x-auto">
+                      <div class="text-xs text-gray-400 mb-2 font-sans">
+                        表 {{ i + 1 }}
+                        <span v-if="tbl.shape" class="ml-2">({{ tbl.shape[0] }} 行 x {{ tbl.shape[1] }} 列)</span>
+                      </div>
+                      <div v-html="tbl.html" class="pygrow-table"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- stderr -->
+                <div v-if="stderr" class="mb-3">
+                  <div class="flex items-center gap-2 text-red-400/70 text-xs mb-1.5">
+                    <i class="fas fa-exclamation-circle"></i>错误输出
+                  </div>
+                  <pre class="text-red-400 whitespace-pre-wrap bg-gray-950 rounded-lg p-3">{{ stderr }}</pre>
+                </div>
+
+                <!-- Empty state -->
+                <div v-if="!stdout && !stderr && !images.length && !tables.length && !error && !loading" class="text-gray-500 italic text-center py-8">
+                  <i class="fas fa-play text-2xl mb-3 block opacity-50"></i>
                   点击"运行"按钮查看输出结果
                 </div>
               </div>
@@ -522,5 +588,33 @@ loadSavedList()
   width: 0;
   opacity: 0;
   overflow: hidden;
+}
+
+/* Pandas DataFrame table styling (rendered via v-html) */
+:deep(.pygrow-table) table {
+  width: 100%;
+  font-size: 12px;
+  font-family: 'Microsoft YaHei', ui-sans-serif, sans-serif;
+  border-collapse: collapse;
+}
+:deep(.pygrow-table) thead th {
+  background: #f1f5f9;
+  color: #334155;
+  font-weight: 600;
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 2px solid #cbd5e1;
+  white-space: nowrap;
+}
+:deep(.pygrow-table) tbody td {
+  padding: 6px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #1e293b;
+}
+:deep(.pygrow-table) tbody tr:nth-child(even) td {
+  background: #f8fafc;
+}
+:deep(.pygrow-table) tbody tr:hover td {
+  background: #eef2ff;
 }
 </style>

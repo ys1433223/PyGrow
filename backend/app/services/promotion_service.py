@@ -29,7 +29,6 @@ from app.services.gamification import RANK_TIERS, MAJOR_LEVELS, get_rank_index, 
 
 logger = logging.getLogger(__name__)
 
-DEEPSEEK_BASE = "https://api.deepseek.com"
 EXAM_QUESTION_COUNT = 10
 RECENT_DAYS = 30
 

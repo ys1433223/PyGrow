@@ -7,8 +7,6 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-DEEPSEEK_BASE = "https://api.deepseek.com"
-
 # ---------------------------------------------------------------------------
 # Knowledge type → hint modes (3 levels each)
 # ---------------------------------------------------------------------------
@@ -405,7 +403,7 @@ async def get_ai_hint(
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
                 resp = await client.post(
-                    f"{DEEPSEEK_BASE}/v1/chat/completions",
+                    f"{settings.deepseek_base_url}/v1/chat/completions",
                     headers={
                         "Authorization": f"Bearer {api_key}",
                         "Content-Type": "application/json",

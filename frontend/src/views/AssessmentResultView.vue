@@ -9,19 +9,44 @@ const router = useRouter()
 const result = ref(null)
 const loading = ref(true)
 
-const levelColors = {
-  '入门级': 'from-gray-400 to-gray-600',
-  '初级': 'from-green-400 to-green-600',
-  '中级': 'from-blue-400 to-blue-600',
-  '高级': 'from-purple-400 to-purple-600',
+const rankGradients = {
+  '萌新小白': 'from-gray-400 to-gray-600',
+  '勤学学徒': 'from-green-400 to-emerald-600',
+  '达标选手': 'from-blue-400 to-blue-600',
+  '稳扎玩家': 'from-purple-400 to-purple-600',
+  '进阶干将': 'from-amber-400 to-orange-600',
+  '学科达人': 'from-red-400 to-rose-600',
+  '专业先锋': 'from-cyan-400 to-teal-600',
+  '满级学神': 'from-yellow-400 to-amber-600',
 }
 
-const levelBadgeColors = {
-  '入门级': 'bg-gray-100 text-gray-600',
-  '初级': 'bg-green-100 text-green-600',
-  '中级': 'bg-blue-100 text-blue-600',
-  '高级': 'bg-purple-100 text-purple-600',
+const rankBadgeColors = {
+  '萌新小白': 'bg-gray-100 text-gray-600',
+  '勤学学徒': 'bg-green-100 text-green-600',
+  '达标选手': 'bg-blue-100 text-blue-600',
+  '稳扎玩家': 'bg-purple-100 text-purple-600',
+  '进阶干将': 'bg-amber-100 text-amber-700',
+  '学科达人': 'bg-red-100 text-red-600',
+  '专业先锋': 'bg-teal-100 text-teal-700',
+  '满级学神': 'bg-yellow-100 text-yellow-700',
 }
+
+const rankDescriptions = {
+  '萌新小白': 'Python 编程世界的新成员，从这里开启你的成长之旅！',
+  '勤学学徒': '基础扎实，继续保持学习和练习的节奏。',
+  '达标选手': '已掌握核心知识，具备独立解决问题的能力。',
+  '稳扎玩家': '知识体系完善，是时候向更高段位发起挑战了！',
+}
+
+const rankLabel = computed(() => {
+  if (!result.value) return ''
+  return result.value.assigned_rank || result.value.level || ''
+})
+
+const rankDesc = computed(() => rankDescriptions[rankLabel.value] || '')
+
+const gradientClass = computed(() => rankGradients[rankLabel.value] || 'from-gray-400 to-gray-600')
+const badgeClass = computed(() => rankBadgeColors[rankLabel.value] || 'bg-gray-100 text-gray-600')
 
 const scoreRingStyle = computed(() => {
   if (!result.value) return {}
@@ -71,7 +96,7 @@ function retakeAssessment() {
         <div class="max-w-2xl mx-auto">
           <!-- Score card -->
           <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-8">
-            <div class="h-32 bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center relative">
+            <div class="h-32 bg-gradient-to-r" :class="gradientClass" style="display:flex;align-items:center;justify-content:center;position:relative">
               <div class="absolute inset-0 flex items-center justify-center">
                 <div class="w-28 h-28 rounded-full flex items-center justify-center" :style="scoreRingStyle">
                   <div class="w-24 h-24 rounded-full bg-white flex flex-col items-center justify-center">
@@ -83,11 +108,12 @@ function retakeAssessment() {
             </div>
 
             <div class="p-8 text-center">
-              <span class="inline-block text-sm font-bold px-4 py-1.5 rounded-full mb-3" :class="levelBadgeColors[result.level] || 'bg-gray-100 text-gray-600'">
-                {{ result.level }}
+              <span class="inline-block text-sm font-bold px-4 py-1.5 rounded-full mb-3" :class="badgeClass">
+                {{ rankLabel }}
               </span>
               <h1 class="text-2xl font-bold text-gray-900 mb-2">测评完成！</h1>
               <p class="text-gray-500">答对 {{ result.score }}/{{ result.total }} 题，正确率 {{ result.score_percent }}%</p>
+              <p v-if="rankDesc" class="text-gray-600 text-sm mt-2 max-w-md mx-auto leading-relaxed">{{ rankDesc }}</p>
               <p v-if="result.experience_gained" class="text-blue-600 text-sm mt-2 font-medium">+{{ result.experience_gained }} 经验值</p>
             </div>
           </div>

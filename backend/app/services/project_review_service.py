@@ -8,8 +8,6 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-DEEPSEEK_BASE = "https://api.deepseek.com"
-
 REVIEW_SYSTEM_PROMPT = """你是一个专业的 Python 编程教师，负责批改学生的综合项目作业。
 你需要根据评分量规对学生的项目进行打分和评价。
 
@@ -130,7 +128,7 @@ async def review_project(
         try:
             async with httpx.AsyncClient(timeout=60.0) as client:
                 resp = await client.post(
-                    f"{DEEPSEEK_BASE}/v1/chat/completions",
+                    f"{settings.deepseek_base_url}/v1/chat/completions",
                     headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
                     json={
                         "model": "deepseek-chat",

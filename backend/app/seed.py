@@ -8,7 +8,7 @@ from app.models.user import User
 from app.models.course import Course, Lesson
 from app.models.gamification import Question, Badge, DailyTask
 from app.models.project import Project
-from app.models.community import Post
+from app.models.community import Post, Comment, PostLike, CommentLike
 
 
 COURSES_DATA = [
@@ -408,17 +408,18 @@ def _load_projects_from_json():
 
 
 # ========== Community Seed Posts ==========
+# Each post: (user_id, title, content, category, tags, like_count)
 COMMUNITY_POSTS = [
-    {"title": "Python 列表推导式怎么用？求大神指导", "content": "刚开始学 Python 列表推导式，看到 [x for x in range(10) if x%2==0] 这种写法感觉很酷，但不太理解执行顺序。请问哪位大神能详细解释一下列表推导式的工作原理？", "category": "问答专区", "tags": "列表,for循环,初级,代码求助"},
-    {"title": "分享一个很实用的 Python 字符串处理技巧", "content": "最近在处理大量文本数据时发现，用 str.translate() 和 str.maketrans() 比 replace 循环快很多。我来分享一下具体用法和性能对比，希望对大家有帮助！", "category": "技术分享区", "tags": "字符串,经验分享,初级"},
-    {"title": "推荐几个免费的 Python 视频课程资源", "content": "整理了几个免费的 Python 视频课程资源，包括 B 站上质量很高的教程，还有一些国外大学的公开课，适合不同阶段的学习者。", "category": "资源分享", "tags": "视频课程,图文教程,入门级,初级"},
-    {"title": "学了三个月 Python，感觉啥也不会...", "content": "每天看视频跟着敲代码，感觉看的时候都懂，但让自己写就完全不知道从哪里下手。是不是不适合学编程啊？求各位过来人指点一下！", "category": "我要吐槽", "tags": "学习吐槽,入门级,初级"},
-    {"title": "NameError: name 'xxx' is not defined 怎么解决？", "content": "运行代码的时候总是报 NameError，说变量没有定义。检查了好几遍变量名拼写也没问题，请问还可能是什么原因导致的？", "category": "问答专区", "tags": "NameError,变量未定义,变量,入门级,报错求助"},
-    {"title": "PyTorch 入门经验分享：从零到跑通第一个模型", "content": "花了两周时间终于跑通了第一个图像分类模型，记录一下踩过的坑和学习路线，希望对想学深度学习的同学有帮助。", "category": "技术分享区", "tags": "数据分析,面向对象,经验分享,学习笔记,中级"},
-    {"title": "收集的 Python 练习题大合集（带答案）分享", "content": "整理了 100 道 Python 练习题，涵盖基础语法到面向对象，每道题都有详细答案和解析。适合新手练习和面试准备。", "category": "资源分享", "tags": "练习题,代码模板,变量,函数,初级,中级"},
-    {"title": "缩进错误搞得我心态炸了", "content": "复制了一段代码过来改了一下，结果满屏的 IndentationError，tab 和空格混用的问题真的要命。Python 这个强制缩进有时候真的很烦！", "category": "我要吐槽", "tags": "IndentationError,缩进问题,学习吐槽,入门级"},
-    {"title": "while 循环怎么避免死循环？求最佳实践", "content": "写了个 while 循环来读取文件，结果忘了写退出条件，程序跑了一分钟还在转。大家平时怎么避免写死循环的？有什么好的习惯吗？", "category": "问答专区", "tags": "while循环,死循环,文件操作,初级,代码求助"},
-    {"title": "分享一个我自己写的天气查询小工具", "content": "用 requests + tkinter 写了个桌面天气查询工具，输入城市名就能显示实时天气。代码开源在 GitHub 上，欢迎大家提建议！", "category": "技术分享区", "tags": "函数,模块,项目展示,中级"},
+    (1, "Python 列表推导式怎么用？求大神指导", "刚开始学 Python 列表推导式，看到 [x for x in range(10) if x%2==0] 这种写法感觉很酷，但不太理解执行顺序。请问哪位大神能详细解释一下列表推导式的工作原理？", "问答专区", "列表,for循环,初级,代码求助", 12),
+    (2, "分享一个很实用的 Python 字符串处理技巧", "最近在处理大量文本数据时发现，用 str.translate() 和 str.maketrans() 比 replace 循环快很多。我来分享一下具体用法和性能对比，希望对大家有帮助！", "技术分享区", "字符串,经验分享,初级", 45),
+    (2, "推荐几个免费的 Python 视频课程资源", "整理了几个免费的 Python 视频课程资源，包括 B 站上质量很高的教程，还有一些国外大学的公开课，适合不同阶段的学习者。", "资源分享", "视频课程,图文教程,入门级,初级", 8),
+    (3, "学了三个月 Python，感觉啥也不会...", "每天看视频跟着敲代码，感觉看的时候都懂，但让自己写就完全不知道从哪里下手。是不是不适合学编程啊？求各位过来人指点一下！", "我要吐槽", "学习吐槽,入门级,初级", 3),
+    (1, "NameError: name 'xxx' is not defined 怎么解决？", "运行代码的时候总是报 NameError，说变量没有定义。检查了好几遍变量名拼写也没问题，请问还可能是什么原因导致的？", "问答专区", "NameError,变量未定义,变量,入门级,报错求助", 7),
+    (2, "PyTorch 入门经验分享：从零到跑通第一个模型", "花了两周时间终于跑通了第一个图像分类模型，记录一下踩过的坑和学习路线，希望对想学深度学习的同学有帮助。", "技术分享区", "数据分析,面向对象,经验分享,学习笔记,中级", 110),
+    (3, "收集的 Python 练习题大合集（带答案）分享", "整理了 100 道 Python 练习题，涵盖基础语法到面向对象，每道题都有详细答案和解析。适合新手练习和面试准备。", "资源分享", "练习题,代码模板,变量,函数,初级,中级", 23),
+    (1, "缩进错误搞得我心态炸了", "复制了一段代码过来改了一下，结果满屏的 IndentationError，tab 和空格混用的问题真的要命。Python 这个强制缩进有时候真的很烦！", "我要吐槽", "IndentationError,缩进问题,学习吐槽,入门级", 6),
+    (3, "while 循环怎么避免死循环？求最佳实践", "写了个 while 循环来读取文件，结果忘了写退出条件，程序跑了一分钟还在转。大家平时怎么避免写死循环的？有什么好的习惯吗？", "问答专区", "while循环,死循环,文件操作,初级,代码求助", 15),
+    (2, "分享一个我自己写的天气查询小工具", "用 requests + tkinter 写了个桌面天气查询工具，输入城市名就能显示实时天气。代码开源在 GitHub 上，欢迎大家提建议！", "技术分享区", "函数,模块,项目展示,中级", 88),
 ]
 
 async def seed():
@@ -486,15 +487,48 @@ async def seed():
         if projects_data:
             print(f"Seeded {len(projects_data)} projects.")
 
-        # Ensure system user exists for seed posts
+        # Ensure demo users exist for seed posts
         from app.services.auth_service import hash_password
-        sys_user = (await session.execute(select(User).where(User.id == 1))).scalar_one_or_none()
-        if not sys_user:
-            session.add(User(id=1, username="admin", password_hash=hash_password("admin123"), nickname="社区管理员", is_admin=1))
+        pwd = hash_password("123456")
+        DEMO_USERS = [
+            (1, "admin", "社区管理员", 1),
+            (2, "Python小明", "Python小明", 0),
+            (3, "代码小达人", "代码小达人", 0),
+        ]
+        for uid, uname, nnick, is_admin in DEMO_USERS:
+            existing = (await session.execute(select(User).where(User.id == uid))).scalar_one_or_none()
+            if not existing:
+                session.add(User(id=uid, username=uname, password_hash=pwd, nickname=nnick, is_admin=is_admin))
 
         # Seed community posts
-        for pdata in COMMUNITY_POSTS:
-            session.add(Post(user_id=1, **pdata))
+        for uid, title, content, category, tags, like_count in COMMUNITY_POSTS:
+            session.add(Post(user_id=uid, title=title, content=content, category=category, tags=tags, like_count=like_count))
+
+        # Seed PostLike records so get_user_total_likes sums correctly
+        # Simulate: users 1,2,3 liking each other's posts
+        post_ids = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        like_pairs = [
+            # user 2 likes many posts (user 2's own posts get likes from 1 & 3)
+            (1, 1), (1, 2), (1, 5), (1, 8),  # user 1 likes
+            (2, 1), (2, 2), (2, 3), (2, 5), (2, 6), (2, 8), (2, 9),  # user 2 likes
+            (3, 1), (3, 2), (3, 3), (3, 6), (3, 7), (3, 10),  # user 3 likes
+        ]
+        for uid, pid in like_pairs:
+            session.add(PostLike(user_id=uid, post_id=pid))
+
+        # Seed a few comments with likes
+        sample_comments = [
+            (1, 1, 2, "列表推导式其实就是一种简洁的 for 循环写法，执行顺序和普通 for 一样，只是写法更紧凑。多写几次就习惯了，加油！"),
+            (2, 6, 1, "PyTorch 入门的路线图太有帮助了！我也在学深度学习，可以加个好友交流吗？"),
+            (3, 10, 3, "这个天气查询工具很实用，代码结构也很清晰。建议可以加上城市自动补全功能。"),
+            (4, 2, 3, "字符串处理确实有很多技巧，translate 方法比 replace 高效很多，谢谢分享！"),
+        ]
+        for cid, pid, uid, content in sample_comments:
+            session.add(Comment(id=cid, post_id=pid, user_id=uid, content=content, like_count=3))
+
+        for cid in [1, 2, 3, 4]:
+            session.add(CommentLike(user_id=1, comment_id=cid))
+            session.add(CommentLike(user_id=2, comment_id=cid))
 
         await session.commit()
         print("Database seeded successfully.")

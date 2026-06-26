@@ -106,6 +106,8 @@ async function loadDailyQuestions() {
       if (questions.value.length === 0) {
         error.value = '今日题库暂无可用题目，请稍后再来。'
       }
+    } else {
+      error.value = res.data.message || '加载题目失败'
     }
   } catch (e) {
     error.value = '加载题目失败，请检查网络连接。'
@@ -139,9 +141,11 @@ async function submitAnswers() {
       else if (pct >= 75) triggerPetState('happy', 4000)
       else if (pct >= 60) triggerPetState('thinking', 4000)
       else triggerPetState('comfort', 4000)
+    } else {
+      error.value = res.data.message || '提交失败，请重试。'
     }
   } catch (e) {
-    error.value = '提交失败，请重试。'
+    error.value = '提交失败，请检查网络连接。'
   } finally {
     submitting.value = false
   }
@@ -235,6 +239,17 @@ watch([currentQuestion, currentIndex, totalQuestions], () => {
       <div class="text-center bg-white rounded-2xl shadow-sm border border-gray-100 p-10 max-w-md mx-auto">
         <p class="text-4xl mb-3">📋</p>
         <p class="text-gray-600 mb-4">{{ error }}</p>
+        <button @click="router.push('/practice')" class="text-blue-600 hover:text-blue-700 text-sm font-medium">
+          <i class="fas fa-arrow-left mr-1"></i>返回练习中心
+        </button>
+      </div>
+    </main>
+
+    <!-- Empty questions fallback -->
+    <main v-else-if="questions.length === 0 && !loading" class="flex-grow flex items-center justify-center">
+      <div class="text-center bg-white rounded-2xl shadow-sm border border-gray-100 p-10 max-w-md mx-auto">
+        <p class="text-4xl mb-3">📋</p>
+        <p class="text-gray-600 mb-4">暂无可用题目</p>
         <button @click="router.push('/practice')" class="text-blue-600 hover:text-blue-700 text-sm font-medium">
           <i class="fas fa-arrow-left mr-1"></i>返回练习中心
         </button>

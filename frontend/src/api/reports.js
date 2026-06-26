@@ -7,4 +7,7 @@ export const reportsApi = {
   getKnowledgePoints() {
     return client.get('/report/knowledge-points')
   },
+  getRadarData() {
+    return client.get('/report/radar-data')
+  },
 }

@@ -177,8 +177,10 @@ async function loadChapterTags(chNum) {
     const res = await practiceApi.getByChapter(chapterStage.value, chNum)
     if (res.data.code === 200) {
       chapterTagsMap.value = { ...chapterTagsMap.value, [chNum]: res.data.data.available_tags || [] }
+    } else {
+      chapterTagsMap.value = { ...chapterTagsMap.value, [chNum]: [] }
     }
-  } catch {}
+  } catch { chapterTagsMap.value = { ...chapterTagsMap.value, [chNum]: [] } }
 }
 
 function selectChapterPractice(chNum, tag = null) {
@@ -195,8 +197,11 @@ async function loadChapterQuestions() {
       questions.value = res.data.data.questions
       chapterAvailableTags.value = res.data.data.available_tags || []
       resetState()
+    } else {
+      questionError.value = res.data.message || '加载失败'
+      questions.value = []
     }
-  } catch (e) { questionError.value = '加载失败' }
+  } catch (e) { questionError.value = '加载失败，请检查网络连接' }
   loading.value = false
 }
 
@@ -204,8 +209,14 @@ async function loadWrong() {
   loading.value = true; questionError.value = ''
   try {
     const res = await practiceApi.getWrongQuestions(wrongFilterTag.value)
-    if (res.data.code === 200) { questions.value = res.data.data.wrong_questions; resetState() }
-  } catch (e) { questionError.value = '加载失败' }
+    if (res.data.code === 200) {
+      questions.value = res.data.data.wrong_questions
+      resetState()
+    } else {
+      questionError.value = res.data.message || '加载失败'
+      questions.value = []
+    }
+  } catch (e) { questionError.value = '加载失败，请检查网络连接' }
   loading.value = false
 }
 
@@ -222,8 +233,11 @@ async function loadRecommend() {
         learned_scope: res.data.data.learned_scope || {},
       }
       resetState()
+    } else {
+      questionError.value = res.data.message || '加载失败'
+      questions.value = []
     }
-  } catch (e) { questionError.value = '加载失败' }
+  } catch (e) { questionError.value = '加载失败，请检查网络连接' }
   loading.value = false
 }
 
@@ -253,8 +267,10 @@ async function submitAnswers() {
       else if (pct >= 75) triggerPetState('happy', 4000)
       else if (pct >= 60) triggerPetState('thinking', 4000)
       else triggerPetState('comfort', 4000)
+    } else {
+      questionError.value = res.data.message || '提交失败'
     }
-  } catch (e) { questionError.value = '提交失败' }
+  } catch (e) { questionError.value = '提交失败，请检查网络连接' }
   submitting.value = false
 }
 
@@ -379,6 +395,13 @@ onUnmounted(() => { setPetMode('active') })
         </div>
 
         <div v-if="loading" class="text-center py-20 bg-white rounded-[2rem]"><i class="fas fa-spinner fa-spin text-4xl text-blue-400 mb-4 block"></i><p class="text-gray-400">加载题目中...</p></div>
+
+        <!-- Error banner -->
+        <div v-else-if="questionError" class="text-center py-16 bg-white rounded-[2rem]">
+          <i class="fas fa-exclamation-circle text-5xl text-red-300 mb-4 block"></i>
+          <p class="text-gray-600 mb-4">{{ questionError }}</p>
+          <button @click="goBack" class="text-blue-600 hover:underline text-sm">返回练习中心</button>
+        </div>
 
         <!-- ====== CHAPTER: left sidebar tree with expandable tags ====== -->
         <div v-else-if="activeModule === 'chapter' && questions.length === 0" class="flex gap-5 min-h-0" style="min-height: 55vh;">

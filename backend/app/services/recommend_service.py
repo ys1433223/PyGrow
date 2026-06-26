@@ -16,8 +16,6 @@ from app.services.gamification import calc_major_level
 
 logger = logging.getLogger(__name__)
 
-DEEPSEEK_BASE = "https://api.deepseek.com"
-
 KNOWLEDGE_TAGS = [
     "Python基础", "编码规范", "数据类型", "运算符与表达式", "函数",
     "正则表达式", "面向对象", "文件操作", "网页基础",
@@ -325,7 +323,7 @@ async def generate_ai_questions(
     try:
         async with httpx.AsyncClient(timeout=60.0) as client:
             resp = await client.post(
-                f"{DEEPSEEK_BASE}/v1/chat/completions",
+                f"{settings.deepseek_base_url}/v1/chat/completions",
                 headers={
                     "Authorization": f"Bearer {api_key}",
                     "Content-Type": "application/json",

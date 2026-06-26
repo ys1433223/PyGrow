@@ -27,6 +27,7 @@ class Settings(BaseSettings):
 
     # DeepSeek
     deepseek_api_key: str = ""
+    deepseek_base_url: str = "https://api.deepseek.com"
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "allow"}
 

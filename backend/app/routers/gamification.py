@@ -6,7 +6,7 @@ from sqlalchemy import select, func
 from app.database import get_db
 from app.deps import get_current_user
 from app.models.user import User
-from app.models.gamification import Badge, UserBadge, DailyTask, UserDailyTask
+from app.models.gamification import Badge, UserBadge, DailyTask, UserDailyTask, PracticeRecord
 from app.schemas.common import api_response
 from app.schemas.gamification import ClaimReward
 from app.services.gamification import calc_level, calc_major_level, calc_rank_progress, award_badge_if_earned, get_consecutive_days, reset_daily_exp_if_new_day, DAILY_TOTAL_EXP_CAP, DAILY_TASK_EXP_CAP, get_rank_exp_limit
@@ -61,6 +61,10 @@ async def get_daily_tasks(user: User = Depends(get_current_user), db: AsyncSessi
     items = []
     for t in all_tasks:
         ut = user_tasks.get(t.id)
+        already_claimed = ut.is_completed if ut else False
+        is_claimable = False
+        if not already_claimed:
+            is_claimable = await _verify_task_completion(db, user.id, t.task_type, today)
         items.append({
             "id": t.id,
             "title": t.title,
@@ -68,7 +72,8 @@ async def get_daily_tasks(user: User = Depends(get_current_user), db: AsyncSessi
             "task_type": t.task_type,
             "reward_exp": t.reward_exp,
             "reward_points": t.reward_points,
-            "is_completed": ut.is_completed if ut else False,
+            "is_completed": already_claimed,
+            "is_claimable": is_claimable,
         })
 
     return api_response(data=items)

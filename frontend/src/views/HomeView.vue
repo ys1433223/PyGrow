@@ -69,14 +69,36 @@ function getCourseLevel(courseTitle) {
   return getCourseInfo(courseTitle).level
 }
 
+const featureLinks = [
+  { title: '6门课程', desc: '按阶段系统学习', to: '/courses', accent: '#2563eb', soft: '#eaf2ff', iconX: '0%', iconY: '0%', fallback: 'fas fa-graduation-cap' },
+  { title: '每日一练', desc: '用短题巩固知识', to: '/daily-practice', accent: '#7c3aed', soft: '#f1eaff', iconX: '50%', iconY: '0%', fallback: 'fas fa-dumbbell' },
+  { title: '在线编程', desc: '即写即运行', to: '/code-runner', accent: '#0ea5e9', soft: '#e7f6ff', iconX: '100%', iconY: '0%', fallback: 'fas fa-code' },
+  { title: '宠物探险', desc: '收集明信片', to: '/adventure', accent: '#f59e0b', soft: '#fff5df', iconX: '0%', iconY: '100%', fallback: 'fas fa-compass' },
+  { title: '项目挑战', desc: '把知识做成作品', to: '/projects', accent: '#ec4899', soft: '#fff0f7', iconX: '50%', iconY: '100%', fallback: 'fas fa-tasks' },
+  { title: '学习社区', desc: '交流互助成长', to: '/community', accent: '#22c55e', soft: '#eafbf1', iconX: '100%', iconY: '100%', fallback: 'fas fa-comments' },
+]
+
 const tools = ref([
-  { id: '1', name: 'PyCharm', icon: '🐍', desc: '专业IDE', color: 'bg-blue-50 border-blue-200' },
-  { id: '2', name: 'VS Code', icon: '💻', desc: '轻量编辑器', color: 'bg-blue-50 border-blue-200' },
-  { id: '3', name: 'Jupyter', icon: '📓', desc: '数据分析神器', color: 'bg-orange-50 border-orange-200' },
-  { id: '4', name: 'Anaconda', icon: '🟢', desc: '环境管理', color: 'bg-green-50 border-green-200' },
-  { id: '5', name: 'Pip', icon: '📦', desc: '包管理工具', color: 'bg-yellow-50 border-yellow-200' },
-  { id: '6', name: 'Docker', icon: '🐳', desc: '容器部署', color: 'bg-blue-50 border-blue-200' }
+  { id: '1', name: 'PyCharm', icon: 'fas fa-leaf', desc: '专业 IDE', accent: '#3b82f6' },
+  { id: '2', name: 'VS Code', icon: 'fas fa-laptop-code', desc: '轻量编辑器', accent: '#60a5fa' },
+  { id: '3', name: 'Jupyter', icon: 'fas fa-chart-line', desc: '数据分析神器', accent: '#fb923c' },
+  { id: '4', name: 'Anaconda', icon: 'fas fa-layer-group', desc: '环境管理', accent: '#34d399' },
+  { id: '5', name: 'Pip', icon: 'fas fa-box-open', desc: '包管理工具', accent: '#fbbf24' },
+  { id: '6', name: 'Docker', icon: 'fas fa-cube', desc: '容器部署', accent: '#38bdf8' }
 ])
+
+function handleImageError(event) {
+  event.currentTarget.classList.add('asset-hidden')
+}
+
+function authorInitial(name) {
+  return (name || '学').trim().charAt(0).toUpperCase()
+}
+
+function postExcerpt(post) {
+  const raw = post.summary || post.excerpt || post.content || post.body || '分享学习经验、代码思路和成长记录，一起把 Python 学扎实。'
+  return String(raw).replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').slice(0, 72)
+}
 
 onMounted(async () => {
   try {
@@ -201,48 +223,20 @@ function goToCourse(course) {
 
       <!-- Feature Overview -->
       <section class="container mx-auto px-4 mb-12">
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <router-link to="/courses" class="group bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center hover:shadow-md hover:-translate-y-1 transition-all">
-            <div class="w-11 h-11 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-lg mx-auto mb-3 group-hover:scale-110 transition-transform">
-              <i class="fas fa-play"></i>
+        <div class="feature-grid grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <router-link
+            v-for="feature in featureLinks"
+            :key="feature.to"
+            :to="feature.to"
+            class="feature-card group"
+            :style="{ '--feature-accent': feature.accent, '--feature-soft': feature.soft, '--icon-x': feature.iconX, '--icon-y': feature.iconY }"
+          >
+            <div class="feature-icon-sprite" aria-hidden="true">
+              <span class="feature-icon-fallback"><i :class="feature.fallback"></i></span>
             </div>
-            <h4 class="font-bold text-sm text-gray-800 mb-1">6门课程</h4>
-            <p class="text-gray-400 text-xs">系统学习</p>
-          </router-link>
-          <router-link to="/daily-practice" class="group bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center hover:shadow-md hover:-translate-y-1 transition-all">
-            <div class="w-11 h-11 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center text-lg mx-auto mb-3 group-hover:scale-110 transition-transform">
-              <i class="fas fa-dumbbell"></i>
-            </div>
-            <h4 class="font-bold text-sm text-gray-800 mb-1">每日一练</h4>
-            <p class="text-gray-400 text-xs">巩固知识</p>
-          </router-link>
-          <router-link to="/code-runner" class="group bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center hover:shadow-md hover:-translate-y-1 transition-all">
-            <div class="w-11 h-11 bg-pink-100 text-pink-600 rounded-xl flex items-center justify-center text-lg mx-auto mb-3 group-hover:scale-110 transition-transform">
-              <i class="fas fa-code"></i>
-            </div>
-            <h4 class="font-bold text-sm text-gray-800 mb-1">在线编程</h4>
-            <p class="text-gray-400 text-xs">即写即运行</p>
-          </router-link>
-          <router-link to="/adventure" class="group bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center hover:shadow-md hover:-translate-y-1 transition-all">
-            <div class="w-11 h-11 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center text-lg mx-auto mb-3 group-hover:scale-110 transition-transform">
-              <i class="fas fa-compass"></i>
-            </div>
-            <h4 class="font-bold text-sm text-gray-800 mb-1">宠物探险</h4>
-            <p class="text-gray-400 text-xs">收集明信片</p>
-          </router-link>
-          <router-link to="/projects" class="group bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center hover:shadow-md hover:-translate-y-1 transition-all">
-            <div class="w-11 h-11 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center text-lg mx-auto mb-3 group-hover:scale-110 transition-transform">
-              <i class="fas fa-tasks"></i>
-            </div>
-            <h4 class="font-bold text-sm text-gray-800 mb-1">项目挑战</h4>
-            <p class="text-gray-400 text-xs">学以致用</p>
-          </router-link>
-          <router-link to="/community" class="group bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center hover:shadow-md hover:-translate-y-1 transition-all">
-            <div class="w-11 h-11 bg-green-100 text-green-600 rounded-xl flex items-center justify-center text-lg mx-auto mb-3 group-hover:scale-110 transition-transform">
-              <i class="fas fa-comments"></i>
-            </div>
-            <h4 class="font-bold text-sm text-gray-800 mb-1">学习社区</h4>
-            <p class="text-gray-400 text-xs">交流互助</p>
+            <h4>{{ feature.title }}</h4>
+            <p>{{ feature.desc }}</p>
+            <span class="feature-card-arrow"><i data-lucide="arrow-right" width="14"></i></span>
           </router-link>
         </div>
       </section>
@@ -282,7 +276,6 @@ function goToCourse(course) {
             <!-- Card footer -->
             <div class="p-4 flex items-center justify-between">
               <div class="flex items-center gap-3">
-                <span class="text-xs text-gray-400"><i class="fas fa-layer-group mr-1"></i>{{ course.chapters_count || 0 }} 章节</span>
                 <span v-if="course.students_count" class="text-xs text-gray-400"><i class="fas fa-users mr-1"></i>{{ course.students_count }} 人学习</span>
               </div>
               <span class="text-blue-600 text-xs font-bold flex items-center group-hover:translate-x-1.5 transition-transform duration-300">
@@ -334,9 +327,9 @@ function goToCourse(course) {
               </h4>
               <div v-if="dailyTasks.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <div v-for="task in dailyTasks" :key="task.id"
-                  :class="['flex items-center justify-between p-4 rounded-xl border transition-all', task.is_completed ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-100 hover:shadow-md']">
+                  :class="['flex items-center justify-between p-4 rounded-xl border transition-all', task.is_completed ? 'bg-green-50 border-green-200' : task.is_claimable ? 'bg-blue-50/50 border-blue-200 hover:shadow-md' : 'bg-gray-100 border-gray-200']">
                   <div class="flex items-center gap-3">
-                    <div :class="['w-10 h-10 rounded-full flex items-center justify-center text-lg', task.is_completed ? 'bg-green-100' : 'bg-white border border-gray-200']">
+                    <div :class="['w-10 h-10 rounded-full flex items-center justify-center text-lg', task.is_completed ? 'bg-green-100' : task.is_claimable ? 'bg-blue-100' : 'bg-gray-200']">
                       <span v-if="task.is_completed">✅</span>
                       <span v-else>{{ task.task_type === 'watch_video' ? '📺' : task.task_type === 'do_practice' ? '📝' : task.task_type === 'run_code' ? '💻' : task.task_type === 'daily_checkin' ? '📅' : '🎯' }}</span>
                     </div>
@@ -345,10 +338,14 @@ function goToCourse(course) {
                       <p class="text-xs text-gray-400">+{{ task.reward_exp }} XP · +{{ task.reward_points }} 积分</p>
                     </div>
                   </div>
-                  <button v-if="!task.is_completed" @click="claimTaskReward(task.id)"
+                  <button v-if="!task.is_completed && task.is_claimable" @click="claimTaskReward(task.id)"
                     class="px-4 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-full hover:bg-blue-700 transition whitespace-nowrap">
                     领取
                   </button>
+                  <span v-else-if="!task.is_completed && !task.is_claimable"
+                    class="px-4 py-1.5 bg-gray-300 text-gray-400 text-xs font-bold rounded-full whitespace-nowrap cursor-default">
+                    未完成
+                  </span>
                   <span v-else class="text-xs text-green-600 font-bold">已完成</span>
                 </div>
               </div>
@@ -433,73 +430,110 @@ function goToCourse(course) {
       </section>
 
       <!-- Locked state (not logged in) -->
-      <section v-else class="container mx-auto px-4 mt-16 mb-20 text-center py-16 bg-white rounded-[2rem] shadow-sm border border-gray-100 relative overflow-hidden group">
-        <div class="absolute inset-0 bg-blue-600 opacity-0 group-hover:opacity-5 transition-opacity pointer-events-none"></div>
-        <div class="text-6xl mb-4">🔒</div>
-        <h3 class="text-2xl font-bold text-gray-800 mb-2">学习中心已锁定</h3>
-        <p class="text-gray-500 mb-6">登录后解锁我的课程、实战练习与专属书架</p>
-        <a href="/login" @click.prevent="$router.push('/login')" class="inline-block bg-blue-600 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:scale-105 transition-transform">
-          立即登录 / 注册
-        </a>
+      <section v-else class="container mx-auto px-4 mt-16 mb-20">
+        <div class="locked-center-card group">
+          <div class="locked-center-copy">
+            <span class="section-kicker">成长档案</span>
+            <h3>学习中心已锁定</h3>
+            <p>登录后解锁课程进度、今日任务、实战练习和你的专属 Python 成长记录。</p>
+            <div class="locked-benefits">
+              <span><i class="fas fa-route"></i> 学习路径</span>
+              <span><i class="fas fa-chart-simple"></i> 进度报告</span>
+              <span><i class="fas fa-award"></i> 等级徽章</span>
+            </div>
+            <a href="/login" @click.prevent="$router.push('/login')" class="locked-login-button">
+              立即登录 / 注册 <i data-lucide="arrow-right" width="16"></i>
+            </a>
+          </div>
+          <div class="locked-center-visual" aria-hidden="true">
+            <div class="visual-fallback"><i class="fas fa-lock"></i></div>
+            <img
+              src="/images/home/learning-center-locked.png"
+              alt=""
+              loading="lazy"
+              @error="handleImageError"
+            >
+          </div>
+        </div>
       </section>
 
       <!-- Discussion -->
       <section class="container mx-auto px-4 mt-20">
-        <div class="flex items-center justify-between mb-8">
-          <router-link to="/community" class="cursor-pointer group">
-            <h2 class="text-3xl font-bold text-gray-900 flex items-center group-hover:text-blue-600 transition-colors">
-              <span class="mr-2">💬</span> 学习社区
-              <i data-lucide="arrow-right" class="ml-2 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+        <div class="community-head">
+          <router-link to="/community" class="community-title-link group">
+            <span class="section-kicker">学习社区</span>
+            <h2>
+              同学们正在讨论什么
+              <i data-lucide="arrow-right" width="22" class="ml-2 opacity-0 group-hover:opacity-100 transition-opacity"></i>
             </h2>
-            <p class="text-gray-500 mt-2">不仅是学习，更是交流与成长的社区</p>
+            <p>把问题、笔记和项目心得放到桌面上，一起把 Python 学得更扎实。</p>
           </router-link>
+          <div class="community-visual" aria-hidden="true">
+            <div class="visual-fallback"><i class="fas fa-comments"></i></div>
+            <img
+              src="/images/home/community-collab.png"
+              alt=""
+              loading="lazy"
+              @error="handleImageError"
+            >
+          </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div v-for="post in hotPosts" :key="post.id"
                @click="$router.push(`/community?post=${post.id}`)"
-               class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-1 transition-all relative overflow-hidden group cursor-pointer">
-            <div v-if="post.is_pinned" class="absolute top-0 right-0 bg-red-100 text-red-600 text-xs px-3 py-1 rounded-bl-xl font-bold flex items-center">HOT</div>
-            <div class="flex items-start space-x-4">
-              <img :src="post.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + post.author" class="w-12 h-12 rounded-full bg-gray-100 border border-white shadow-sm">
-              <div class="flex-1">
-                <div class="flex items-center space-x-2 mb-1">
-                  <span v-if="post.tags && post.tags.length" class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded flex items-center"># {{ post.tags[0] }}</span>
-                  <span class="text-gray-400 text-xs">@{{ post.author }}</span>
+               class="community-post-card group">
+            <div v-if="post.is_pinned" class="community-hot">HOT</div>
+            <div class="community-post-top">
+              <div class="community-avatar">
+                <span>{{ authorInitial(post.author) }}</span>
+                <img v-if="post.avatar" :src="post.avatar" :alt="post.author" @error="handleImageError">
+              </div>
+              <div class="min-w-0 flex-1">
+                <div class="community-meta">
+                  <span v-if="post.tags && post.tags.length" class="community-tag"># {{ post.tags[0] }}</span>
+                  <span>@{{ post.author }}</span>
                 </div>
-                <h3 class="font-bold text-gray-800 text-lg mb-3 line-clamp-1 group-hover:text-blue-600 transition-colors">{{ post.title }}</h3>
-                <div class="flex items-center space-x-6 text-gray-400 text-sm">
-                  <span class="flex items-center"><i data-lucide="message-square" width="16" class="mr-1"></i> {{ post.comment_count }}</span>
-                  <span class="flex items-center"><i data-lucide="heart" width="16" class="mr-1"></i> {{ post.like_count }}</span>
+                <h3>{{ post.title }}</h3>
+                <p>{{ postExcerpt(post) }}</p>
+                <div class="community-stats">
+                  <span><i data-lucide="message-square" width="15"></i>{{ post.comment_count || 0 }}</span>
+                  <span><i data-lucide="heart" width="15"></i>{{ post.like_count || 0 }}</span>
+                  <span><i data-lucide="eye" width="15"></i>{{ post.view_count || post.views || 0 }}</span>
                 </div>
               </div>
             </div>
           </div>
           <!-- Empty state when no posts -->
-          <div v-if="hotPosts.length === 0" class="md:col-span-2 text-center py-12 bg-white rounded-2xl border border-gray-100">
-            <div class="text-4xl mb-3">💬</div>
-            <p class="text-gray-400">暂无热门帖子，快去社区发帖吧！</p>
+          <div v-if="hotPosts.length === 0" class="empty-state-card md:col-span-2">
+            <img src="/images/empty-states/learning-empty.png" alt="" loading="lazy" @error="handleImageError">
+            <div class="visual-fallback"><i class="fas fa-comments"></i></div>
+            <h3>暂无热门帖子</h3>
+            <p>快去社区发帖，把今天的 Python 小发现分享出来。</p>
           </div>
         </div>
       </section>
 
       <!-- Tools -->
       <section class="container mx-auto px-4 mt-20 mb-20">
-        <div class="bg-gray-900 rounded-[2.5rem] p-8 md:p-12 relative overflow-hidden text-white">
-          <div class="absolute top-0 right-0 w-64 h-64 bg-blue-600 rounded-full blur-[100px] opacity-30 pointer-events-none"></div>
-          <div class="absolute bottom-0 left-0 w-64 h-64 bg-purple-600 rounded-full blur-[100px] opacity-30 pointer-events-none"></div>
-
-          <div class="relative z-10 text-center mb-10">
-            <h2 class="text-3xl font-bold mb-4 flex items-center justify-center">
-              <i data-lucide="zap" class="mr-2 text-yellow-400 fill-current"></i> 学习工具补给站
-            </h2>
-            <p class="text-gray-400">工欲善其事，必先利其器。</p>
+        <div class="tools-supply-panel">
+          <div class="tools-texture" aria-hidden="true"></div>
+          <div class="tools-head">
+            <span class="section-kicker dark">工具补给</span>
+            <h2><i data-lucide="zap" width="26"></i> 学习工具补给站</h2>
+            <p>工欲善其事，必先利其器。把常用工具放在一个安静、好找的位置。</p>
           </div>
 
           <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <router-link v-for="tool in tools" :key="tool.id" to="/resources" :class="['block p-4 rounded-2xl border bg-white/5 backdrop-blur-sm hover:bg-white/10 transition-all hover:-translate-y-1 hover:shadow-lg group text-center', tool.color]">
-              <div class="text-4xl mb-3 transform group-hover:scale-110 transition-transform">{{ tool.icon }}</div>
-              <h3 class="font-bold text-gray-200 mb-1">{{ tool.name }}</h3>
-              <p class="text-xs text-gray-500 line-clamp-1">{{ tool.desc }}</p>
+            <router-link
+              v-for="tool in tools"
+              :key="tool.id"
+              to="/resources"
+              class="tool-card group"
+              :style="{ '--tool-accent': tool.accent }"
+            >
+              <div class="tool-icon"><i :class="tool.icon"></i></div>
+              <h3>{{ tool.name }}</h3>
+              <p>{{ tool.desc }}</p>
             </router-link>
           </div>
         </div>
@@ -509,3 +543,528 @@ function goToCourse(course) {
     <AppFooter />
   </div>
 </template>
+
+<style scoped>
+.section-kicker {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border-radius: 999px;
+  background: #eaf2ff;
+  color: #2563eb;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  padding: 0.35rem 0.75rem;
+}
+
+.section-kicker.dark {
+  background: rgba(96, 165, 250, 0.16);
+  color: #bfdbfe;
+}
+
+.feature-card {
+  position: relative;
+  display: flex;
+  min-height: 168px;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 1.5rem;
+  background:
+    radial-gradient(circle at 76% 18%, var(--feature-soft), transparent 34%),
+    #fff;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+  padding: 1rem;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-6px);
+  border-color: color-mix(in srgb, var(--feature-accent) 30%, #dbeafe);
+  box-shadow: 0 20px 48px rgba(37, 99, 235, 0.12);
+}
+
+.feature-card h4 {
+  color: #1f2937;
+  font-size: 0.95rem;
+  font-weight: 800;
+  margin-top: 0.8rem;
+}
+
+.feature-card p {
+  color: #64748b;
+  font-size: 0.78rem;
+  margin-top: 0.25rem;
+}
+
+.feature-icon-sprite {
+  position: relative;
+  width: 76px;
+  height: 58px;
+  border-radius: 1rem;
+  background: var(--feature-soft);
+  overflow: hidden;
+}
+
+.feature-icon-sprite::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url('/images/icons/home-feature-icons.png');
+  background-repeat: no-repeat;
+  background-size: 300% 200%;
+  background-position: var(--icon-x) var(--icon-y);
+  z-index: 2;
+}
+
+.feature-icon-fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--feature-accent);
+  font-size: 1.35rem;
+  z-index: 1;
+}
+
+.feature-card-arrow {
+  position: absolute;
+  right: 0.9rem;
+  top: 0.9rem;
+  display: grid;
+  place-items: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 999px;
+  color: var(--feature-accent);
+  background: rgba(255, 255, 255, 0.78);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.feature-card:hover .feature-card-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.locked-center-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.02fr) minmax(320px, 0.98fr);
+  gap: 2rem;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(191, 219, 254, 0.8);
+  border-radius: 2rem;
+  background:
+    linear-gradient(135deg, rgba(239, 246, 255, 0.98), rgba(245, 243, 255, 0.96)),
+    #fff;
+  box-shadow: 0 22px 55px rgba(37, 99, 235, 0.1);
+  padding: clamp(1.5rem, 4vw, 3rem);
+}
+
+.locked-center-copy h3 {
+  color: #111827;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  font-weight: 900;
+  margin: 0.9rem 0 0.75rem;
+}
+
+.locked-center-copy p {
+  color: #64748b;
+  max-width: 34rem;
+  line-height: 1.8;
+}
+
+.locked-benefits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin: 1.5rem 0;
+}
+
+.locked-benefits span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.74);
+  color: #475569;
+  font-size: 0.86rem;
+  font-weight: 700;
+  padding: 0.58rem 0.85rem;
+  box-shadow: inset 0 0 0 1px rgba(191, 219, 254, 0.6);
+}
+
+.locked-login-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  border-radius: 999px;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 800;
+  padding: 0.9rem 1.35rem;
+  box-shadow: 0 16px 34px rgba(37, 99, 235, 0.28);
+  transition: transform 0.25s ease, background 0.25s ease;
+}
+
+.locked-login-button:hover {
+  transform: translateY(-2px);
+  background: #1d4ed8;
+}
+
+.locked-center-visual,
+.community-visual,
+.empty-state-card {
+  position: relative;
+}
+
+.locked-center-visual {
+  min-height: 280px;
+  border-radius: 1.5rem;
+  background: linear-gradient(145deg, #dbeafe, #f5f3ff);
+  overflow: hidden;
+}
+
+.locked-center-visual img,
+.community-visual img,
+.empty-state-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  position: relative;
+  z-index: 2;
+}
+
+.asset-hidden {
+  display: none !important;
+}
+
+.visual-fallback {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  color: #2563eb;
+  font-size: 3rem;
+  background: linear-gradient(145deg, #eff6ff, #f5f3ff);
+}
+
+.community-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 440px);
+  gap: 2rem;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.community-title-link h2 {
+  display: flex;
+  align-items: center;
+  color: #111827;
+  font-size: clamp(1.9rem, 3vw, 2.5rem);
+  font-weight: 900;
+  margin: 0.85rem 0 0.5rem;
+  transition: color 0.25s ease;
+}
+
+.community-title-link:hover h2 {
+  color: #2563eb;
+}
+
+.community-title-link p {
+  color: #64748b;
+}
+
+.community-visual {
+  height: 170px;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  border: 1px solid #e0e7ff;
+  box-shadow: 0 16px 38px rgba(99, 102, 241, 0.11);
+}
+
+.community-post-card {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 1.5rem;
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+  padding: 1.35rem;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.community-post-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(37, 99, 235, 0.07), transparent 42%);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.community-post-card:hover {
+  transform: translateY(-5px);
+  border-color: #bfdbfe;
+  box-shadow: 0 20px 45px rgba(37, 99, 235, 0.12);
+}
+
+.community-post-card:hover::before {
+  opacity: 1;
+}
+
+.community-hot {
+  position: absolute;
+  right: 0;
+  top: 0;
+  border-bottom-left-radius: 1rem;
+  background: #fee2e2;
+  color: #dc2626;
+  font-size: 0.72rem;
+  font-weight: 900;
+  padding: 0.35rem 0.7rem;
+  z-index: 3;
+}
+
+.community-post-top {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  gap: 1rem;
+}
+
+.community-avatar {
+  position: relative;
+  flex: 0 0 auto;
+  width: 3.25rem;
+  height: 3.25rem;
+  overflow: hidden;
+  border-radius: 1.1rem;
+  background: linear-gradient(135deg, #60a5fa, #a78bfa);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+}
+
+.community-avatar img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.community-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #94a3b8;
+  font-size: 0.76rem;
+  margin-bottom: 0.35rem;
+}
+
+.community-tag {
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-weight: 800;
+  padding: 0.18rem 0.5rem;
+}
+
+.community-post-card h3 {
+  color: #1f2937;
+  font-size: 1.05rem;
+  font-weight: 850;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.25s ease;
+}
+
+.community-post-card:hover h3 {
+  color: #2563eb;
+}
+
+.community-post-card p {
+  color: #64748b;
+  font-size: 0.86rem;
+  line-height: 1.65;
+  margin: 0.55rem 0 1rem;
+}
+
+.community-stats {
+  display: flex;
+  gap: 1rem;
+  color: #94a3b8;
+  font-size: 0.82rem;
+}
+
+.community-stats span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32rem;
+}
+
+.empty-state-card {
+  min-height: 260px;
+  overflow: hidden;
+  border: 1px dashed #bfdbfe;
+  border-radius: 1.5rem;
+  background: #fff;
+  text-align: center;
+  padding: 2rem;
+}
+
+.empty-state-card img {
+  width: min(260px, 72%);
+  height: auto;
+  margin: 0 auto 1rem;
+}
+
+.empty-state-card .visual-fallback {
+  position: relative;
+  height: 150px;
+  border-radius: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.empty-state-card img:not(.asset-hidden) + .visual-fallback {
+  display: none;
+}
+
+.empty-state-card h3 {
+  color: #1f2937;
+  font-weight: 900;
+  font-size: 1.15rem;
+}
+
+.empty-state-card p {
+  color: #64748b;
+  margin-top: 0.35rem;
+}
+
+.tools-supply-panel {
+  position: relative;
+  overflow: hidden;
+  border-radius: 2.5rem;
+  background: #0f172a;
+  color: #fff;
+  padding: clamp(2rem, 5vw, 3.2rem);
+  box-shadow: 0 28px 65px rgba(15, 23, 42, 0.2);
+}
+
+.tools-texture {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(135deg, rgba(15, 23, 42, 0.1), rgba(30, 41, 59, 0.34)),
+    url('/images/home/tools-night-texture.png') center / cover no-repeat,
+    radial-gradient(circle at 70% 20%, rgba(59, 130, 246, 0.26), transparent 36%),
+    #0f172a;
+  opacity: 0.9;
+}
+
+.tools-head {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  margin-bottom: 2.4rem;
+}
+
+.tools-head h2 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  font-size: clamp(1.9rem, 3vw, 2.35rem);
+  font-weight: 900;
+  margin: 0.85rem 0 0.55rem;
+}
+
+.tools-head h2 svg {
+  color: #facc15;
+  fill: currentColor;
+}
+
+.tools-head p {
+  color: #cbd5e1;
+}
+
+.tool-card {
+  position: relative;
+  z-index: 2;
+  min-height: 132px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 1.35rem;
+  background: rgba(255, 255, 255, 0.075);
+  color: #e5e7eb;
+  text-align: center;
+  padding: 1.05rem 0.85rem;
+  transition: transform 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+}
+
+.tool-card:hover {
+  transform: translateY(-5px);
+  border-color: color-mix(in srgb, var(--tool-accent) 45%, rgba(255, 255, 255, 0.22));
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.tool-icon {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  margin: 0 auto 0.75rem;
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--tool-accent) 20%, rgba(255, 255, 255, 0.08));
+  color: var(--tool-accent);
+  font-size: 1.18rem;
+}
+
+.tool-card h3 {
+  color: #f8fafc;
+  font-weight: 850;
+  margin-bottom: 0.25rem;
+}
+
+.tool-card p {
+  color: #94a3b8;
+  font-size: 0.78rem;
+}
+
+@media (max-width: 900px) {
+  .locked-center-card,
+  .community-head {
+    grid-template-columns: 1fr;
+  }
+
+  .locked-center-visual {
+    min-height: 220px;
+  }
+}
+
+@media (max-width: 640px) {
+  .feature-card {
+    min-height: 150px;
+    padding: 0.85rem;
+  }
+
+  .feature-icon-sprite {
+    width: 64px;
+    height: 50px;
+  }
+
+  .community-post-top {
+    gap: 0.8rem;
+  }
+}
+</style>
