@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, nextTick } from 'vue'
+import { renderMarkdown } from '../utils/markdown'
 
 const emit = defineEmits(['close'])
 
@@ -406,7 +407,7 @@ const modelDisplayName = computed(() => {
           <!-- AI message with code blocks -->
           <div v-else class="text-xs px-3 py-2 rounded-2xl rounded-bl-md bg-white text-gray-700 border border-gray-200 shadow-sm leading-relaxed whitespace-pre-wrap relative group/copy">
             <template v-for="(part, pi) in parseContent(m.content)" :key="pi">
-              <span v-if="part.type === 'text'">{{ part.content }}</span>
+              <span v-if="part.type === 'text'" v-html="renderMarkdown(part.content)"></span>
               <div v-else class="my-2 -mx-2 rounded-lg overflow-hidden border border-gray-300 bg-gray-900 relative group/code">
                 <div class="flex items-center justify-between px-3 py-1.5 bg-gray-800 text-gray-400 text-[10px]">
                   <span>{{ part.lang || 'code' }}</span>
@@ -479,5 +480,19 @@ const modelDisplayName = computed(() => {
 @keyframes bounce {
   0%, 80%, 100% { transform: translateY(0); }
   40% { transform: translateY(-4px); }
+}
+:deep(.inline-code) {
+  background: #f1f5f9;
+  color: #e11d48;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 0.85em;
+}
+:deep(p) {
+  margin: 0;
+}
+:deep(p + p) {
+  margin-top: 0.5em;
 }
 </style>

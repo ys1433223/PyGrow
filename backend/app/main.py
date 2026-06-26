@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
-from app.routers import auth, courses, users, assessment, practice, gamification, reports, home, code_runner, ai_mentor, projects, notes, community, leaderboard, admin, reviews, favorites, ai_notes, debug, pet, promotion
+from app.routers import auth, courses, users, assessment, practice, gamification, reports, home, code_runner, code_flask, ai_mentor, projects, notes, community, leaderboard, admin, reviews, favorites, ai_notes, debug, pet, promotion
 from app.database import engine, Base
 from sqlalchemy import text
 
@@ -21,6 +21,16 @@ async def lifespan(app: FastAPI):
             )))
         except Exception:
             pass
+        # Migration: add note_time_text, note_type, updated_at to notes
+        for col_sql in [
+            "ALTER TABLE notes ADD COLUMN time_text VARCHAR(20) DEFAULT '00:00'",
+            "ALTER TABLE notes ADD COLUMN note_type VARCHAR(20) DEFAULT '重点'",
+            "ALTER TABLE notes ADD COLUMN updated_at DATETIME",
+        ]:
+            try:
+                await conn.run_sync(lambda c, s=col_sql: c.execute(text(s)))
+            except Exception:
+                pass
     from app.seed import seed
     import asyncio
     await seed()
@@ -50,6 +60,7 @@ app.include_router(gamification.router, prefix="/api/gamification", tags=["gamif
 app.include_router(reports.router, prefix="/api/report", tags=["report"])
 app.include_router(home.router, prefix="/api/home", tags=["home"])
 app.include_router(code_runner.router, prefix="/api/code", tags=["code-runner"])
+app.include_router(code_flask.router, prefix="/api/code", tags=["code-flask"])
 app.include_router(ai_mentor.router, prefix="/api/ai", tags=["ai-mentor"])
 app.include_router(projects.router, prefix="/api/projects", tags=["projects"])
 app.include_router(notes.router, prefix="/api/notes", tags=["notes"])

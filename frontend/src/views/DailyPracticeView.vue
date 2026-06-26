@@ -257,7 +257,10 @@ watch([currentQuestion, currentIndex, totalQuestions], () => {
     </main>
 
     <!-- ========== QUIZ MODE ========== -->
-    <main v-else-if="!submitted" class="flex-grow container mx-auto px-4 py-6 max-w-3xl">
+    <main v-else-if="!submitted" class="flex-grow container mx-auto px-4 py-6 max-w-5xl">
+      <button @click="$router.push('/learning-center')" class="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 mb-3 transition">
+        <i class="fas fa-arrow-left"></i> 返回学习中心
+      </button>
       <!-- Top bar: timer + progress -->
       <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6">
         <div class="flex items-center justify-between mb-3">
@@ -414,7 +417,7 @@ watch([currentQuestion, currentIndex, totalQuestions], () => {
     </main>
 
     <!-- ========== RESULTS ========== -->
-    <main v-else-if="submitted && results" class="flex-grow container mx-auto px-4 py-6 max-w-3xl">
+    <main v-else-if="submitted && results" class="flex-grow container mx-auto px-4 py-6 max-w-5xl">
       <!-- Score header -->
       <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-lg p-8 text-white text-center mb-6">
         <p class="text-sm text-white/70 mb-2">每日一练 · {{ majorLevel }}段</p>

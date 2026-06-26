@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
 import { practiceApi } from '../../api/practice'
+import { renderMarkdown } from '../../utils/markdown'
 
 const props = defineProps({
   questionId: { type: Number, required: true },
@@ -179,10 +180,10 @@ function addToReview() {
             </span>
           </div>
           <div class="px-4 py-3">
-            <p class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{{ hint.content }}</p>
-            <p v-if="hint.examples" class="text-xs text-gray-500 mt-2 italic whitespace-pre-wrap">{{ hint.examples }}</p>
-            <p v-if="hint.keywords" class="text-xs text-blue-600 mt-2">{{ hint.keywords }}</p>
-            <p v-if="hint.common_mistakes" class="text-xs text-amber-600 mt-2">{{ hint.common_mistakes }}</p>
+            <p class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap" v-html="renderMarkdown(hint.content)"></p>
+            <p v-if="hint.examples" class="text-xs text-gray-500 mt-2 italic whitespace-pre-wrap" v-html="renderMarkdown(hint.examples)"></p>
+            <p v-if="hint.keywords" class="text-xs text-blue-600 mt-2" v-html="renderMarkdown(hint.keywords)"></p>
+            <p v-if="hint.common_mistakes" class="text-xs text-amber-600 mt-2" v-html="renderMarkdown(hint.common_mistakes)"></p>
           </div>
         </div>
 
@@ -212,8 +213,7 @@ function addToReview() {
             <span class="text-xs font-bold text-amber-700">知识点补救卡片</span>
           </div>
           <div class="px-4 py-3 space-y-3">
-            <div v-if="hints[hints.length - 1]?.content" class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-              {{ hints[hints.length - 1].content }}
+            <div v-if="hints[hints.length - 1]?.content" class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap" v-html="renderMarkdown(hints[hints.length - 1]?.content || '')">
             </div>
             <div class="flex flex-col gap-2">
               <button
@@ -271,5 +271,19 @@ function addToReview() {
 @keyframes slideIn {
   from { opacity: 0; transform: translateY(-4px); }
   to { opacity: 1; transform: translateY(0); }
+}
+:deep(.inline-code) {
+  background: #e2e8f0;
+  color: #e11d48;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 0.85em;
+}
+:deep(p) {
+  margin: 0;
+}
+:deep(p + p) {
+  margin-top: 0.4em;
 }
 </style>

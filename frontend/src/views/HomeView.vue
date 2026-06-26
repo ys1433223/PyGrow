@@ -335,7 +335,7 @@ function goToCourse(course) {
                     </div>
                     <div>
                       <p class="text-sm font-bold text-gray-800">{{ task.title }}</p>
-                      <p class="text-xs text-gray-400">+{{ task.reward_exp }} XP · +{{ task.reward_points }} 积分</p>
+                      <p class="text-xs text-gray-400">+{{ task.reward_exp }} XP · +{{ task.reward_points }} 饼干</p>
                     </div>
                   </div>
                   <button v-if="!task.is_completed && task.is_claimable" @click="claimTaskReward(task.id)"

@@ -120,7 +120,7 @@ async def get_assessment_questions(
             "id": q.id,
             "title": q.title,
             "content": q.content,
-            "type": q.type,
+            "type": {"single_choice": "single", "multiple_choice": "multi", "judge": "tf", "fill_blank": "fill"}.get(q.type, q.type),
             "options": q.options or [],
             "knowledge_point": q.knowledge_point,
             "difficulty": q.difficulty,

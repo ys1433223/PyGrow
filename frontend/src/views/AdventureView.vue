@@ -59,7 +59,9 @@ async function fetchProfile() {
           status: 'completed',
         }
       } else {
-        adventureState.value = 'idle'
+        if (adventureState.value !== 'reward') {
+          adventureState.value = 'idle'
+        }
       }
     }
   } catch (e) {
@@ -177,11 +179,12 @@ async function handleClaimReward() {
     const res = await adventureApi.claimReward()
     if (res.data.code === 200) {
       const data = res.data.data
+      // Save reward first, then refresh without overriding reward state
       claimedReward.value = data.reward
       adventureState.value = 'reward'
       triggerPetAdventureEnd()
 
-      // Refresh profile and logs
+      // Refresh profile and logs (fetchProfile skips state reset when showing reward)
       await fetchProfile()
       await fetchLogs()
       await fetchRewards()
@@ -190,6 +193,15 @@ async function handleClaimReward() {
     }
   } catch (e) {
     alert('网络错误，请稍后再试')
+  }
+}
+
+function collectToAlbum() {
+  const rewardType = claimedReward.value?.reward_type
+  claimedReward.value = null
+  adventureState.value = 'idle'
+  if (rewardType) {
+    router.push({ path: '/profile/collection', query: { type: rewardType } })
   }
 }
 
@@ -379,7 +391,7 @@ watch(countdown, (val) => {
                   </div>
                 </div>
                 <div class="flex justify-center gap-3 mt-4">
-                  <button @click="closeRewardCard"
+                  <button @click="collectToAlbum"
                     class="px-6 py-3 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-white text-sm font-bold shadow-lg hover:shadow-xl transition">
                     <i class="fas fa-bookmark mr-1.5"></i>收集到图鉴
                   </button>
@@ -403,7 +415,7 @@ watch(countdown, (val) => {
                   </p>
                 </div>
                 <div class="flex justify-center mt-4">
-                  <button @click="closeRewardCard"
+                  <button @click="collectToAlbum"
                     class="px-6 py-3 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-white text-sm font-bold shadow-lg hover:shadow-xl transition">
                     <i class="fas fa-bookmark mr-1.5"></i>收集到图鉴
                   </button>
@@ -425,7 +437,7 @@ watch(countdown, (val) => {
                   </p>
                 </div>
                 <div class="mt-4">
-                  <button @click="closeRewardCard"
+                  <button @click="collectToAlbum"
                     class="px-6 py-3 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-white text-sm font-bold shadow-lg hover:shadow-xl transition">
                     <i class="fas fa-bookmark mr-1.5"></i>收集到图鉴
                   </button>

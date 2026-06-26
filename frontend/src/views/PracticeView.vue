@@ -105,6 +105,9 @@ const chapterFilterDiff = ref(null)
 const chapterFilterTag = ref(null)
 const chapterAvailableTags = ref([])
 const wrongFilterTag = ref(null)
+const wrongPreviewMode = ref(false)
+const selectedWrongIds = ref(new Set())
+const wrongQuestionList = ref([])
 const knowledgeTags = ref([])
 const expandedChapters = ref(new Set())
 const chapterTagsMap = ref({}) // { chapterNum: [tag1, tag2, ...] }
@@ -156,7 +159,7 @@ function getResultForQuestion(qId) {
 // ---- Module openers ----
 function openModule(key) {
   if (key === 'chapter') { activeModule.value = 'chapter'; chapterNum.value = null; chapterFilterTag.value = null; chapterAvailableTags.value = []; chapterTagsMap.value = {}; expandedChapters.value = new Set(); questions.value = []; resetState() }
-  else if (key === 'wrong') { activeModule.value = 'wrong'; questions.value = []; resetState(); loadWrong() }
+  else if (key === 'wrong') { activeModule.value = 'wrong'; wrongPreviewMode.value = true; selectedWrongIds.value = new Set(); wrongQuestionList.value = []; questions.value = []; resetState(); loadWrongPreview() }
   else if (key === 'recommend') { activeModule.value = 'recommend'; questions.value = []; resetState(); loadRecommend() }
 }
 
@@ -218,6 +221,40 @@ async function loadWrong() {
     }
   } catch (e) { questionError.value = '加载失败，请检查网络连接' }
   loading.value = false
+}
+
+async function loadWrongPreview() {
+  loading.value = true; questionError.value = ''
+  try {
+    const res = await practiceApi.getWrongQuestions(null)
+    if (res.data.code === 200) {
+      wrongQuestionList.value = res.data.data.wrong_questions || []
+    } else {
+      questionError.value = res.data.message || '加载失败'
+    }
+  } catch (e) { questionError.value = '加载失败，请检查网络连接' }
+  loading.value = false
+}
+
+function toggleWrongSelect(qId) {
+  const s = new Set(selectedWrongIds.value)
+  if (s.has(qId)) s.delete(qId); else s.add(qId)
+  selectedWrongIds.value = s
+}
+
+function selectAllWrong() {
+  selectedWrongIds.value = new Set(wrongQuestionList.value.map(q => q.id))
+}
+
+function deselectAllWrong() {
+  selectedWrongIds.value = new Set()
+}
+
+function startWrongPractice() {
+  if (selectedWrongIds.value.size === 0) return
+  wrongPreviewMode.value = false
+  questions.value = wrongQuestionList.value.filter(q => selectedWrongIds.value.has(q.id))
+  resetState()
 }
 
 async function loadRecommend() {
@@ -323,6 +360,7 @@ onUnmounted(() => { setPetMode('active') })
   <div class="min-h-screen flex flex-col bg-gray-50">
     <PageLoader /><AppHeader />
     <main class="flex-grow container mx-auto px-4 py-8">
+      <button @click="$router.push('/learning-center')" class="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 mb-3 transition"><i class="fas fa-arrow-left"></i> 返回学习中心</button>
       <div class="mb-8"><h1 class="text-3xl font-bold text-gray-900 mb-2">练习中心</h1><p class="text-gray-500">章节练习 · 专项突破 · 错题巩固 · 智能推荐</p></div>
 
       <div v-if="!auth.isLoggedIn" class="text-center py-16 bg-white rounded-[2rem] shadow-sm border border-gray-100">
@@ -465,12 +503,87 @@ onUnmounted(() => { setPetMode('active') })
           </div>
         </div>
 
+        <!-- ====== WRONG: Preview list (select questions before practice) ====== -->
+        <div v-if="activeModule === 'wrong' && wrongPreviewMode && wrongQuestionList.length > 0 && !loading" class="max-w-3xl mx-auto">
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-red-500 to-amber-500 px-6 py-4 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur">
+                  <i class="fas fa-book text-white"></i>
+                </div>
+                <div>
+                  <h3 class="text-white font-bold">错题预览</h3>
+                  <p class="text-white/70 text-xs">共 {{ wrongQuestionList.length }} 道错题，选择想要练习的题目</p>
+                </div>
+              </div>
+              <button @click="goBack" class="text-white/60 hover:text-white transition">
+                <i class="fas fa-times text-lg"></i>
+              </button>
+            </div>
+
+            <!-- Batch actions -->
+            <div class="flex items-center justify-between px-6 py-3 bg-gray-50 border-b border-gray-100">
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-500">已选 <b class="text-red-500">{{ selectedWrongIds.size }}</b> / {{ wrongQuestionList.length }} 道</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <button @click="selectAllWrong" class="text-xs text-blue-600 hover:underline">全选</button>
+                <span class="text-gray-300">|</span>
+                <button @click="deselectAllWrong" class="text-xs text-gray-400 hover:underline">取消全选</button>
+              </div>
+            </div>
+
+            <!-- Question list -->
+            <div class="max-h-96 overflow-y-auto divide-y divide-gray-50">
+              <div v-for="q in wrongQuestionList" :key="q.id"
+                @click="toggleWrongSelect(q.id)"
+                :class="[
+                  'flex items-start gap-3 px-6 py-3.5 cursor-pointer transition hover:bg-gray-50',
+                  selectedWrongIds.has(q.id) ? 'bg-red-50/50' : ''
+                ]">
+                <div class="flex-shrink-0 mt-0.5">
+                  <div :class="[
+                    'w-5 h-5 rounded border-2 flex items-center justify-center transition',
+                    selectedWrongIds.has(q.id) ? 'bg-red-500 border-red-500' : 'border-gray-300'
+                  ]">
+                    <i v-if="selectedWrongIds.has(q.id)" class="fas fa-check text-white text-[10px]"></i>
+                  </div>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm text-gray-700 leading-relaxed line-clamp-2">{{ q.title || q.content }}</p>
+                  <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
+                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">{{ typeLabel(q.type) }}</span>
+                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded" :class="diffColor(q.difficulty)">{{ diffLabel(q.difficulty) }}</span>
+                    <span v-if="q.knowledge_tag" class="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600">{{ q.knowledge_tag }}</span>
+                  </div>
+                </div>
+                <i :class="[
+                  'flex-shrink-0 text-sm mt-0.5',
+                  selectedWrongIds.has(q.id) ? 'fas fa-check-circle text-red-400' : 'far fa-circle text-gray-300'
+                ]"></i>
+              </div>
+            </div>
+
+            <!-- Start button -->
+            <div class="px-6 py-4 border-t border-gray-100 flex items-center gap-3">
+              <button @click="startWrongPractice" :disabled="selectedWrongIds.size === 0"
+                class="flex-1 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-red-500 to-amber-500 text-white shadow-md hover:shadow-lg hover:-translate-y-0.5 transition disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0">
+                <i class="fas fa-play mr-1.5"></i>开始练习（{{ selectedWrongIds.size }} 道）
+              </button>
+              <button @click="goBack" class="px-6 py-3 rounded-xl text-sm font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 transition">
+                返回
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- Empty states -->
         <div v-else-if="activeModule === 'wrong' && questions.length === 0 && !loading" class="text-center py-16 bg-white rounded-[2rem]"><i class="fas fa-check-circle text-5xl text-green-300 mb-4 block"></i><p class="text-gray-500 mb-2">暂无错题</p><p class="text-gray-400 text-sm">继续保持！</p><button @click="goBack" class="mt-4 text-blue-600 hover:underline text-sm">返回练习中心</button></div>
         <div v-else-if="questions.length === 0 && !loading" class="text-center py-16 bg-white rounded-[2rem]"><p class="text-gray-400">暂无题目</p></div>
 
         <!-- ====== QUESTIONS DISPLAY ====== -->
-        <div v-else-if="questions.length > 0 && !submitted" class="max-w-3xl mx-auto">
+        <div v-else-if="questions.length > 0 && !submitted" class="max-w-5xl mx-auto">
           <div class="bg-white rounded-2xl shadow-sm border p-4 mb-4">
             <div class="flex items-center justify-between mb-2"><span class="text-sm text-gray-500">进度</span><span class="text-sm font-medium text-gray-700">{{ currentIndex + 1 }} / {{ totalQuestions }}</span></div>
             <div class="h-2 bg-gray-100 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all duration-300" :style="{ width: progressPct + '%' }"></div></div>
@@ -548,7 +661,7 @@ onUnmounted(() => { setPetMode('active') })
         </div>
 
         <!-- ====== RESULTS ====== -->
-        <div v-if="submitted && results" class="max-w-3xl mx-auto">
+        <div v-if="submitted && results" class="max-w-5xl mx-auto">
           <div class="bg-white rounded-2xl shadow-sm border p-8 text-center mb-6">
             <div class="w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center text-3xl font-bold" :class="results.score_percent >= 80 ? 'bg-green-100 text-green-600' : results.score_percent >= 60 ? 'bg-amber-100 text-amber-600' : 'bg-red-100 text-red-600'">{{ results.score_percent }}%</div>
             <h3 class="text-2xl font-bold text-gray-800 mb-1">{{ results.score_percent >= 80 ? '优秀！' : results.score_percent >= 60 ? '良好' : '继续加油' }}</h3>

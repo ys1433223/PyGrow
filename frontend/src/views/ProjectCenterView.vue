@@ -134,6 +134,7 @@ function chapterIcon(n) { return n <= 12 ? String(n) : '★' }
     <PageLoader /><AppHeader />
 
     <main class="flex-grow container mx-auto px-4 py-8">
+      <button @click="$router.push('/learning-center')" class="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 mb-3 transition"><i class="fas fa-arrow-left"></i> 返回学习中心</button>
       <div class="max-w-5xl mx-auto">
         <!-- Header -->
         <div class="mb-8">

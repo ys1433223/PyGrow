@@ -143,7 +143,7 @@ async function claimTaskReward(taskId) {
       <!-- Header -->
       <div class="learning-hero mb-8">
         <div class="learning-hero-copy">
-          <span class="section-kicker">Learning Hub</span>
+          <span class="section-kicker">学习工作台</span>
           <h1>学习中心</h1>
           <p>把每日一练、实战编程、项目挑战和成长记录放进同一个工作台。</p>
           <div class="hero-chips">
@@ -235,7 +235,7 @@ async function claimTaskReward(taskId) {
       <div v-if="auth.isLoggedIn && dailyTasks.length > 0" class="daily-task-panel">
         <div class="panel-heading">
           <div>
-            <span class="section-kicker">Daily Quest</span>
+            <span class="section-kicker">今日任务</span>
             <h3><i class="fas fa-calendar-check"></i> 今日任务</h3>
             <p><span>经验</span>提升段位 · 每完成一项获 <span>1 饼干</span></p>
           </div>

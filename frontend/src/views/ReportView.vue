@@ -212,10 +212,11 @@ onMounted(async () => {
     <AppHeader />
 
     <main class="flex-grow container mx-auto px-4 py-8">
+      <button @click="$router.push('/learning-center')" class="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 mb-3 transition"><i class="fas fa-arrow-left"></i> 返回学习中心</button>
       <div class="report-shell mx-auto">
         <div class="report-hero mb-8">
           <div class="report-hero-copy">
-            <span class="section-kicker">Growth Report</span>
+            <span class="section-kicker">学习报告</span>
             <h1>学习报告</h1>
             <p>把等级、经验、练习表现和知识点掌握度整理成一份可行动的成长记录。</p>
           </div>

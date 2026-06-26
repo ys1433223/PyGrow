@@ -103,7 +103,7 @@ async function submitAssessment() {
 
       <template v-else-if="questions.length > 0">
         <!-- Header info -->
-        <div class="max-w-3xl mx-auto mb-8">
+        <div class="max-w-5xl mx-auto mb-8">
           <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <h1 class="text-2xl font-bold text-gray-900 mb-2">能力测评</h1>
             <p class="text-gray-500 text-sm mb-4">共 {{ totalQuestions }} 题、满分 100 分，覆盖 Python 基础到中级知识点。测评结果将为你匹配萌新小白~稳扎玩家四个初始段位。</p>
@@ -130,7 +130,7 @@ async function submitAssessment() {
         </div>
 
         <!-- Question card -->
-        <div v-if="currentQuestion" class="max-w-3xl mx-auto">
+        <div v-if="currentQuestion" class="max-w-5xl mx-auto">
           <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
             <div class="flex items-center gap-2 mb-2">
               <span class="text-xs font-bold px-2 py-0.5 rounded-full"

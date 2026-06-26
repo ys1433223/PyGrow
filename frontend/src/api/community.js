@@ -35,3 +35,11 @@ export function toggleFavorite(postId) {
 export function toggleCommentLike(commentId) {
   return client.post(`/community/comments/${commentId}/like`)
 }
+
+export function getMyPosts() {
+  return client.get('/community/my-posts')
+}
+
+export function deletePost(postId) {
+  return client.delete(`/community/${postId}`)
+}

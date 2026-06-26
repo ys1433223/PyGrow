@@ -111,6 +111,9 @@ const creating = ref(false)
 const createError = ref('')
 const showTagPicker = ref(false)
 const tagsExpanded = ref(false)
+const showCodeInput = ref(false)
+const codeLanguage = ref('python')
+const codeContent = ref('')
 
 const groupedTags = computed(() => {
   const active = allTags.value
@@ -322,6 +325,75 @@ async function handleComment() {
   } catch {} finally { commenting.value = false }
 }
 
+function insertCodeBlock() {
+  showCodeInput.value = true
+  codeLanguage.value = 'python'
+  codeContent.value = ''
+}
+
+function confirmInsertCode() {
+  const lang = codeLanguage.value.trim() || 'plaintext'
+  const code = codeContent.value.trim() || '在此编写代码...'
+  const codeBlock = '\n```' + lang + '\n' + code + '\n```\n'
+  newContent.value += codeBlock
+  showCodeInput.value = false
+  codeContent.value = ''
+}
+
+function copyCodeBlock(event) {
+  const btn = event.currentTarget
+  const pre = btn.closest('.code-block-wrapper').querySelector('pre')
+  const text = pre.textContent
+  navigator.clipboard.writeText(text).then(() => {
+    btn.innerHTML = '<i class="fas fa-check"></i> 已复制'
+    btn.classList.add('text-green-600')
+    setTimeout(() => {
+      btn.innerHTML = '<i class="far fa-copy"></i> 复制'
+      btn.classList.remove('text-green-600')
+    }, 2000)
+  }).catch(() => {})
+}
+
+const parsedContent = computed(() => {
+  if (!currentPost.value?.content) return []
+  const text = currentPost.value.content
+  const segments = []
+  const regex = /```(\w*)\n([\s\S]*?)```/g
+  let lastIndex = 0
+  let match
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      segments.push({ type: 'text', content: text.slice(lastIndex, match.index) })
+    }
+    segments.push({ type: 'code', lang: match[1] || 'plaintext', content: match[2].replace(/\n$/, '') })
+    lastIndex = regex.lastIndex
+  }
+  if (lastIndex < text.length) {
+    segments.push({ type: 'text', content: text.slice(lastIndex) })
+  }
+  return segments.length > 0 ? segments : [{ type: 'text', content: text }]
+})
+
+const previewContent = computed(() => {
+  if (!newContent.value) return []
+  const text = newContent.value
+  const segments = []
+  const regex = /```(\w*)\n([\s\S]*?)```/g
+  let lastIndex = 0
+  let match
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      segments.push({ type: 'text', content: text.slice(lastIndex, match.index) })
+    }
+    segments.push({ type: 'code', lang: match[1] || 'plaintext', content: match[2].replace(/\n$/, '') })
+    lastIndex = regex.lastIndex
+  }
+  if (lastIndex < text.length) {
+    segments.push({ type: 'text', content: text.slice(lastIndex) })
+  }
+  return segments.length > 0 ? segments : [{ type: 'text', content: text }]
+})
+
 async function handleCommentLike(comment) {
   try {
     const res = await toggleCommentLike(comment.id)
@@ -358,7 +430,7 @@ onMounted(() => {
       <!-- Page header -->
       <div v-if="view !== 'detail'" class="community-hero mb-6">
         <div class="community-hero-copy">
-          <span class="section-kicker">PyGrow Community</span>
+          <span class="section-kicker">启航社区</span>
           <h1>
             <span v-if="view !== 'list'" class="cursor-pointer hover:text-blue-600 transition" @click="backToList">学习社区</span>
             <span v-else>学习社区</span>
@@ -553,17 +625,17 @@ onMounted(() => {
       </div>
 
       <!-- ====== Detail View ====== -->
-      <div v-if="view === 'detail' && currentPost" class="max-w-3xl mx-auto">
+      <div v-if="view === 'detail' && currentPost" class="max-w-5xl mx-auto">
         <button @click="backToList" class="text-sm text-gray-500 hover:text-blue-600 mb-4 flex items-center gap-1 transition-colors">
           <i class="fas fa-arrow-left text-xs"></i> 返回列表
         </button>
 
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
           <div class="flex items-center gap-2 mb-4 flex-wrap">
-            <span :class="['text-xs px-2 py-0.5 rounded-full', currentPost.category === '问答专区' ? 'bg-red-100 text-red-600' : currentPost.category === '技术分享区' ? 'bg-blue-100 text-blue-600' : currentPost.category === '资源分享' ? 'bg-green-100 text-green-600' : currentPost.category === '我要吐槽' ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-500']">{{ currentPost.category }}</span>
+            <span :class="['text-sm px-2 py-0.5 rounded-full', currentPost.category === '问答专区' ? 'bg-red-100 text-red-600' : currentPost.category === '技术分享区' ? 'bg-blue-100 text-blue-600' : currentPost.category === '资源分享' ? 'bg-green-100 text-green-600' : currentPost.category === '我要吐槽' ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-500']">{{ currentPost.category }}</span>
             <span v-if="currentPost.tags" v-for="t in (currentPost.tags || '').split(',').filter(Boolean)" :key="t"
-              :class="['text-xs px-1.5 py-0.5 rounded-full', getTagColor(t)]">{{ t }}</span>
-            <span class="text-xs text-gray-400">
+              :class="['text-sm px-1.5 py-0.5 rounded-full', getTagColor(t)]">{{ t }}</span>
+            <span class="text-sm text-gray-400">
               {{ currentPost.author_name }}
               <span v-if="getHonorMeta(currentPost.author_honor_title)" :class="['honor-badge ml-1', getHonorMeta(currentPost.author_honor_title).cls]">
                 <i :class="['fas', getHonorMeta(currentPost.author_honor_title).icon]"></i>{{ getHonorMeta(currentPost.author_honor_title).name }}
@@ -571,8 +643,22 @@ onMounted(() => {
               · {{ currentPost.created_at?.slice(0, 10) }}
             </span>
           </div>
-          <h2 class="text-xl font-bold text-gray-800 mb-4">{{ currentPost.title }}</h2>
-          <div class="text-gray-700 leading-relaxed whitespace-pre-wrap">{{ currentPost.content }}</div>
+          <h2 class="text-2xl font-bold text-gray-800 mb-4">{{ currentPost.title }}</h2>
+          <div class="text-base text-gray-700 leading-relaxed">
+            <template v-for="(seg, i) in parsedContent" :key="i">
+              <p v-if="seg.type === 'text'" class="whitespace-pre-wrap mb-3">{{ seg.content }}</p>
+              <div v-else class="code-block-wrapper relative bg-gray-900 rounded-xl mb-4 overflow-hidden">
+                <div class="flex items-center justify-between px-4 py-2 bg-gray-800 border-b border-gray-700">
+                  <span class="text-xs text-gray-400 font-mono">{{ seg.lang }}</span>
+                  <button @click="copyCodeBlock"
+                    class="text-xs text-gray-400 hover:text-white transition flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-700">
+                    <i class="far fa-copy"></i> 复制
+                  </button>
+                </div>
+                <pre class="p-4 overflow-x-auto"><code class="text-sm text-green-300 font-mono">{{ seg.content }}</code></pre>
+              </div>
+            </template>
+          </div>
           <div class="flex items-center gap-4 mt-6 pt-4 border-t border-gray-100">
             <button @click="handleLike({ id: currentPost.id, like_count: currentPost.like_count, is_liked: currentPost.is_liked }); currentPost.like_count = currentPost.is_liked ? currentPost.like_count - 1 : currentPost.like_count + 1; currentPost.is_liked = !currentPost.is_liked"
               class="flex items-center gap-1.5 text-sm" :class="currentPost.is_liked ? 'text-red-500' : 'text-gray-500'">
@@ -619,7 +705,7 @@ onMounted(() => {
       </div>
 
       <!-- ====== Create View ====== -->
-      <div v-if="view === 'create'" class="max-w-2xl mx-auto">
+      <div v-if="view === 'create'" class="max-w-5xl mx-auto">
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <h2 class="text-lg font-bold text-gray-800 mb-4">发布新帖子</h2>
 
@@ -672,7 +758,53 @@ onMounted(() => {
           </div>
 
           <input v-model="newTitle" class="w-full border border-gray-200 rounded-lg px-3 py-2 mb-3 text-sm outline-none focus:border-blue-400" placeholder="标题（至少 2 个字）" />
-          <textarea v-model="newContent" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-400 resize-none" rows="6" placeholder="内容（不少于 10 个字）"></textarea>
+          <div class="relative">
+            <textarea v-model="newContent" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-400 resize-none" rows="8" placeholder="内容（不少于 10 个字）"></textarea>
+            <button @click="insertCodeBlock" type="button"
+              class="absolute bottom-2 right-2 text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1.5 rounded-lg transition flex items-center gap-1"
+              title="插入代码块">
+              <i class="fas fa-code"></i> 插入代码
+            </button>
+          </div>
+          <!-- Code input dialog -->
+          <div v-if="showCodeInput" class="bg-gray-50 rounded-xl p-4 mb-4 border border-gray-200">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-bold text-gray-700">插入代码块</span>
+              <button @click="showCodeInput = false" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="flex items-center gap-2 mb-2">
+              <label class="text-xs text-gray-500">语言:</label>
+              <select v-model="codeLanguage" class="text-xs border border-gray-200 rounded px-2 py-1 bg-white">
+                <option value="python">Python</option>
+                <option value="html">HTML</option>
+                <option value="css">CSS</option>
+                <option value="javascript">JavaScript</option>
+                <option value="sql">SQL</option>
+                <option value="bash">Bash</option>
+                <option value="plaintext">纯文本</option>
+              </select>
+            </div>
+            <textarea v-model="codeContent" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono outline-none focus:border-blue-400 resize-none bg-white" rows="5" placeholder="在此粘贴代码..."></textarea>
+            <div class="flex justify-end gap-2 mt-2">
+              <button @click="showCodeInput = false" class="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700">取消</button>
+              <button @click="confirmInsertCode" class="px-4 py-1.5 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">插入代码</button>
+            </div>
+          </div>
+          <!-- Live preview -->
+          <div v-if="newContent.trim() && previewContent.some(s => s.type === 'code')" class="bg-white rounded-xl border border-gray-200 p-4 mt-3">
+            <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider"><i class="fas fa-eye mr-1"></i>预览效果</p>
+            <div class="text-sm text-gray-700 leading-relaxed">
+              <template v-for="(seg, i) in previewContent" :key="i">
+                <p v-if="seg.type === 'text'" class="whitespace-pre-wrap mb-2">{{ seg.content }}</p>
+                <div v-else class="code-block-wrapper relative bg-gray-900 rounded-lg mb-2 overflow-hidden">
+                  <div class="flex items-center justify-between px-3 py-1.5 bg-gray-800 border-b border-gray-700">
+                    <span class="text-xs text-gray-400 font-mono">{{ seg.lang }}</span>
+                  </div>
+                  <pre class="p-3 overflow-x-auto"><code class="text-xs text-green-300 font-mono">{{ seg.content }}</code></pre>
+                </div>
+              </template>
+            </div>
+          </div>
           <p v-if="createError" class="text-red-500 text-sm mt-2">{{ createError }}</p>
           <div class="flex justify-end gap-3 mt-4">
             <button @click="view = 'list'" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">取消</button>

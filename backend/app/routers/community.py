@@ -241,6 +241,32 @@ async def get_hot_posts(
     return api_response(data=items)
 
 
+@router.get("/my-posts")
+async def get_my_posts(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get posts created by the current user."""
+    result = await db.execute(
+        select(Post).where(Post.user_id == user.id).order_by(desc(Post.created_at))
+    )
+    posts = result.scalars().all()
+
+    items = []
+    for p in posts:
+        items.append({
+            "id": p.id, "title": p.title, "content": p.content[:200],
+            "category": p.category, "tags": p.tags,
+            "like_count": p.like_count, "comment_count": p.comment_count,
+            "is_pinned": bool(p.is_pinned),
+            "created_at": str(p.created_at),
+            "user_name": user.username,
+            "user_avatar": user.avatar or "",
+        })
+
+    return api_response(data=items)
+
+
 @router.get("/{post_id}")
 async def get_post_detail(
     post_id: int,
@@ -436,3 +462,38 @@ async def toggle_comment_like(
     c.like_count = (c.like_count or 0) + 1
     await db.commit()
     return api_response(data={"liked": True, "like_count": c.like_count})
+
+
+@router.delete("/{post_id}")
+async def delete_post(
+    post_id: int,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete a post. Only the author can delete."""
+    p = (await db.execute(select(Post).where(Post.id == post_id))).scalar_one_or_none()
+    if not p:
+        return api_response(404, "帖子不存在")
+    if p.user_id != user.id:
+        return api_response(403, "只能删除自己的帖子")
+
+    # Delete related records
+    await db.execute(select(Comment).where(Comment.post_id == post_id))
+    comments = (await db.execute(select(Comment).where(Comment.post_id == post_id))).scalars().all()
+    for c in comments:
+        await db.execute(
+            select(CommentLike).where(CommentLike.comment_id == c.id)
+        )  # trigger load
+    for c in comments:
+        await db.delete(c)
+    await db.execute(select(PostLike).where(PostLike.post_id == post_id))
+    post_likes = (await db.execute(select(PostLike).where(PostLike.post_id == post_id))).scalars().all()
+    for pl in post_likes:
+        await db.delete(pl)
+    post_favs = (await db.execute(select(PostFavorite).where(PostFavorite.post_id == post_id))).scalars().all()
+    for pf in post_favs:
+        await db.delete(pf)
+
+    await db.delete(p)
+    await db.commit()
+    return api_response(data={"message": "帖子已删除"})

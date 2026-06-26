@@ -79,6 +79,10 @@ watch(() => route.query.type, (val) => {
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
+          <button @click="router.back()"
+            class="w-10 h-10 rounded-xl flex items-center justify-center bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition shadow-sm flex-shrink-0">
+            <i class="fas fa-arrow-left text-gray-500"></i>
+          </button>
           <div class="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-xl flex items-center justify-center shadow">
             <i class="fas fa-book-open text-white text-lg"></i>
           </div>

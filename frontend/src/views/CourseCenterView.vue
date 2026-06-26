@@ -117,9 +117,11 @@ function selectChapter(chapter) {
   selectedChapter.value = chapter
   const fl = chapter.sections[0]?.lessons[0]
   if (fl) selectedLesson.value = fl
+  loadReviews()
 }
 
 function selectLesson(chapter, section, lesson) {
+  const chapterChanged = selectedChapter.value?.num !== chapter.num
   selectedChapter.value = chapter
   selectedLesson.value = lesson
   // Close AI notes panel and reset state when switching lessons
@@ -130,6 +132,7 @@ function selectLesson(chapter, section, lesson) {
   aiError.value = ''
   if (aiPollTimer) { clearInterval(aiPollTimer); aiPollTimer = null }
   triggerPetState('work', 4000)
+  if (chapterChanged) loadReviews()
 }
 
 function toggleChapter(num) {
@@ -282,8 +285,22 @@ async function resolveBackendIds() {
       const res = await coursesApi.detail(aiCourseId.value)
       const course = res.data?.data || res.data
       const lessons = course?.lessons || []
-      const match = lessons.find(l => l.bilibili_page === selectedLesson.value.page)
-      if (match) aiLessonId.value = match.id
+      // Match by chapter title + page + lesson title (pages reset per chapter; some chapters share pages)
+      const match = lessons.find(l =>
+        l.bilibili_page === selectedLesson.value.page &&
+        l.chapter === selectedChapter.value.title &&
+        l.title === selectedLesson.value.title
+      )
+      if (match) {
+        aiLessonId.value = match.id
+      } else {
+        // Fallback: chapter + page (tolerate slight title mismatch)
+        const chPageMatch = lessons.find(l =>
+          l.bilibili_page === selectedLesson.value.page &&
+          l.chapter === selectedChapter.value.title
+        )
+        if (chPageMatch) aiLessonId.value = chPageMatch.id
+      }
     } catch (e) {
       console.error('Failed to resolve lesson ID:', e)
     }
@@ -306,8 +323,9 @@ async function loadAiNotesForLesson() {
   aiNote.value = null
   aiError.value = ''
   if (!aiCourseId.value) return
+  if (!aiLessonId.value) return  // Can't determine which lesson; don't fetch wrong notes
   try {
-    const res = await aiNotesApi.getNotes(aiCourseId.value, aiLessonId.value || undefined)
+    const res = await aiNotesApi.getNotes(aiCourseId.value, aiLessonId.value)
     if (res.data.code === 200 && res.data.data?.has_note) {
       aiHasNote.value = true
       aiNote.value = res.data.data
@@ -322,6 +340,10 @@ async function handleGenerateAINotes() {
       aiError.value = '无法确定课程信息，请先选择课程'
       return
     }
+  }
+  if (!aiLessonId.value) {
+    aiError.value = '无法确定课时信息，请先选择具体课时'
+    return
   }
   aiError.value = ''
   aiGenerating.value = true
@@ -417,10 +439,16 @@ function updateTaskInFloat(taskId, status, progress, message) {
   } catch {}
 }
 
-// Reviews
+// Reviews — scoped to current chapter
+const reviewCourseId = computed(() => {
+  if (!selectedChapter.value) return null
+  return activeLevel.value + '-ch' + selectedChapter.value.num
+})
+
 async function loadReviews() {
+  if (!reviewCourseId.value) { reviews.value = []; reviewCount.value = 0; avgRating.value = 0; return }
   try {
-    const res = await reviewsApi.list(activeLevel.value)
+    const res = await reviewsApi.list(reviewCourseId.value)
     if (res.data.code === 200) {
       const d = res.data.data
       reviews.value = d.reviews || []
@@ -431,11 +459,11 @@ async function loadReviews() {
 }
 
 async function submitReview() {
-  if (myRating.value === 0) return
+  if (myRating.value === 0 || !reviewCourseId.value) return
   if (!auth.isLoggedIn) { if (window.__openLoginPrompt) window.__openLoginPrompt(); return }
   submittingReview.value = true
   try {
-    const res = await reviewsApi.create(activeLevel.value, myRating.value, myReviewContent.value.trim())
+    const res = await reviewsApi.create(reviewCourseId.value, myRating.value, myReviewContent.value.trim())
     if (res.data.code === 200) {
       myRating.value = 0
       myReviewContent.value = ''
@@ -498,19 +526,19 @@ onMounted(() => {
 
     <main class="flex-grow flex overflow-hidden" style="min-height: calc(100vh - 4rem);">
       <!-- ===== LEFT: Course Tree ===== -->
-      <aside class="w-72 lg:w-80 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col overflow-hidden">
-        <div class="p-3 border-b border-gray-100">
+      <aside class="w-80 lg:w-96 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col overflow-hidden">
+        <div class="p-4 border-b border-gray-100">
           <div class="flex bg-gray-100 rounded-lg p-0.5">
             <button v-for="l in levels" :key="l.level"
                     @click="switchLevel(l.level)"
-                    :class="['flex-1 py-1.5 text-xs font-medium rounded-md transition', activeLevel === l.level ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700']">
+                    :class="['flex-1 py-2 text-sm font-medium rounded-md transition', activeLevel === l.level ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700']">
               {{ l.level }}
             </button>
           </div>
         </div>
-        <div v-if="currentCourse" class="px-4 py-3 border-b border-gray-100">
-          <h2 class="font-bold text-gray-900 text-sm">{{ currentCourse.name }}</h2>
-          <div class="flex items-center gap-3 mt-1 text-xs text-gray-500">
+        <div v-if="currentCourse" class="px-5 py-4 border-b border-gray-100">
+          <h2 class="font-bold text-gray-900 text-base">{{ currentCourse.name }}</h2>
+          <div class="flex items-center gap-3 mt-1.5 text-sm text-gray-500">
             <span><i class="fas fa-book-open text-blue-400 mr-1"></i>{{ currentCourse.chapterCount }}章</span>
             <span><i class="fas fa-play-circle text-blue-400 mr-1"></i>{{ currentCourse.lessonCount }}课时</span>
             <span><i class="fas fa-clock text-blue-400 mr-1"></i>{{ currentCourse.totalDuration }}</span>
@@ -524,28 +552,28 @@ onMounted(() => {
         <div class="flex-grow overflow-y-auto">
           <div v-for="ch in chapters" :key="ch.num" class="border-b border-gray-50">
             <div @click="toggleChapter(ch.num)"
-                 :class="['flex items-center px-4 py-2.5 cursor-pointer hover:bg-blue-50/50 transition group', selectedChapter?.num === ch.num ? 'bg-blue-50 border-l-2 border-blue-500' : 'border-l-2 border-transparent']">
-              <i :class="['fas text-xs mr-2 transition text-gray-400', isChapterExpanded(ch.num) ? 'fa-chevron-down' : 'fa-chevron-right']"></i>
-              <span class="text-xs font-bold text-gray-700 group-hover:text-blue-600 truncate flex-grow">第{{ ch.num }}章 {{ ch.title }}</span>
-              <span class="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">{{ ch.sections.reduce((s, sec) => s + sec.lessons.length, 0) }}课</span>
+                 :class="['flex items-center px-5 py-3 cursor-pointer hover:bg-blue-50/50 transition group', selectedChapter?.num === ch.num ? 'bg-blue-50 border-l-2 border-blue-500' : 'border-l-2 border-transparent']">
+              <i :class="['fas text-sm mr-2 transition text-gray-400', isChapterExpanded(ch.num) ? 'fa-chevron-down' : 'fa-chevron-right']"></i>
+              <span class="text-sm font-bold text-gray-700 group-hover:text-blue-600 truncate flex-grow">第{{ ch.num }}章 {{ ch.title }}</span>
+              <span class="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{{ ch.sections.reduce((s, sec) => s + sec.lessons.length, 0) }}课</span>
             </div>
             <div v-if="isChapterExpanded(ch.num)" class="bg-gray-50/50">
               <div v-for="(sec, si) in ch.sections" :key="si">
                 <div v-if="sec.title" @click="toggleSection(ch.num, si)"
-                     class="flex items-center pl-10 pr-4 py-1.5 cursor-pointer hover:bg-gray-100/50 text-xs text-gray-500">
-                  <i :class="['fas text-[8px] mr-2', isSectionExpanded(ch.num, si) ? 'fa-chevron-down' : 'fa-chevron-right']"></i>
+                     class="flex items-center pl-12 pr-4 py-2 cursor-pointer hover:bg-gray-100/50 text-sm text-gray-500">
+                  <i :class="['fas text-[10px] mr-2', isSectionExpanded(ch.num, si) ? 'fa-chevron-down' : 'fa-chevron-right']"></i>
                   <span class="truncate">{{ sec.title }}</span>
-                  <span class="text-[10px] text-gray-400 ml-auto">{{ sec.lessons.length }}课</span>
+                  <span class="text-xs text-gray-400 ml-auto">{{ sec.lessons.length }}课</span>
                 </div>
                 <div v-if="!sec.title || isSectionExpanded(ch.num, si)">
                   <div v-for="lesson in sec.lessons" :key="lesson.page"
                        @click="selectLesson(ch, sec, lesson)"
-                       :class="['flex items-center pl-16 pr-3 py-1.5 cursor-pointer hover:bg-blue-100/50 transition text-xs', selectedLesson?.page === lesson.page && selectedChapter?.num === ch.num ? 'bg-blue-100/70 text-blue-700 font-medium border-r-2 border-blue-500' : 'text-gray-600']">
-                    <i v-if="isCompleted(ch.num, lesson.page)" class="fas fa-check-circle text-green-500 text-[10px] mr-1.5"></i>
-                    <i v-else class="far fa-circle text-gray-300 text-[10px] mr-1.5"></i>
-                    <span class="text-[10px] text-gray-400 w-8 flex-shrink-0">P{{ lesson.page }}</span>
+                       :class="['flex items-center pl-20 pr-3 py-2 cursor-pointer hover:bg-blue-100/50 transition text-sm', selectedLesson?.page === lesson.page && selectedChapter?.num === ch.num ? 'bg-blue-100/70 text-blue-700 font-medium border-r-2 border-blue-500' : 'text-gray-600']">
+                    <i v-if="isCompleted(ch.num, lesson.page)" class="fas fa-check-circle text-green-500 text-xs mr-1.5"></i>
+                    <i v-else class="far fa-circle text-gray-300 text-xs mr-1.5"></i>
+                    <span class="text-xs text-gray-400 w-8 flex-shrink-0">P{{ lesson.page }}</span>
                     <span class="truncate flex-grow">{{ lesson.title }}</span>
-                    <span class="text-[10px] text-gray-400 ml-1">{{ lesson.duration }}</span>
+                    <span class="text-xs text-gray-400 ml-1">{{ lesson.duration }}</span>
                   </div>
                 </div>
               </div>
@@ -558,10 +586,10 @@ onMounted(() => {
       <section class="flex-grow flex flex-col overflow-y-auto">
         <div v-if="!selectedLesson" class="flex-grow flex items-center justify-center text-gray-400 bg-gray-100/50">
           <div class="text-center">
-            <div class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <i class="fas fa-hand-point-left text-blue-400 text-3xl"></i>
+            <div class="w-28 h-28 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <i class="fas fa-hand-point-left text-blue-400 text-4xl"></i>
             </div>
-            <p class="text-lg font-bold text-gray-500 mb-1">选择课程开始学习</p>
+            <p class="text-xl font-bold text-gray-500 mb-1">选择课程开始学习</p>
             <p class="text-sm">从左侧目录选择章节和课时</p>
           </div>
         </div>
@@ -575,45 +603,45 @@ onMounted(() => {
           </div>
 
           <!-- Info + Controls Bar -->
-          <div class="bg-white border-b border-gray-200 px-4 py-3 flex-shrink-0">
+          <div class="bg-white border-b border-gray-200 px-5 py-4 flex-shrink-0">
             <div class="flex items-start justify-between gap-4 mb-3">
               <div class="flex-grow min-w-0">
                 <div class="flex items-center gap-2 mb-1">
-                  <span class="text-[10px] font-bold bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">P{{ selectedLesson.page }}</span>
-                  <span class="text-xs text-gray-400">{{ selectedLesson.duration }}</span>
-                  <span v-if="isCompleted(selectedChapter?.num, selectedLesson.page)" class="text-[10px] text-green-600 bg-green-50 px-2 py-0.5 rounded-full"><i class="fas fa-check mr-1"></i>已完成</span>
+                  <span class="text-xs font-bold bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">P{{ selectedLesson.page }}</span>
+                  <span class="text-sm text-gray-400">{{ selectedLesson.duration }}</span>
+                  <span v-if="isCompleted(selectedChapter?.num, selectedLesson.page)" class="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full"><i class="fas fa-check mr-1"></i>已完成</span>
                 </div>
-                <h3 class="text-sm font-bold text-gray-900">{{ selectedLesson.title }}</h3>
-                <p class="text-xs text-gray-400 mt-0.5">第{{ selectedChapter?.num }}章 {{ selectedChapter?.title }}</p>
+                <h3 class="text-base font-bold text-gray-900">{{ selectedLesson.title }}</h3>
+                <p class="text-sm text-gray-400 mt-0.5">第{{ selectedChapter?.num }}章 {{ selectedChapter?.title }}</p>
               </div>
             </div>
             <!-- Buttons Row -->
             <div class="flex items-center gap-2 flex-wrap">
               <button @click="markCompleted"
-                      :class="['px-3 py-1.5 rounded-lg text-xs font-medium transition border', isCompleted(selectedChapter?.num, selectedLesson.page) ? 'bg-green-50 text-green-600 border-green-200' : 'bg-gray-100 text-gray-500 hover:bg-green-50 hover:text-green-600 border-transparent']">
+                      :class="['px-3 py-1.5 rounded-lg text-sm font-medium transition border', isCompleted(selectedChapter?.num, selectedLesson.page) ? 'bg-green-50 text-green-600 border-green-200' : 'bg-gray-100 text-gray-500 hover:bg-green-50 hover:text-green-600 border-transparent']">
                 <i :class="isCompleted(selectedChapter?.num, selectedLesson.page) ? 'fas fa-check-circle' : 'far fa-check-circle'"></i> 标记完成
               </button>
               <button @click="toggleAiNotes"
-                      :class="['px-3 py-1.5 rounded-lg text-xs font-medium transition border', showAiNotesPanel ? 'bg-purple-50 text-purple-600 border-purple-200' : 'bg-gray-100 text-gray-500 hover:bg-purple-50 hover:text-purple-600 border-transparent']">
+                      :class="['px-3 py-1.5 rounded-lg text-sm font-medium transition border', showAiNotesPanel ? 'bg-purple-50 text-purple-600 border-purple-200' : 'bg-gray-100 text-gray-500 hover:bg-purple-50 hover:text-purple-600 border-transparent']">
                 <i class="fas fa-robot mr-1"></i>AI笔记
               </button>
               <button @click="toggleFavorite"
-                      :class="['px-3 py-1.5 rounded-lg text-xs font-medium transition border', isCurrentFavorited ? 'bg-red-50 text-red-500 border-red-200' : 'bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-400 border-transparent']">
+                      :class="['px-3 py-1.5 rounded-lg text-sm font-medium transition border', isCurrentFavorited ? 'bg-red-50 text-red-500 border-red-200' : 'bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-400 border-transparent']">
                 <i :class="isCurrentFavorited ? 'fas fa-heart' : 'far fa-heart'"></i> 收藏本章
               </button>
               <button @click="goPractice"
-                      class="px-5 py-2.5 rounded-xl text-sm font-bold transition border bg-gradient-to-r from-green-50 to-emerald-50 text-green-600 border-green-200 hover:from-green-100 hover:to-emerald-100 hover:shadow-md hover:-translate-y-0.5">
+                      class="px-5 py-2.5 rounded-xl text-base font-bold transition border bg-gradient-to-r from-green-50 to-emerald-50 text-green-600 border-green-200 hover:from-green-100 hover:to-emerald-100 hover:shadow-md hover:-translate-y-0.5">
                 <i class="fas fa-dumbbell mr-1.5"></i>练一练
               </button>
               <div class="flex-grow"></div>
               <button @click="goPrev" :disabled="!navInfo.prev"
-                      :class="['flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition', navInfo.prev ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'text-gray-300 cursor-not-allowed']">
-                <i class="fas fa-chevron-left text-[10px]"></i> 上一课
+                      :class="['flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition', navInfo.prev ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'text-gray-300 cursor-not-allowed']">
+                <i class="fas fa-chevron-left text-xs"></i> 上一课
               </button>
-              <span class="text-xs text-gray-300">|</span>
+              <span class="text-sm text-gray-300">|</span>
               <button @click="goNext" :disabled="!navInfo.next"
-                      :class="['flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition', navInfo.next ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'text-gray-300 cursor-not-allowed']">
-                下一课 <i class="fas fa-chevron-right text-[10px]"></i>
+                      :class="['flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition', navInfo.next ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'text-gray-300 cursor-not-allowed']">
+                下一课 <i class="fas fa-chevron-right text-xs"></i>
               </button>
             </div>
             <!-- AI Notes Panel -->
@@ -683,6 +711,13 @@ onMounted(() => {
                 </div>
               </template>
 
+              <!-- No lesson resolved -->
+              <template v-else-if="!aiLessonId">
+                <p class="text-gray-500 leading-relaxed text-[10px]">
+                  <i class="fas fa-info-circle mr-1"></i>当前课时暂不支持 AI 笔记功能，请切换到其他课时后再试。
+                </p>
+              </template>
+
               <!-- Generate button -->
               <template v-else>
                 <p class="text-purple-600 leading-relaxed mb-3">AI 将自动解析当前课时视频，生成课程简介、知识点笔记、视频看点、易错提醒和学习建议。</p>
@@ -698,36 +733,36 @@ onMounted(() => {
       </section>
 
       <!-- ===== RIGHT: Notes + Reviews + Resources ===== -->
-      <aside class="w-80 flex-shrink-0 bg-white border-l border-gray-200 flex flex-col overflow-hidden">
+      <aside class="w-96 flex-shrink-0 bg-white border-l border-gray-200 flex flex-col overflow-hidden">
         <div class="flex-grow overflow-y-auto">
           <!-- Timestamp Notes -->
-          <div class="p-4 border-b border-gray-100">
-            <h4 class="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+          <div class="p-5 border-b border-gray-100">
+            <h4 class="text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
               <i class="fas fa-clock text-blue-500"></i>时间戳笔记
             </h4>
             <div v-if="selectedLesson" class="space-y-2 mb-3">
               <div class="flex gap-1.5">
-                <input v-model="noteTimestamp" placeholder="00:00" class="w-16 text-xs px-2 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-300 text-center">
+                <input v-model="noteTimestamp" placeholder="00:00" class="w-16 text-sm px-2 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-300 text-center">
                 <input v-model="noteContent" placeholder="记录此刻的笔记..."
-                       class="flex-grow text-xs px-2 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-300"
+                       class="flex-grow text-sm px-2 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-300"
                        @keyup.enter="addTimestampNote">
                 <button @click="addTimestampNote"
-                        class="px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition flex-shrink-0">
+                        class="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition flex-shrink-0">
                   <i class="fas fa-plus"></i>
                 </button>
               </div>
             </div>
-            <div v-else class="text-xs text-gray-400 text-center py-4">请先选择课时</div>
-            <div v-if="timestampNotes.length === 0 && selectedLesson" class="text-xs text-gray-400 text-center py-2">暂无笔记，添加第一条吧</div>
+            <div v-else class="text-sm text-gray-400 text-center py-4">请先选择课时</div>
+            <div v-if="timestampNotes.length === 0 && selectedLesson" class="text-sm text-gray-400 text-center py-2">暂无笔记，添加第一条吧</div>
             <div class="space-y-2">
               <div v-for="note in timestampNotes" :key="note.id" class="bg-gray-50 rounded-lg p-2.5 group">
                 <div class="flex items-start justify-between gap-2">
                   <div class="flex-grow min-w-0">
                     <div class="flex items-center gap-1.5 mb-1">
-                      <span class="text-[10px] font-bold text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded">{{ note.timestamp || '--:--' }}</span>
-                      <span class="text-[10px] text-gray-400 truncate">{{ note.lessonTitle?.substring(0, 20) }}</span>
+                      <span class="text-xs font-bold text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded">{{ note.timestamp || '--:--' }}</span>
+                      <span class="text-xs text-gray-400 truncate">{{ note.lessonTitle?.substring(0, 20) }}</span>
                     </div>
-                    <p class="text-xs text-gray-700">{{ note.content }}</p>
+                    <p class="text-sm text-gray-700">{{ note.content }}</p>
                   </div>
                   <button @click="deleteTimestampNote(note.id)" class="text-gray-300 hover:text-red-400 transition opacity-0 group-hover:opacity-100 flex-shrink-0">
                     <i class="fas fa-times text-[10px]"></i>
@@ -738,16 +773,16 @@ onMounted(() => {
           </div>
 
           <!-- Course Resources -->
-          <div class="p-4 border-b border-gray-100">
-            <h4 class="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+          <div class="p-5 border-b border-gray-100">
+            <h4 class="text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
               <i class="fas fa-folder-open text-yellow-500"></i>课程配套资源
             </h4>
 
-            <div v-if="!selectedChapter" class="text-xs text-gray-400 text-center py-6">
+            <div v-if="!selectedChapter" class="text-sm text-gray-400 text-center py-6">
               <i class="fas fa-hand-point-left text-3xl mb-2 block"></i>
               请先从左侧选择章节
             </div>
-            <div v-else-if="!chapterResources" class="text-xs text-gray-400 text-center py-6">
+            <div v-else-if="!chapterResources" class="text-sm text-gray-400 text-center py-6">
               <i class="fas fa-inbox text-3xl mb-2 block"></i>
               本章暂无配套资源
             </div>
@@ -758,24 +793,24 @@ onMounted(() => {
                 <div @click="toggleResourceType('mindmap')"
                      class="flex items-center justify-between p-3 cursor-pointer hover:bg-blue-50 transition">
                   <div class="flex items-center gap-2">
-                    <div class="w-7 h-7 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <i class="fas fa-project-diagram text-blue-500 text-[10px]"></i>
+                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <i class="fas fa-project-diagram text-blue-500 text-xs"></i>
                     </div>
                     <div>
-                      <p class="text-xs font-medium text-gray-700">思维导图</p>
-                      <p class="text-[10px] text-gray-400">{{ chapterResources.mindMaps.length }} 个文件</p>
+                      <p class="text-sm font-medium text-gray-700">思维导图</p>
+                      <p class="text-xs text-gray-400">{{ chapterResources.mindMaps.length }} 个文件</p>
                     </div>
                   </div>
-                  <i :class="['fas text-xs text-gray-400 transition', isResourceExpanded('mindmap') ? 'fa-chevron-down' : 'fa-chevron-right']"></i>
+                  <i :class="['fas text-sm text-gray-400 transition', isResourceExpanded('mindmap') ? 'fa-chevron-down' : 'fa-chevron-right']"></i>
                 </div>
                 <div v-if="isResourceExpanded('mindmap')" class="px-3 pb-2 space-y-1">
                   <a v-for="(f, fi) in chapterResources.mindMaps" :key="fi"
                      :href="f.url" target="_blank"
-                     class="flex items-center justify-between px-3 py-1.5 rounded-lg hover:bg-blue-100/50 transition text-xs">
+                     class="flex items-center justify-between px-3 py-1.5 rounded-lg hover:bg-blue-100/50 transition text-sm">
                     <span class="truncate text-gray-600"><i class="far fa-image text-blue-400 mr-1.5"></i>{{ f.name }}</span>
                     <i class="fas fa-download text-gray-300 hover:text-blue-500 flex-shrink-0 ml-2"></i>
                   </a>
-                  <p v-if="chapterResources.mindMaps.length === 0" class="text-[10px] text-gray-400 px-3 py-1">暂无思维导图</p>
+                  <p v-if="chapterResources.mindMaps.length === 0" class="text-xs text-gray-400 px-3 py-1">暂无思维导图</p>
                 </div>
               </div>
 
@@ -784,24 +819,24 @@ onMounted(() => {
                 <div @click="toggleResourceType('ppt')"
                      class="flex items-center justify-between p-3 cursor-pointer hover:bg-orange-50 transition">
                   <div class="flex items-center gap-2">
-                    <div class="w-7 h-7 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <i class="fas fa-file-powerpoint text-orange-500 text-[10px]"></i>
+                    <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <i class="fas fa-file-powerpoint text-orange-500 text-xs"></i>
                     </div>
                     <div>
-                      <p class="text-xs font-medium text-gray-700">PPT 课件</p>
-                      <p class="text-[10px] text-gray-400">{{ chapterResources.ppts.length }} 个文件</p>
+                      <p class="text-sm font-medium text-gray-700">PPT 课件</p>
+                      <p class="text-xs text-gray-400">{{ chapterResources.ppts.length }} 个文件</p>
                     </div>
                   </div>
-                  <i :class="['fas text-xs text-gray-400 transition', isResourceExpanded('ppt') ? 'fa-chevron-down' : 'fa-chevron-right']"></i>
+                  <i :class="['fas text-sm text-gray-400 transition', isResourceExpanded('ppt') ? 'fa-chevron-down' : 'fa-chevron-right']"></i>
                 </div>
                 <div v-if="isResourceExpanded('ppt')" class="px-3 pb-2 space-y-1 max-h-48 overflow-y-auto">
                   <a v-for="(f, fi) in chapterResources.ppts" :key="fi"
                      :href="f.url" target="_blank"
-                     class="flex items-center justify-between px-3 py-1.5 rounded-lg hover:bg-orange-100/50 transition text-xs">
+                     class="flex items-center justify-between px-3 py-1.5 rounded-lg hover:bg-orange-100/50 transition text-sm">
                     <span class="truncate text-gray-600"><i class="far fa-file-powerpoint text-orange-400 mr-1.5"></i>{{ f.name }}</span>
                     <i class="fas fa-download text-gray-300 hover:text-orange-500 flex-shrink-0 ml-2"></i>
                   </a>
-                  <p v-if="chapterResources.ppts.length === 0" class="text-[10px] text-gray-400 px-3 py-1">暂无PPT课件</p>
+                  <p v-if="chapterResources.ppts.length === 0" class="text-xs text-gray-400 px-3 py-1">暂无PPT课件</p>
                 </div>
               </div>
 
@@ -810,79 +845,88 @@ onMounted(() => {
                 <div @click="toggleResourceType('code')"
                      class="flex items-center justify-between p-3 cursor-pointer hover:bg-green-50 transition">
                   <div class="flex items-center gap-2">
-                    <div class="w-7 h-7 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <i class="fas fa-code text-green-500 text-[10px]"></i>
+                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <i class="fas fa-code text-green-500 text-xs"></i>
                     </div>
                     <div>
-                      <p class="text-xs font-medium text-gray-700">案例代码</p>
-                      <p class="text-[10px] text-gray-400">{{ chapterResources.codes.length }} 个文件</p>
+                      <p class="text-sm font-medium text-gray-700">案例代码</p>
+                      <p class="text-xs text-gray-400">{{ chapterResources.codes.length }} 个文件</p>
                     </div>
                   </div>
-                  <i :class="['fas text-xs text-gray-400 transition', isResourceExpanded('code') ? 'fa-chevron-down' : 'fa-chevron-right']"></i>
+                  <i :class="['fas text-sm text-gray-400 transition', isResourceExpanded('code') ? 'fa-chevron-down' : 'fa-chevron-right']"></i>
                 </div>
                 <div v-if="isResourceExpanded('code')" class="px-3 pb-2 space-y-1 max-h-48 overflow-y-auto">
                   <a v-for="(f, fi) in chapterResources.codes" :key="fi"
                      :href="f.url" target="_blank"
-                     class="flex items-center justify-between px-3 py-1.5 rounded-lg hover:bg-green-100/50 transition text-xs">
+                     class="flex items-center justify-between px-3 py-1.5 rounded-lg hover:bg-green-100/50 transition text-sm">
                     <span class="truncate text-gray-600"><i class="far fa-file-code text-green-400 mr-1.5"></i>{{ f.name }}</span>
                     <i class="fas fa-download text-gray-300 hover:text-green-500 flex-shrink-0 ml-2"></i>
                   </a>
-                  <p v-if="chapterResources.codes.length === 0" class="text-[10px] text-gray-400 px-3 py-1">暂无案例代码</p>
+                  <p v-if="chapterResources.codes.length === 0" class="text-xs text-gray-400 px-3 py-1">暂无案例代码</p>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Course Reviews -->
-          <div class="p-4">
-            <h4 class="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+          <div class="p-5">
+            <h4 class="text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
               <i class="fas fa-star text-yellow-400"></i>课程评价
+              <span v-if="selectedChapter" class="text-xs text-gray-400 font-normal">第{{ selectedChapter.num }}章</span>
             </h4>
-            <!-- Rating summary -->
-            <div class="flex items-center gap-3 mb-3 p-3 bg-yellow-50 rounded-xl">
-              <div class="text-2xl font-bold text-gray-800">{{ avgRating || '-' }}</div>
-              <div>
-                <div class="flex text-yellow-400 text-sm">
-                  <i v-for="i in 5" :key="i" :class="i <= Math.round(avgRating) ? 'fas fa-star' : 'far fa-star'"></i>
-                </div>
-                <div class="text-[10px] text-gray-400">{{ reviewCount }} 条评价</div>
-              </div>
+
+            <!-- No chapter selected -->
+            <div v-if="!selectedChapter" class="text-sm text-gray-400 text-center py-6">
+              请选择章节后查看评价
             </div>
 
-            <!-- My review -->
-            <div v-if="auth.isLoggedIn" class="mb-3 p-3 bg-gray-50 rounded-xl">
-              <p class="text-xs font-bold text-gray-600 mb-2">我的评价</p>
-              <div class="flex gap-0.5 mb-2">
-                <button v-for="i in 5" :key="i" @click="myRating = i"
-                        :class="['text-lg transition hover:scale-110', i <= myRating ? 'text-yellow-400' : 'text-gray-300']">
-                  <i :class="i <= myRating ? 'fas fa-star' : 'far fa-star'"></i>
+            <template v-else>
+              <!-- Rating summary -->
+              <div class="flex items-center gap-3 mb-3 p-3 bg-yellow-50 rounded-xl">
+                <div class="text-3xl font-bold text-gray-800">{{ avgRating || '-' }}</div>
+                <div>
+                  <div class="flex text-yellow-400 text-base">
+                    <i v-for="i in 5" :key="i" :class="i <= Math.round(avgRating) ? 'fas fa-star' : 'far fa-star'"></i>
+                  </div>
+                  <div class="text-xs text-gray-400">{{ reviewCount }} 条评价</div>
+                </div>
+              </div>
+
+              <!-- My review -->
+              <div v-if="auth.isLoggedIn" class="mb-3 p-3 bg-gray-50 rounded-xl">
+                <p class="text-sm font-bold text-gray-600 mb-2">我的评价</p>
+                <div class="flex gap-0.5 mb-2">
+                  <button v-for="i in 5" :key="i" @click="myRating = i"
+                          :class="['text-xl transition hover:scale-110', i <= myRating ? 'text-yellow-400' : 'text-gray-300']">
+                    <i :class="i <= myRating ? 'fas fa-star' : 'far fa-star'"></i>
+                  </button>
+                </div>
+                <textarea v-model="myReviewContent" placeholder="写下你的学习感受..."
+                          class="w-full text-sm p-2 border border-gray-200 rounded-lg resize-none focus:outline-none focus:border-blue-300 h-16"></textarea>
+                <button @click="submitReview" :disabled="myRating === 0 || submittingReview"
+                        class="mt-2 text-sm bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                  {{ submittingReview ? '提交中...' : '提交评价' }}
                 </button>
               </div>
-              <textarea v-model="myReviewContent" placeholder="写下你的学习感受..."
-                        class="w-full text-xs p-2 border border-gray-200 rounded-lg resize-none focus:outline-none focus:border-blue-300 h-16"></textarea>
-              <button @click="submitReview" :disabled="myRating === 0 || submittingReview"
-                      class="mt-2 text-xs bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
-                {{ submittingReview ? '提交中...' : '提交评价' }}
-              </button>
-            </div>
-            <div v-else class="mb-3 p-3 bg-gray-50 rounded-xl text-center text-xs text-gray-400">
-              <a href="/login" class="text-blue-500 hover:underline">登录</a>后即可评价
-            </div>
-
-            <!-- Review list -->
-            <div class="space-y-3">
-              <div v-for="r in reviews" :key="r.id" class="border-t border-gray-50 pt-3">
-                <div class="flex items-center gap-2 mb-1">
-                  <img :src="r.avatar" class="w-5 h-5 rounded-full">
-                  <span class="text-xs font-bold text-gray-700">{{ r.username }}</span>
-                  <span class="flex text-[8px] text-yellow-400">
-                    <i v-for="i in 5" :key="i" :class="i <= r.rating ? 'fas fa-star' : 'far fa-star'"></i>
-                  </span>
-                </div>
-                <p class="text-xs text-gray-500" v-if="r.content">{{ r.content }}</p>
+              <div v-else class="mb-3 p-3 bg-gray-50 rounded-xl text-center text-sm text-gray-400">
+                <a href="/login" class="text-blue-500 hover:underline">登录</a>后即可评价
               </div>
-              <div v-if="reviews.length === 0" class="text-xs text-gray-400 text-center py-4">暂无评价，成为第一个评价的人吧</div>
-            </div>
+
+              <!-- Review list -->
+              <div class="space-y-3">
+                <div v-for="r in reviews" :key="r.id" class="border-t border-gray-50 pt-3">
+                  <div class="flex items-center gap-2 mb-1">
+                    <img :src="r.avatar" class="w-6 h-6 rounded-full">
+                    <span class="text-sm font-bold text-gray-700">{{ r.username }}</span>
+                    <span class="flex text-[10px] text-yellow-400">
+                      <i v-for="i in 5" :key="i" :class="i <= r.rating ? 'fas fa-star' : 'far fa-star'"></i>
+                    </span>
+                  </div>
+                  <p class="text-sm text-gray-500" v-if="r.content">{{ r.content }}</p>
+                </div>
+                <div v-if="reviews.length === 0" class="text-sm text-gray-400 text-center py-4">暂无评价，成为第一个评价的人吧</div>
+              </div>
+            </template>
           </div>
         </div>
       </aside>
