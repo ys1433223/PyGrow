@@ -9,6 +9,7 @@ import AppHeader from '../components/layout/AppHeader.vue'
 import AppFooter from '../components/layout/AppFooter.vue'
 import PageLoader from '../components/layout/PageLoader.vue'
 import ExpBar from '../components/common/ExpBar.vue'
+import { asset } from '../utils/assets'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -154,7 +155,7 @@ async function claimTaskReward(taskId) {
         </div>
         <div class="learning-hero-visual" aria-hidden="true">
           <div class="visual-fallback"><i class="fas fa-graduation-cap"></i></div>
-          <img src="/images/learning-center/study-command-center.png" alt="" loading="lazy" @error="handleImageError">
+          <img :src="asset('/images/learning-center/study-command-center.png')" alt="" loading="lazy" @error="handleImageError">
         </div>
       </div>
 

@@ -8,6 +8,7 @@ import PageLoader from '../components/layout/PageLoader.vue'
 import ExpBar from '../components/common/ExpBar.vue'
 import RadarChart from '../components/common/RadarChart.vue'
 import { courseLevels } from '../data/courseData'
+import { asset } from '../utils/assets'
 
 // Build flat course list from courseLevels
 function getAllCourses() {
@@ -221,7 +222,7 @@ onMounted(async () => {
           </div>
           <div class="report-hero-visual" aria-hidden="true">
             <div class="visual-fallback"><i class="fas fa-chart-line"></i></div>
-            <img src="/images/report/growth-insights.png" alt="" loading="lazy" @error="handleImageError">
+            <img :src="asset('/images/report/growth-insights.png')" alt="" loading="lazy" @error="handleImageError">
           </div>
         </div>
 
@@ -331,7 +332,7 @@ onMounted(async () => {
         </template>
 
         <div v-else class="report-empty-card">
-          <img src="/images/empty-states/learning-empty.png" alt="" loading="lazy" @error="handleImageError">
+          <img :src="asset('/images/empty-states/learning-empty.png')" alt="" loading="lazy" @error="handleImageError">
           <div class="visual-fallback"><i class="fas fa-chart-pie"></i></div>
           <h3>暂无学习数据</h3>
           <p>先完成课程或练习，报告会自动整理你的成长轨迹。</p>

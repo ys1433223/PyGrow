@@ -5,6 +5,7 @@ import { adventureApi } from '../api/adventure'
 import AppHeader from '../components/layout/AppHeader.vue'
 import AppFooter from '../components/layout/AppFooter.vue'
 import PageLoader from '../components/layout/PageLoader.vue'
+import { asset } from '../utils/assets'
 
 const router = useRouter()
 const route = useRoute()
@@ -172,7 +173,7 @@ watch(() => route.query.type, (val) => {
             @click="openDetail(reward)">
             <div class="flex items-start gap-3">
               <img
-                :src="'/pets/status/studying' + (Math.random() > 0.5 ? '2' : '') + '.png'"
+                :src="asset('/pets/status/studying' + (Math.random() > 0.5 ? '2' : '') + '.png')"
                 class="w-20 h-20 object-contain flex-shrink-0"
                 alt="studying"
               />
@@ -210,7 +211,7 @@ watch(() => route.query.type, (val) => {
             @click="openDetail(reward)">
             <div class="flex items-start gap-3">
               <img
-                :src="'/pets/status/love' + (Math.random() > 0.5 ? '2' : '') + '.png'"
+                :src="asset('/pets/status/love' + (Math.random() > 0.5 ? '2' : '') + '.png')"
                 class="w-28 h-28 object-contain flex-shrink-0"
                 alt="love"
               />
@@ -282,7 +283,7 @@ watch(() => route.query.type, (val) => {
           </div>
           <div class="p-6">
             <img
-              :src="'/pets/status/studying' + (Math.random() > 0.5 ? '2' : '') + '.png'"
+              :src="asset('/pets/status/studying' + (Math.random() > 0.5 ? '2' : '') + '.png')"
               class="w-36 h-36 mx-auto mb-4 object-contain"
               alt="studying"
             />
@@ -317,7 +318,7 @@ watch(() => route.query.type, (val) => {
           </div>
           <div class="p-6 text-center">
             <img
-              :src="'/pets/status/love' + (Math.random() > 0.5 ? '2' : '') + '.png'"
+              :src="asset('/pets/status/love' + (Math.random() > 0.5 ? '2' : '') + '.png')"
               class="w-44 h-44 mx-auto mb-4 object-contain"
               alt="love"
             />

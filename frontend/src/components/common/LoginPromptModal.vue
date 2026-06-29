@@ -1,5 +1,6 @@
 <script setup>
 import { useRouter } from 'vue-router'
+import { asset } from '../../utils/assets'
 
 const router = useRouter()
 const props = defineProps({
@@ -25,7 +26,7 @@ function goToLogin() {
         <!-- Pet sleeping image -->
         <div class="mb-5">
           <img
-            src="/pets/default/纸箱休息.gif"
+            :src="asset('/pets/default/纸箱休息.gif')"
             alt="宠物在休息"
             class="w-32 h-32 mx-auto object-contain"
           />

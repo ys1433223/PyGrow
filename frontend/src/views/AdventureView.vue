@@ -6,6 +6,7 @@ import { triggerPetState, triggerPetAdventureStart, triggerPetAdventureEnd } fro
 import AppHeader from '../components/layout/AppHeader.vue'
 import AppFooter from '../components/layout/AppFooter.vue'
 import PageLoader from '../components/layout/PageLoader.vue'
+import { asset } from '../utils/assets'
 
 const router = useRouter()
 
@@ -402,7 +403,7 @@ watch(countdown, (val) => {
               <div v-else-if="claimedReward.reward_type === 'knowledge_note'" class="text-center">
                 <div class="max-w-sm mx-auto bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl shadow-lg border border-blue-100 p-6">
                   <img
-                    :src="'/pets/status/studying' + (Math.random() > 0.5 ? '2' : '') + '.png'"
+                    :src="asset('/pets/status/studying' + (Math.random() > 0.5 ? '2' : '') + '.png')"
                     class="w-36 h-36 mx-auto mb-3 object-contain"
                     alt="studying"
                   />
@@ -426,7 +427,7 @@ watch(countdown, (val) => {
               <div v-else-if="claimedReward.reward_type === 'blessing'" class="text-center">
                 <div class="max-w-sm mx-auto bg-gradient-to-br from-pink-50 to-rose-50 rounded-2xl shadow-lg border border-pink-100 p-6">
                   <img
-                    :src="'/pets/status/love' + (Math.random() > 0.5 ? '2' : '') + '.png'"
+                    :src="asset('/pets/status/love' + (Math.random() > 0.5 ? '2' : '') + '.png')"
                     class="w-44 h-44 mx-auto mb-3 object-contain"
                     alt="love"
                   />

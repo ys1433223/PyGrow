@@ -1,6 +1,8 @@
 // State→GIF mapping built from actual files in public/pets/default/
 // Each state pool lists GIF filenames; idle is the universal fallback.
 
+import { asset } from '../utils/assets'
+
 const IDLE = ['yes.gif', '无语.gif', '吐舌.gif', '吃薯片.gif', '浇水.gif']
 
 export const PET_STATE_POOLS = {
@@ -23,7 +25,7 @@ export const PET_STATE_POOLS = {
 export function pickGif(state) {
   const pool = PET_STATE_POOLS[state] || PET_STATE_POOLS.idle
   const idx = Math.floor(Math.random() * pool.length)
-  return `/pets/default/${pool[idx]}`
+  return asset(`/pets/default/${pool[idx]}`)
 }
 
 export const TMP_STATE_DEFAULTS = {

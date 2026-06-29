@@ -1,6 +1,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 
+const BASE = import.meta.env.BASE_URL
+
 const LOADING_GIFS = [
   '端详.gif', '对手指.gif', '吐舌.gif', '思考.gif', '喜欢.gif',
   '点赞.gif', '鼓掌.gif', '戳戳.gif', '喜欢2.gif', '喜欢3.gif',
@@ -13,7 +15,7 @@ const petGif = ref('')
 
 onMounted(() => {
   const gif = LOADING_GIFS[Math.floor(Math.random() * LOADING_GIFS.length)]
-  petGif.value = `/pets/default/${gif}`
+  petGif.value = BASE + 'pets/default/' + gif
 
   const timer = setInterval(() => {
     progress.value += 10

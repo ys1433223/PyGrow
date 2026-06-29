@@ -7,6 +7,7 @@ import PageLoader from '../components/layout/PageLoader.vue'
 import { getPosts, getHotPosts, getPostDetail, createPost, addComment, toggleLike, toggleFavorite, toggleCommentLike } from '../api/community'
 import { getXPLeaderboard, getProjectsLeaderboard, getStreakLeaderboard } from '../api/leaderboard'
 import { useAuthStore } from '../stores/auth'
+import { asset } from '../utils/assets'
 const route = useRoute()
 import { calcMajorLevel } from '../utils/levels'
 
@@ -445,7 +446,7 @@ onMounted(() => {
         </div>
         <div class="community-hero-visual" aria-hidden="true">
           <div class="visual-fallback"><i class="fas fa-comments"></i></div>
-          <img src="/images/community/community-hero.png" alt="" loading="lazy" @error="handleImageError">
+          <img :src="asset('/images/community/community-hero.png')" alt="" loading="lazy" @error="handleImageError">
         </div>
         <button v-if="view === 'list'" @click="view = 'create'" class="publish-button">
           <i class="fas fa-pen mr-1.5"></i>发布帖子
@@ -459,7 +460,7 @@ onMounted(() => {
           <div class="leaderboard-card sticky top-20">
             <div class="leaderboard-visual" aria-hidden="true">
               <div class="visual-fallback"><i class="fas fa-trophy"></i></div>
-              <img src="/images/community/leaderboard-podium.png" alt="" loading="lazy" @error="handleImageError">
+              <img :src="asset('/images/community/leaderboard-podium.png')" alt="" loading="lazy" @error="handleImageError">
             </div>
             <div class="leaderboard-heading">
               <div>

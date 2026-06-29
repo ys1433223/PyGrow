@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { asset } from '../utils/assets'
 import { pickGif, TMP_STATE_DEFAULTS } from '../data/petAnimationMap'
 import { listenPetState, listenPetMode, listenPetMessage, listenPetAdventureStart, listenPetAdventureEnd } from '../hooks/usePetCompanion'
 import PetMenu from './PetMenu.vue'
@@ -289,7 +290,7 @@ function startAdventureAnimation() {
   adventureAnimating.value = true
   // Pick random happy GIF
   const gif = HAPPY_ADVENTURE_GIFS[Math.floor(Math.random() * HAPPY_ADVENTURE_GIFS.length)]
-  adventureGif.value = `/pets/default/${gif}`
+  adventureGif.value = asset(`/pets/default/${gif}`)
   // Move to center
   const cx = (window.innerWidth - SIZE) / 2
   const cy = (window.innerHeight - SIZE) / 2

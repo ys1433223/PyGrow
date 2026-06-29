@@ -11,6 +11,7 @@ import AppHeader from '../components/layout/AppHeader.vue'
 import AppFooter from '../components/layout/AppFooter.vue'
 import PageLoader from '../components/layout/PageLoader.vue'
 import ExpBar from '../components/common/ExpBar.vue'
+import { asset } from '../utils/assets'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -24,32 +25,32 @@ const hotPosts = ref([])
 const COURSE_MAP = [
   {
     title: 'Python3.11零基础快速入门',
-    cover: '/images/course-covers/Python3.11零基础快速入门.png',
+    cover: asset('/images/course-covers/Python3.11零基础快速入门.png'),
     level: '初级', chapter: 1,
   },
   {
     title: 'Scrapy分布式爬虫',
-    cover: '/images/course-covers/Scrapy分布式爬虫.png',
+    cover: asset('/images/course-covers/Scrapy分布式爬虫.png'),
     level: '中级', chapter: 5,
   },
   {
     title: 'Python操作Excel与邮件自动化',
-    cover: '/images/course-covers/ython操作Excel与邮件自动化.png',
+    cover: asset('/images/course-covers/ython操作Excel与邮件自动化.png'),
     level: '高级', chapter: 2,
   },
   {
     title: 'Pandas &Matplotlib数据可视化',
-    cover: '/images/course-covers/Pandas &Matplotlib数据可视化.png',
+    cover: asset('/images/course-covers/Pandas &Matplotlib数据可视化.png'),
     level: '高级', chapter: 4,
   },
   {
     title: 'Django/Flask企业级开发实战',
-    cover: '/images/course-covers/DjangoFlask开发.png',
+    cover: asset('/images/course-covers/DjangoFlask开发.png'),
     level: '中级', chapter: 3,
   },
   {
     title: 'PyTorch深度学习与神经网络',
-    cover: '/images/course-covers/PyTorch深度学习与神经网络.png',
+    cover: asset('/images/course-covers/PyTorch深度学习与神经网络.png'),
     level: '高级', chapter: 7,
   },
 ]
@@ -205,7 +206,7 @@ function goToCourse(course) {
 
           <div class="md:w-1/2 mt-12 md:mt-0 relative flex justify-center md:justify-end">
             <div class="relative w-full max-w-lg">
-              <img src="/de-image/home-hero.png" alt="Python学习" class="w-full h-auto object-contain z-10 relative drop-shadow-2xl">
+              <img :src="asset('/de-image/home-hero.png')" alt="Python学习" class="w-full h-auto object-contain z-10 relative drop-shadow-2xl">
               <div class="absolute -left-4 top-8 bg-white p-4 rounded-xl shadow-lg z-20 animate-float border border-gray-50">
                 <div class="flex items-center gap-3">
                   <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600">
@@ -232,7 +233,7 @@ function goToCourse(course) {
             class="feature-card group"
             :style="{ '--feature-accent': feature.accent, '--feature-soft': feature.soft, '--icon-x': feature.iconX, '--icon-y': feature.iconY }"
           >
-            <div class="feature-icon-sprite" aria-hidden="true">
+            <div class="feature-icon-sprite" :style="{ '--icon-sprite': `url(${asset('/images/icons/home-feature-icons.png')})` }" aria-hidden="true">
               <span class="feature-icon-fallback"><i :class="feature.fallback"></i></span>
             </div>
             <h4>{{ feature.title }}</h4>
@@ -449,7 +450,7 @@ function goToCourse(course) {
           <div class="locked-center-visual" aria-hidden="true">
             <div class="visual-fallback"><i class="fas fa-lock"></i></div>
             <img
-              src="/images/home/learning-center-locked.png"
+              :src="asset('/images/home/learning-center-locked.png')"
               alt=""
               loading="lazy"
               @error="handleImageError"
@@ -472,7 +473,7 @@ function goToCourse(course) {
           <div class="community-visual" aria-hidden="true">
             <div class="visual-fallback"><i class="fas fa-comments"></i></div>
             <img
-              src="/images/home/community-collab.png"
+              :src="asset('/images/home/community-collab.png')"
               alt=""
               loading="lazy"
               @error="handleImageError"
@@ -506,7 +507,7 @@ function goToCourse(course) {
           </div>
           <!-- Empty state when no posts -->
           <div v-if="hotPosts.length === 0" class="empty-state-card md:col-span-2">
-            <img src="/images/empty-states/learning-empty.png" alt="" loading="lazy" @error="handleImageError">
+            <img :src="asset('/images/empty-states/learning-empty.png')" alt="" loading="lazy" @error="handleImageError">
             <div class="visual-fallback"><i class="fas fa-comments"></i></div>
             <h3>暂无热门帖子</h3>
             <p>快去社区发帖，把今天的 Python 小发现分享出来。</p>
@@ -517,7 +518,7 @@ function goToCourse(course) {
       <!-- Tools -->
       <section class="container mx-auto px-4 mt-20 mb-20">
         <div class="tools-supply-panel">
-          <div class="tools-texture" aria-hidden="true"></div>
+          <div class="tools-texture" :style="{ background: `linear-gradient(135deg, rgba(15,23,42,0.1), rgba(30,41,59,0.34)), url(${asset('/images/home/tools-night-texture.png')}) center/cover no-repeat, radial-gradient(circle at 70% 20%, rgba(59,130,246,0.26), transparent 36%), #0f172a` }" aria-hidden="true"></div>
           <div class="tools-head">
             <span class="section-kicker dark">工具补给</span>
             <h2><i data-lucide="zap" width="26"></i> 学习工具补给站</h2>
@@ -613,7 +614,7 @@ function goToCourse(course) {
   content: "";
   position: absolute;
   inset: 0;
-  background-image: url('/images/icons/home-feature-icons.png');
+  background-image: var(--icon-sprite);
   background-repeat: no-repeat;
   background-size: 300% 200%;
   background-position: var(--icon-x) var(--icon-y);
@@ -966,11 +967,6 @@ function goToCourse(course) {
 .tools-texture {
   position: absolute;
   inset: 0;
-  background:
-    linear-gradient(135deg, rgba(15, 23, 42, 0.1), rgba(30, 41, 59, 0.34)),
-    url('/images/home/tools-night-texture.png') center / cover no-repeat,
-    radial-gradient(circle at 70% 20%, rgba(59, 130, 246, 0.26), transparent 36%),
-    #0f172a;
   opacity: 0.9;
 }
 

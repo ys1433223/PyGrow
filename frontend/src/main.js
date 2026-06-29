@@ -5,6 +5,7 @@ import router from './router'
 
 import '@fortawesome/fontawesome-free/css/all.min.css'
 import './assets/styles/global.css'
+import './utils/day-night_script.js'
 
 const app = createApp(App)
 app.use(createPinia())
