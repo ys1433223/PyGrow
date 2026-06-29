@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
+  { path: '/gate', name: 'gate', component: () => import('../views/AccessGate.vue') },
   { path: '/', name: 'home', component: () => import('../views/HomeView.vue') },
   { path: '/login', name: 'login', component: () => import('../views/LoginView.vue') },
   { path: '/register', name: 'register', component: () => import('../views/RegisterView.vue') },
@@ -31,6 +32,9 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
+  if (to.name !== 'gate' && !localStorage.getItem('pygrow_unlocked')) {
+    return next('/gate')
+  }
   if (to.meta.requiresAuth) {
     const token = localStorage.getItem('access_token')
     if (!token) {
