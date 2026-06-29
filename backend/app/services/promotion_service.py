@@ -216,6 +216,25 @@ async def select_promotion_questions(
     rank_index = get_rank_index(current_rank)
     skip_hard = rank_index <= 1  # 萌新小白 or 勤学学徒 → no hard
 
+    # ---- Exclude questions from previous promotion exams ----
+    past_exam_result = await db.execute(
+        select(PromotionExam).where(
+            PromotionExam.user_id == user_id,
+            PromotionExam.status == "completed",
+        )
+    )
+    past_exams = past_exam_result.scalars().all()
+    past_exam_question_ids = set()
+    for exam in past_exams:
+        if exam.questions:
+            for q in exam.questions:
+                qid = q.get("id") or q.get("question_id")
+                if qid:
+                    past_exam_question_ids.add(qid)
+
+    # Merge with completed practice question IDs
+    all_excluded_ids = completed_ids | past_exam_question_ids
+
     selected = []
     used_ids = set()
     source_breakdown = defaultdict(int)
@@ -233,9 +252,11 @@ async def select_promotion_questions(
         q for q in all_candidates
         if (q.knowledge_tag or "") in learned_tags
     ]
+    # Exclude questions already used in past promotion exams
+    candidates = [q for q in candidates if q.id not in past_exam_question_ids]
     if not candidates:
         # Fallback: use all questions in stage (new student with no records)
-        candidates = [q for q in all_candidates if q.stage in allowed_stages]
+        candidates = [q for q in all_candidates if q.stage in allowed_stages and q.id not in past_exam_question_ids]
 
     # Exclude hard for new students
     if skip_hard:

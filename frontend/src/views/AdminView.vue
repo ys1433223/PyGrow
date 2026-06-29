@@ -111,7 +111,7 @@ onMounted(loadTab)
           <div v-for="u in users" :key="u.id" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center justify-between">
             <div>
               <p class="font-medium text-gray-800">{{ u.username }} <span v-if="u.is_admin" class="text-xs text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded-full">管理员</span></p>
-              <p class="text-xs text-gray-400">{{ u.level }} · {{ u.experience }} XP · {{ u.points }} 积分</p>
+              <p class="text-xs text-gray-400">{{ u.level }} · {{ u.experience }} 经验</p>
             </div>
             <button @click="handleToggleAdmin(u.id)" :class="u.is_admin ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'" class="px-3 py-1 rounded-full text-xs font-medium hover:opacity-80 transition">{{ u.is_admin ? '取消管理员' : '设为管理员' }}</button>
           </div>

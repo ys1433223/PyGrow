@@ -430,7 +430,7 @@ onMounted(() => {
       <!-- Page header -->
       <div v-if="view !== 'detail'" class="community-hero mb-6">
         <div class="community-hero-copy">
-          <span class="section-kicker">启航社区</span>
+          <span class="section-kicker">学习社区</span>
           <h1>
             <span v-if="view !== 'list'" class="cursor-pointer hover:text-blue-600 transition" @click="backToList">学习社区</span>
             <span v-else>学习社区</span>
@@ -463,7 +463,7 @@ onMounted(() => {
             </div>
             <div class="leaderboard-heading">
               <div>
-                <span class="section-kicker">Leaderboard</span>
+                <span class="section-kicker">排行榜</span>
                 <h3><i class="fas fa-trophy"></i>排行榜</h3>
               </div>
               <span class="lb-unit">{{ activeLbDimension.unit }}</span>

@@ -57,11 +57,15 @@ const scoreRingStyle = computed(() => {
   }
 })
 
+const isSkip = ref(false)
+
 onMounted(() => {
   const cached = localStorage.getItem('lastAssessmentResult')
   if (cached) {
     try {
-      result.value = JSON.parse(cached)
+      const parsed = JSON.parse(cached)
+      result.value = parsed
+      isSkip.value = !!parsed.skip
     } catch {}
   }
   loading.value = false
@@ -111,10 +115,18 @@ function retakeAssessment() {
               <span class="inline-block text-sm font-bold px-4 py-1.5 rounded-full mb-3" :class="badgeClass">
                 {{ rankLabel }}
               </span>
-              <h1 class="text-2xl font-bold text-gray-900 mb-2">测评完成！</h1>
-              <p class="text-gray-500">答对 {{ result.score }}/{{ result.total }} 题，正确率 {{ result.score_percent }}%</p>
-              <p v-if="rankDesc" class="text-gray-600 text-sm mt-2 max-w-md mx-auto leading-relaxed">{{ rankDesc }}</p>
-              <p v-if="result.experience_gained" class="text-blue-600 text-sm mt-2 font-medium">+{{ result.experience_gained }} 经验值</p>
+              <h1 class="text-2xl font-bold text-gray-900 mb-2">
+                {{ isSkip ? '已跳过测评' : '测评完成！' }}
+              </h1>
+              <template v-if="isSkip">
+                <p class="text-gray-500">你选择暂时跳过能力测评，默认段位为萌新小白。</p>
+                <p class="text-gray-400 text-sm mt-1">后续可通过课程学习、答题练习和晋级赛来提升段位。</p>
+              </template>
+              <template v-else>
+                <p class="text-gray-500">答对 {{ result.score }}/{{ result.total }} 题，正确率 {{ result.score_percent }}%</p>
+                <p v-if="rankDesc" class="text-gray-600 text-sm mt-2 max-w-md mx-auto leading-relaxed">{{ rankDesc }}</p>
+                <p v-if="result.experience_gained" class="text-blue-600 text-sm mt-2 font-medium">+{{ result.experience_gained }} 经验值</p>
+              </template>
             </div>
           </div>
 
@@ -169,9 +181,6 @@ function retakeAssessment() {
             <button @click="goToPractice" class="flex-1 bg-purple-600 text-white py-3 rounded-xl font-bold hover:bg-purple-700 transition shadow-lg">
               <i class="fas fa-dumbbell mr-2"></i>去练习巩固
             </button>
-            <button @click="retakeAssessment" class="flex-1 bg-gray-100 text-gray-600 py-3 rounded-xl font-medium hover:bg-gray-200 transition">
-              <i class="fas fa-redo mr-2"></i>重新测评
-            </button>
           </div>
         </div>
       </template>
@@ -179,7 +188,7 @@ function retakeAssessment() {
       <div v-else class="text-center py-20">
         <p class="text-5xl mb-4">📋</p>
         <p class="text-gray-500 mb-4">暂无测评结果</p>
-        <button @click="retakeAssessment" class="bg-blue-600 text-white px-6 py-2.5 rounded-full font-bold hover:bg-blue-700 transition shadow-lg">
+        <button @click="$router.push('/assessment')" class="bg-blue-600 text-white px-6 py-2.5 rounded-full font-bold hover:bg-blue-700 transition shadow-lg">
           开始能力测评
         </button>
       </div>

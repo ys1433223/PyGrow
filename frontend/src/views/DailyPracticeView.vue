@@ -186,7 +186,7 @@ onMounted(async () => {
     router.push('/login')
     return
   }
-  setPetMode('simplified')
+  setPetMode('hidden')
   await loadDailyQuestions()
   if (questions.value.length > 0) {
     startTimer()
@@ -257,7 +257,7 @@ watch([currentQuestion, currentIndex, totalQuestions], () => {
     </main>
 
     <!-- ========== QUIZ MODE ========== -->
-    <main v-else-if="!submitted" class="flex-grow container mx-auto px-4 py-6 max-w-5xl">
+    <main v-else-if="!submitted" class="flex-grow container mx-auto px-4 py-6 max-w-7xl">
       <button @click="$router.push('/learning-center')" class="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 mb-3 transition">
         <i class="fas fa-arrow-left"></i> 返回学习中心
       </button>
@@ -322,6 +322,8 @@ watch([currentQuestion, currentIndex, totalQuestions], () => {
             :knowledge-tag="currentQuestion.knowledge_tag"
             :knowledge-type="currentQuestion.knowledge_type || ''"
             :student-code="userAnswers[currentQuestion.id] || ''"
+            :options="currentQuestion.options || []"
+            :correct-answer="currentQuestion.answer || ''"
             @hint-used="(count) => onHintUsed(currentQuestion.id, count)"
           />
         </div>
@@ -417,7 +419,7 @@ watch([currentQuestion, currentIndex, totalQuestions], () => {
     </main>
 
     <!-- ========== RESULTS ========== -->
-    <main v-else-if="submitted && results" class="flex-grow container mx-auto px-4 py-6 max-w-5xl">
+    <main v-else-if="submitted && results" class="flex-grow container mx-auto px-4 py-6 max-w-7xl">
       <!-- Score header -->
       <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-lg p-8 text-white text-center mb-6">
         <p class="text-sm text-white/70 mb-2">每日一练 · {{ majorLevel }}段</p>

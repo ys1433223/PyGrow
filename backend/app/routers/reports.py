@@ -11,7 +11,7 @@ from app.models.community import Post
 from app.models.favorite import Favorite
 from app.models.project import ProjectSubmission
 from app.schemas.common import api_response
-from app.services.gamification import calc_level_progress
+from app.services.gamification import calc_rank_progress
 
 router = APIRouter()
 
@@ -42,7 +42,11 @@ async def get_report_summary(user: User = Depends(get_current_user), db: AsyncSe
     wrong_count = total_practice - correct_count
     accuracy = round(correct_count / total_practice * 100) if total_practice > 0 else 0
 
-    lvl_info = calc_level_progress(user.experience)
+    rank_info = calc_rank_progress(
+        user.current_rank or "萌新小白",
+        user.current_exp or 0,
+        user.total_exp or 0,
+    )
 
     return api_response(data={
         "completed_courses": completed_courses,
@@ -51,13 +55,12 @@ async def get_report_summary(user: User = Depends(get_current_user), db: AsyncSe
         "correct_count": correct_count,
         "wrong_count": wrong_count,
         "accuracy": accuracy,
-        "level": lvl_info["current_level"],
-        "current_xp": lvl_info["current_xp"],
-        "next_level_xp": lvl_info["next_level_xp"],
-        "progress_percent": lvl_info["progress_percent"],
-        "major_level": lvl_info["major_level"],
-        "experience": user.experience,
-        "points": user.points,
+        "level": rank_info["current_rank"],
+        "current_xp": rank_info["current_exp"],
+        "next_level_xp": rank_info["rank_exp_limit"],
+        "progress_percent": rank_info["progress_percent"],
+        "major_level": rank_info["major_level"],
+        "experience": rank_info["total_exp"],
     })
 
 

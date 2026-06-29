@@ -47,11 +47,15 @@ async def get_assessment_questions(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Return a structured 20-question placement test (100 points total).
+    """Return a structured 10-question placement test (100 points total).
 
     Questions cover core Python topics with a basic→intermediate gradient,
     drawn from stage 初级/中级, difficulty easy/medium.
+    Each user can only take this once.
     """
+    if user.is_assessed and user.is_assessed != 0:
+        return api_response(code=400, message="您已完成过能力测评，每个账号只能测评一次。")
+
     selected = []
     seen_ids = set()
     topics_fallback = list(PLACEMENT_TOPICS)
@@ -209,6 +213,7 @@ async def submit_assessment(
     user.rank_exp_limit = rank_exp_limit
     user.total_exp = (user.total_exp or 0) + xp_gained
     user.can_promotion_test = 0  # must earn EXP to unlock promotion
+    user.is_assessed = 1  # mark as completed
 
     # Also sync legacy fields
     user.level = new_rank
@@ -277,4 +282,29 @@ async def get_assessment_result(
         "total": total,
         "score_percent": score_pct,
         "level": user.level,
+    })
+
+
+@router.post("/skip")
+async def skip_assessment(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Skip placement test — default to first rank (萌新小白)."""
+    if user.is_assessed and user.is_assessed != 0:
+        return api_response(code=400, message="已经跳过了，不需要重复操作。")
+
+    default_rank = DEFAULT_RANK
+    user.current_rank = default_rank
+    user.current_exp = 0
+    user.rank_exp_limit = get_rank_exp_limit(default_rank)
+    user.can_promotion_test = 0
+    user.is_assessed = -1  # -1 = skipped
+    user.level = default_rank
+
+    await db.commit()
+
+    return api_response(data={
+        "assigned_rank": default_rank,
+        "message": "已跳过测评，段位设为萌新小白。后续可通过练习和课程学习提升段位。",
     })

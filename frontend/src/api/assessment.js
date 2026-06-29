@@ -10,4 +10,7 @@ export const assessmentApi = {
   getResult() {
     return client.get('/assessment/result')
   },
+  skipAssessment() {
+    return client.post('/assessment/skip')
+  },
 }

@@ -11,6 +11,8 @@ const props = defineProps({
   knowledgeTag: { type: String, default: '' },
   knowledgeType: { type: String, default: '' },
   studentCode: { type: String, default: '' },
+  options: { type: Array, default: () => [] },
+  correctAnswer: { type: String, default: '' },
 })
 
 const emit = defineEmits(['hint-used'])
@@ -70,6 +72,8 @@ async function requestHint(level) {
       knowledge_type: props.knowledgeType,
       student_code: props.studentCode,
       hint_level: level || nextLevel.value,
+      options: props.options || [],
+      correct_answer: props.correctAnswer || '',
     })
     if (res.data.code === 200) {
       const data = res.data.data

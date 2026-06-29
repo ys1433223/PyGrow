@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { coursesApi } from '../api/courses'
@@ -70,7 +70,7 @@ function getCourseLevel(courseTitle) {
 }
 
 const featureLinks = [
-  { title: '6门课程', desc: '按阶段系统学习', to: '/courses', accent: '#2563eb', soft: '#eaf2ff', iconX: '0%', iconY: '0%', fallback: 'fas fa-graduation-cap' },
+  { title: '3门课程', desc: '按阶段系统学习', to: '/courses', accent: '#2563eb', soft: '#eaf2ff', iconX: '0%', iconY: '0%', fallback: 'fas fa-graduation-cap' },
   { title: '每日一练', desc: '用短题巩固知识', to: '/daily-practice', accent: '#7c3aed', soft: '#f1eaff', iconX: '50%', iconY: '0%', fallback: 'fas fa-dumbbell' },
   { title: '在线编程', desc: '即写即运行', to: '/code-runner', accent: '#0ea5e9', soft: '#e7f6ff', iconX: '100%', iconY: '0%', fallback: 'fas fa-code' },
   { title: '宠物探险', desc: '收集明信片', to: '/adventure', accent: '#f59e0b', soft: '#fff5df', iconX: '0%', iconY: '100%', fallback: 'fas fa-compass' },
@@ -133,6 +133,7 @@ onMounted(async () => {
     console.error('Failed to load hot posts:', e)
   }
 
+  await nextTick()
   if (typeof lucide !== 'undefined') lucide.createIcons()
 })
 
@@ -496,9 +497,9 @@ function goToCourse(course) {
                 <h3>{{ post.title }}</h3>
                 <p>{{ postExcerpt(post) }}</p>
                 <div class="community-stats">
-                  <span><i data-lucide="message-square" width="15"></i>{{ post.comment_count || 0 }}</span>
-                  <span><i data-lucide="heart" width="15"></i>{{ post.like_count || 0 }}</span>
-                  <span><i data-lucide="eye" width="15"></i>{{ post.view_count || post.views || 0 }}</span>
+                  <span><i data-lucide="message-square" width="15"></i>{{ post.comment_count || 0 }} 评论</span>
+                  <span><i data-lucide="heart" width="15"></i>{{ post.like_count || 0 }} 赞</span>
+                  <span><i data-lucide="calendar" width="15"></i>{{ (post.created_at || '').slice(0, 10) }}</span>
                 </div>
               </div>
             </div>

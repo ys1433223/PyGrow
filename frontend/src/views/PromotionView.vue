@@ -81,7 +81,28 @@ async function startExam() {
 }
 
 function selectAnswer(qId, answer) {
-  answers.value[String(qId)] = answer
+  const key = String(qId)
+  const q = questions.value.find(q => String(q.question_id) === key)
+  if (q?.type === 'multiple_choice') {
+    // Toggle option on/off for multi-select
+    const current = (answers.value[key] || '').split(/[,，]\s*/).filter(Boolean)
+    const idx = current.indexOf(answer)
+    if (idx >= 0) current.splice(idx, 1)
+    else current.push(answer)
+    answers.value[key] = current.join(',')
+  } else {
+    answers.value[key] = answer
+  }
+}
+
+function isOptionSelected(qId, opt) {
+  const key = String(qId)
+  const q = questions.value.find(q => String(q.question_id) === key)
+  if (q?.type === 'multiple_choice') {
+    const current = (answers.value[key] || '').split(/[,，]\s*/).filter(Boolean)
+    return current.includes(opt)
+  }
+  return answers.value[key] === opt
 }
 
 function nextQuestion() {
@@ -256,17 +277,26 @@ function goBack() {
 
           <!-- Options -->
           <div v-if="['single_choice', 'multiple_choice'].includes(questions[currentIndex].type)" class="space-y-3 mb-6">
+            <p v-if="questions[currentIndex].type === 'multiple_choice'" class="text-xs text-amber-600 mb-1">
+              <i class="fas fa-info-circle mr-1"></i>多选题，点击选项切换选中状态
+            </p>
             <button
               v-for="(opt, oi) in (questions[currentIndex].options || [])" :key="oi"
               @click="selectAnswer(questions[currentIndex].question_id, opt)"
               :class="[
                 'w-full text-left px-4 py-3 rounded-xl border transition font-medium text-sm',
-                answers[String(questions[currentIndex].question_id)] === opt
+                isOptionSelected(questions[currentIndex].question_id, opt)
                   ? 'border-blue-500 bg-blue-50 text-blue-700'
                   : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
               ]"
             >
-              {{ opt }}
+              <span class="flex items-center gap-2">
+                <span v-if="questions[currentIndex].type === 'multiple_choice'" class="w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center"
+                  :class="isOptionSelected(questions[currentIndex].question_id, opt) ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-300'">
+                  <i v-if="isOptionSelected(questions[currentIndex].question_id, opt)" class="fas fa-check text-[8px]"></i>
+                </span>
+                <span>{{ opt }}</span>
+              </span>
             </button>
           </div>
 

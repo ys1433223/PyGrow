@@ -29,6 +29,8 @@ class User(Base):
     # Daily EXP tracking (resets each day)
     daily_exp = Column(Integer, default=0)
     daily_exp_date = Column(Date)
+    # Placement assessment flag (0=not taken, 1=completed, -1=skipped)
+    is_assessed = Column(Integer, default=0)
     # Admin
     is_admin = Column(Integer, default=0)
     last_login_at = Column(DateTime)

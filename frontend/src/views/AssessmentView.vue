@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { assessmentApi } from '../api/assessment'
 import AppHeader from '../components/layout/AppHeader.vue'
@@ -14,6 +14,8 @@ const submitted = ref(false)
 const loading = ref(true)
 const showConfirm = ref(false)
 const multiSelectTemp = ref({})
+const alreadyAssessed = ref(false)
+const skipping = ref(false)
 
 const totalQuestions = computed(() => questions.value.length)
 const currentQuestion = computed(() => questions.value[currentIndex.value] || null)
@@ -31,6 +33,8 @@ onMounted(async () => {
       questions.value.forEach(q => {
         if (q.type === 'multi') multiSelectTemp.value[q.id] = []
       })
+    } else if (res.data.code === 400) {
+      alreadyAssessed.value = true
     }
   } catch (e) {
     console.error('Failed to load questions:', e)
@@ -38,6 +42,22 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+async function skipAssessment() {
+  skipping.value = true
+  try {
+    const res = await assessmentApi.skipAssessment()
+    if (res.data.code === 200) {
+      localStorage.setItem('lastAssessmentResult', JSON.stringify({
+        score_percent: 0,
+        assigned_rank: res.data.data.assigned_rank,
+        skip: true,
+      }))
+      router.push('/assessment/result')
+    }
+  } catch { /* ignore */ }
+  skipping.value = false
+}
 
 function selectAnswer(qid, option) {
   const q = questions.value.find(q => q.id === qid)
@@ -101,12 +121,32 @@ async function submitAssessment() {
         <p class="text-gray-500">正在加载测评题目...</p>
       </div>
 
+      <!-- Already assessed -->
+      <div v-else-if="alreadyAssessed" class="max-w-md mx-auto text-center py-16">
+        <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-5">
+          <i class="fas fa-check-circle text-blue-500 text-3xl"></i>
+        </div>
+        <h2 class="text-xl font-bold text-gray-900 mb-2">您已完成能力测评</h2>
+        <p class="text-gray-500 mb-6">每个账号只能参加一次能力测评。</p>
+        <button @click="router.push('/')" class="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition">
+          返回首页
+        </button>
+      </div>
+
       <template v-else-if="questions.length > 0">
         <!-- Header info -->
         <div class="max-w-5xl mx-auto mb-8">
           <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h1 class="text-2xl font-bold text-gray-900 mb-2">能力测评</h1>
-            <p class="text-gray-500 text-sm mb-4">共 {{ totalQuestions }} 题、满分 100 分，覆盖 Python 基础到中级知识点。测评结果将为你匹配萌新小白~稳扎玩家四个初始段位。</p>
+            <div class="flex items-start justify-between">
+              <div>
+                <h1 class="text-2xl font-bold text-gray-900 mb-2">能力测评</h1>
+                <p class="text-gray-500 text-sm mb-4">共 {{ totalQuestions }} 题、满分 100 分，覆盖 Python 基础到中级知识点。测评结果将为你匹配萌新小白~稳扎玩家四个初始段位。</p>
+              </div>
+              <button @click="skipAssessment" :disabled="skipping"
+                class="ml-4 px-4 py-2 text-sm text-gray-400 hover:text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition whitespace-nowrap flex-shrink-0">
+                {{ skipping ? '跳过中...' : '暂时跳过' }}
+              </button>
+            </div>
             <!-- Progress -->
             <div class="flex items-center gap-3">
               <div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">

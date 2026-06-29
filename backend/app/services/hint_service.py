@@ -1,5 +1,6 @@
 import json
 import logging
+import random
 
 import httpx
 
@@ -153,6 +154,36 @@ MODE_PROMPTS = {
         "4. 【记忆关键词】3-5个关键词\n"
         "用友好的语气鼓励学生。不要直接给出本道题的答案！总计250字以内。"
     ),
+
+    # ---- exclude wrong answers (concept questions with fixed options) ------
+    "exclude_one": (
+        "学生正在做一道关于「{knowledge_tag}」的题目。\n题目：{question}\n"
+        "题目选项：{options_text}\n"
+        "以下选项已被确认为错误：**{excluded_opt}**\n\n"
+        "请向学生解释为什么「{excluded_opt}」这个选项是错误的，帮助学生排除它。"
+        "只解释这个选项错在哪里，不要提及正确选项是什么。用鼓励的语气。150字以内。"
+    ),
+    "exclude_two": (
+        "学生正在做一道关于「{knowledge_tag}」的题目。\n题目：{question}\n"
+        "题目选项：{options_text}\n"
+        "以下选项已被确认为错误：**{excluded_opt}**\n\n"
+        "请向学生依次解释为什么这些选项是错误的，帮助学生排除它们。"
+        "只解释这些选项为什么错，不要提及正确选项。用鼓励的语气。200字以内。"
+    ),
+
+    # ---- knowledge card with answer (remediation for fixed-answer) ---------
+    "remediation_with_answer": (
+        "学生连续查看了多个提示仍然不理解一道关于「{knowledge_tag}」的题目。"
+        "\n题目：{question}\n"
+        "题目选项：{options_text}\n"
+        "正确答案是：**{correct_answer}**\n\n"
+        "请生成一个简短的知识点补救卡片，包含以下内容：\n"
+        "1. 【核心概念】用一句话解释核心概念\n"
+        "2. 【答案解析】为什么正确答案是{correct_answer}，简要说明原因\n"
+        "3. 【易错点】列出最常见的1-2个错误理解\n"
+        "4. 【记忆关键词】3-5个关键词\n"
+        "用友好的语气鼓励学生。总计250字以内。"
+    ),
 }
 
 
@@ -196,6 +227,9 @@ def _build_user_prompt(
     knowledge_tag: str,
     question: str,
     student_code: str,
+    options_text: str = "",
+    excluded_opt: str = "",
+    correct_answer: str = "",
 ) -> str:
     """Build the user prompt for the given mode."""
     # code type uses "code_knowledge_point" / "code_approach" / "code_structure"
@@ -208,6 +242,9 @@ def _build_user_prompt(
         knowledge_tag=knowledge_tag or "Python基础",
         question=question,
         student_code=student_code or "（学生还没有作答）",
+        options_text=options_text or "",
+        excluded_opt=excluded_opt or "",
+        correct_answer=correct_answer or "",
     )
 
 
@@ -364,6 +401,92 @@ def _mock_hint(knowledge_type: str, knowledge_tag: str, hint_level: int) -> dict
     }
 
 
+def _mock_fixed_answer_hint(knowledge_tag: str, hint_level: int, options: list, correct_answer: str, opts_text: str) -> dict:
+    """Mock hint for fixed-answer questions with exclude-wrong / answer logic."""
+    if hint_level == 4:
+        return {
+            "hint_level": 4,
+            "hint_mode": "remediation_with_answer",
+            "title": "知识点补救卡片",
+            "content": f"【核心概念】\n{knowledge_tag}是Python编程中的重要知识点。\n\n"
+                       f"【答案解析】\n正确答案是「{correct_answer}」。这道题考察的是对{knowledge_tag}的理解和运用。"
+                       f"请仔细回顾相关概念，确保真正理解为什么这个选项是对的。\n\n"
+                       f"【易错点】\n1. 容易和其他相似概念混淆\n2. 特殊边界条件容易被忽略\n\n"
+                       f"【记忆关键词】\n{knowledge_tag}、基本用法、正确选项判断",
+            "examples": "",
+            "common_mistakes": "概念混淆、忽略细节",
+            "keywords": f"{knowledge_tag}, {correct_answer}",
+            "still_no_answer": True,
+        }
+    # Level 2-3: exclude wrong answers
+    excluded = _pick_wrong_options(options, correct_answer, hint_level - 1)
+    content = f"💡 **排除法提示**\n\n"
+    if excluded:
+        opts_list = excluded.split("、")
+        for opt in opts_list:
+            content += f"❌ 「{opt.strip()}」—— 这个选项是错误的。\n"
+        content += f"\n想一想：为什么这些选项不对？排除它们后，答案就呼之欲出了！"
+    else:
+        content += f"请仔细分析每个选项，排除明显不合理的答案。\n记住{knowledge_tag}的核心概念，用排除法缩小范围。"
+    return {
+        "hint_level": hint_level,
+        "hint_mode": f"exclude_{'one' if hint_level == 2 else 'two'}",
+        "title": "排除错误选项",
+        "content": content,
+        "examples": "",
+        "common_mistakes": "",
+        "keywords": "",
+        "still_no_answer": False,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Fixed-answer question helper
+# ---------------------------------------------------------------------------
+
+FIXED_ANSWER_TYPES = {"single_choice", "multiple_choice", "judge"}
+
+def _options_to_text(options: list) -> str:
+    """Convert options list to readable text."""
+    if not options:
+        return ""
+    parts = []
+    for opt in options:
+        if isinstance(opt, dict):
+            label = opt.get("label", "")
+            text = opt.get("text", "")
+            parts.append(f"{label}. {text}" if label else str(text))
+        else:
+            parts.append(str(opt))
+    return "\n".join(parts)
+
+
+def _pick_wrong_options(options: list, correct_answer: str, count: int) -> str:
+    """Pick `count` random wrong options and return as text."""
+    if not options:
+        return ""
+    wrong = []
+    for opt in options:
+        if isinstance(opt, dict):
+            label = opt.get("label", "")
+            text = opt.get("text", "")
+            full = f"{label}. {text}" if label else str(text)
+        else:
+            full = str(opt)
+        # Check if this option matches the correct answer
+        if label and label.upper() == correct_answer.strip().upper():
+            continue
+        if str(text).strip().upper() == correct_answer.strip().upper():
+            continue
+        if full.strip().upper() == correct_answer.strip().upper():
+            continue
+        wrong.append(full)
+    if not wrong:
+        return ""
+    picked = random.sample(wrong, min(count, len(wrong)))
+    return "、".join(picked)
+
+
 # ---------------------------------------------------------------------------
 # Main hint function
 # ---------------------------------------------------------------------------
@@ -375,6 +498,8 @@ async def get_ai_hint(
     student_code: str = "",
     hint_level: int = 1,
     knowledge_type: str = "",
+    options: list | None = None,
+    correct_answer: str = "",
 ) -> dict:
     """Get AI-generated hint for a question.
 
@@ -382,18 +507,61 @@ async def get_ai_hint(
         {hint_level, hint_mode, title, content, examples, common_mistakes,
          keywords, still_no_answer}
     """
+    if options is None:
+        options = []
+
     # Infer knowledge_type if not provided
     if not knowledge_type:
         knowledge_type = _infer_knowledge_type(question_type, knowledge_tag, question)
 
-    # Get mode config
-    mode_info = _get_mode_config(knowledge_type, hint_level)
-    mode = mode_info["mode"]
+    is_fixed_answer = question_type in FIXED_ANSWER_TYPES and len(options) > 0 and correct_answer
 
-    # Build the user prompt
-    user_prompt = _build_user_prompt(
-        mode, knowledge_type, knowledge_tag, question, student_code,
-    )
+    opts_text = _options_to_text(options)
+
+    # ---- Handle fixed-answer questions: exclude wrong answers / give answer ----
+    if is_fixed_answer:
+        if hint_level == 4:
+            # Knowledge card with answer
+            mode = "remediation_with_answer"
+            title = "知识点补救卡片"
+            user_prompt = _build_user_prompt(
+                mode, knowledge_type, knowledge_tag, question, student_code,
+                options_text=opts_text, correct_answer=correct_answer,
+            )
+        elif hint_level == 2:
+            # Exclude one wrong answer
+            excluded = _pick_wrong_options(options, correct_answer, 1)
+            mode = "exclude_one"
+            title = "排除错误选项"
+            user_prompt = _build_user_prompt(
+                mode, knowledge_type, knowledge_tag, question, student_code,
+                options_text=opts_text, excluded_opt=excluded,
+            )
+        elif hint_level == 3:
+            # Exclude two wrong answers
+            excluded = _pick_wrong_options(options, correct_answer, 2)
+            mode = "exclude_two"
+            title = "排除错误选项"
+            user_prompt = _build_user_prompt(
+                mode, knowledge_type, knowledge_tag, question, student_code,
+                options_text=opts_text, excluded_opt=excluded,
+            )
+        else:
+            # Level 1: normal concept card
+            mode_info = _get_mode_config(knowledge_type, hint_level)
+            mode = mode_info["mode"]
+            title = mode_info["title"]
+            user_prompt = _build_user_prompt(
+                mode, knowledge_type, knowledge_tag, question, student_code,
+            )
+    else:
+        # Standard hint flow
+        mode_info = _get_mode_config(knowledge_type, hint_level)
+        mode = mode_info["mode"]
+        title = mode_info["title"]
+        user_prompt = _build_user_prompt(
+            mode, knowledge_type, knowledge_tag, question, student_code,
+        )
 
     # Try DeepSeek API
     api_key = settings.deepseek_api_key or settings.ai_api_key
@@ -431,7 +599,7 @@ async def get_ai_hint(
     result = {
         "hint_level": hint_level,
         "hint_mode": mode,
-        "title": mode_info["title"],
+        "title": title,
         "content": content or "",
         "examples": "",
         "common_mistakes": "",
@@ -445,4 +613,6 @@ async def get_ai_hint(
 
     # Fallback to mock
     logger.info(f"Using mock hint for {knowledge_type} level {hint_level}")
+    if is_fixed_answer and hint_level >= 2:
+        return _mock_fixed_answer_hint(knowledge_tag, hint_level, options, correct_answer, opts_text)
     return _mock_hint(knowledge_type, knowledge_tag, hint_level)

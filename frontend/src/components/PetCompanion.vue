@@ -16,7 +16,9 @@ const router = useRouter()
 const ROUTE_MODE_DEFAULTS = {
   login: 'hidden',
   register: 'hidden',
-  dailyPractice: 'simplified',
+  promotion: 'hidden',
+  assessment: 'hidden',
+  assessmentResult: 'hidden',
 }
 
 function getDefaultMode() {

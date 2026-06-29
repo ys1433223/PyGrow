@@ -9,9 +9,10 @@ from app.database import get_db, random_func
 from app.deps import get_current_user
 from app.models.user import User
 from app.models.gamification import Question, PracticeRecord
+from app.models.promotion import PromotionExam
 from app.schemas.common import api_response
 from app.schemas.gamification import PracticeSubmit, BatchSubmit, HintRequest
-from app.services.gamification import calc_level, calc_major_level, award_badge_if_earned, calc_practice_xp, reset_daily_exp_if_new_day, DAILY_TOTAL_EXP_CAP, get_rank_exp_limit, get_next_rank
+from app.services.gamification import calc_major_level, award_badge_if_earned, calc_practice_xp, reset_daily_exp_if_new_day, DAILY_TOTAL_EXP_CAP, get_rank_exp_limit, get_next_rank
 from app.services.hint_service import get_ai_hint
 from app.services.pet_service import award_cookies
 
@@ -316,22 +317,21 @@ async def submit_answer(
 
     if xp_gained:
         user.daily_exp += xp_gained
-        user.current_exp += xp_gained
+        # Apply 200% EXP overflow cap per rank
+        exp_limit = get_rank_exp_limit(user.current_rank or "萌新小白")
+        max_current_exp = exp_limit * 2
+        capped_exp = min(xp_gained, max(0, max_current_exp - (user.current_exp or 0)))
+        if capped_exp > 0:
+            user.current_exp += capped_exp
         user.total_exp += xp_gained
         user.experience += xp_gained
         user.points += xp_gained
 
-        # Check rank-up
-        old_rank = user.current_rank
-        user.level = calc_level(user.total_exp)
-        user.current_rank = calc_level(user.total_exp)
-        user.rank_exp_limit = get_rank_exp_limit(user.current_rank)
-        if user.current_rank != old_rank:
-            user.can_promotion_test = 0
-            user.current_exp = 0  # Reset on rank-up
-            user.rank_exp_limit = get_rank_exp_limit(user.current_rank)
-            await award_badge_if_earned(db, user.id, "level_reach", user.total_exp)
-        elif user.current_exp >= user.rank_exp_limit:
+        # Keep level in sync with current_rank (rank only changes via promotion exam)
+        user.level = user.current_rank
+        user.rank_exp_limit = exp_limit
+        # Check if EXP is full → enable promotion test
+        if (user.current_exp or 0) >= exp_limit:
             user.can_promotion_test = 1
 
     # Award cookies for correct answers
@@ -428,20 +428,22 @@ async def batch_submit(
     # Award XP
     if capped_xp:
         user.daily_exp += capped_xp
-        user.current_exp += capped_xp
         user.total_exp += capped_xp
         user.experience += capped_xp
         user.points += capped_xp
 
-        old_rank = user.current_rank
-        user.level = calc_level(user.total_exp)
-        user.current_rank = calc_level(user.total_exp)
-        if user.current_rank != old_rank:
-            user.can_promotion_test = 0
-            user.current_exp = 0
-            user.rank_exp_limit = get_rank_exp_limit(user.current_rank)
-            await award_badge_if_earned(db, user.id, "level_reach", user.total_exp)
-        elif user.current_exp >= user.rank_exp_limit:
+        # Apply 200% EXP overflow cap per rank (same as single submit)
+        exp_limit = get_rank_exp_limit(user.current_rank or "萌新小白")
+        max_current_exp = exp_limit * 2
+        capped_exp = min(capped_xp, max(0, max_current_exp - (user.current_exp or 0)))
+        if capped_exp > 0:
+            user.current_exp += capped_exp
+
+        # Keep level in sync with current_rank (rank only changes via promotion exam)
+        user.level = user.current_rank
+        user.rank_exp_limit = exp_limit
+        # Check if EXP is full → enable promotion test
+        if (user.current_exp or 0) >= exp_limit:
             user.can_promotion_test = 1
 
     score_pct = round(correct / total * 100) if total > 0 else 0
@@ -641,17 +643,34 @@ async def get_promotion_test(
     completed_ids = await get_completed_question_ids(user.id, db)
     wrong_counts = await get_wrong_question_ids(user.id, db)
 
+    # Exclude questions from past promotion exams
+    past_exam_result = await db.execute(
+        select(PromotionExam).where(
+            PromotionExam.user_id == user.id,
+            PromotionExam.status == "completed",
+        )
+    )
+    past_exam_ids = set()
+    for exam in past_exam_result.scalars().all():
+        if exam.questions:
+            for q in exam.questions:
+                qid = q.get("id") or q.get("question_id")
+                if qid:
+                    past_exam_ids.add(qid)
+
+    all_excluded = completed_ids | past_exam_ids
+
     # Get all questions for user's stage
     result = await db.execute(
         select(Question).where(Question.stage == stage)
     )
-    pool = [q for q in result.scalars().all() if q.id not in completed_ids]
+    pool = [q for q in result.scalars().all() if q.id not in all_excluded]
 
     if len(pool) < 10:
         # Fallback to adjacent stage
         adj = "中级" if stage == "高级" else ("高级" if stage == "中级" else "中级")
         result = await db.execute(select(Question).where(Question.stage == adj))
-        adj_pool = [q for q in result.scalars().all() if q.id not in completed_ids]
+        adj_pool = [q for q in result.scalars().all() if q.id not in all_excluded]
         pool.extend(adj_pool)
 
     # Weight: prefer wrong knowledge tags
@@ -814,6 +833,8 @@ async def get_ai_hint_for_question(
         knowledge_type=req.knowledge_type or question.knowledge_type or "",
         student_code=req.student_code,
         hint_level=req.hint_level,
+        options=req.options if req.options else (question.options or []),
+        correct_answer=req.correct_answer if req.correct_answer else (question.answer or ""),
     )
     return api_response(data=hint)
 

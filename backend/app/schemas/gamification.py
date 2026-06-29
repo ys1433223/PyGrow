@@ -36,3 +36,5 @@ class HintRequest(BaseModel):
     student_code: str = ""
     hint_level: int = 1
     hint_mode: str = ""  # concept_card/example/keyword or compare_table/judge_basis/mistake or etc.
+    options: list = []  # question options [{label, text}] for fixed-answer questions
+    correct_answer: str = ""  # correct answer for knowledge card / wrong-answer exclusion

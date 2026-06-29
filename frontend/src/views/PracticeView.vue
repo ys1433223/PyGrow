@@ -350,7 +350,7 @@ watch(activeModule, () => { if (activeModule.value) loadMyFavorites() })
 watch([activeModule, submitted], ([mod, sub]) => {
   if (!mod) setPetMode('active')
   else if (sub) setPetMode('active')
-  else setPetMode('silent')
+  else setPetMode('hidden')
 })
 
 onUnmounted(() => { setPetMode('active') })
@@ -370,7 +370,7 @@ onUnmounted(() => { setPetMode('active') })
 
       <!-- ====== MODULE HUB ====== -->
       <template v-if="auth.isLoggedIn && !activeModule">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-5xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-7xl mx-auto">
 
           <!-- 章节练习 - large -->
           <div @click="openModule('chapter')" class="md:col-span-2 group bg-gradient-to-br from-blue-50 to-white rounded-[2rem] shadow-sm border border-blue-100 p-8 md:p-10 hover:shadow-xl hover:-translate-y-1.5 transition-all cursor-pointer overflow-hidden relative">
@@ -583,7 +583,7 @@ onUnmounted(() => { setPetMode('active') })
         <div v-else-if="questions.length === 0 && !loading" class="text-center py-16 bg-white rounded-[2rem]"><p class="text-gray-400">暂无题目</p></div>
 
         <!-- ====== QUESTIONS DISPLAY ====== -->
-        <div v-else-if="questions.length > 0 && !submitted" class="max-w-5xl mx-auto">
+        <div v-else-if="questions.length > 0 && !submitted" class="max-w-7xl mx-auto">
           <div class="bg-white rounded-2xl shadow-sm border p-4 mb-4">
             <div class="flex items-center justify-between mb-2"><span class="text-sm text-gray-500">进度</span><span class="text-sm font-medium text-gray-700">{{ currentIndex + 1 }} / {{ totalQuestions }}</span></div>
             <div class="h-2 bg-gray-100 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all duration-300" :style="{ width: progressPct + '%' }"></div></div>
@@ -618,6 +618,8 @@ onUnmounted(() => { setPetMode('active') })
                 :knowledge-tag="currentQuestion.knowledge_tag"
                 :knowledge-type="currentQuestion.knowledge_type || ''"
                 :student-code="userAnswers[currentQuestion.id] || ''"
+                :options="currentQuestion.options || []"
+                :correct-answer="currentQuestion.answer || ''"
                 @hint-used="(count) => onHintUsed(currentQuestion.id, count)"
               />
             </div>
@@ -661,7 +663,7 @@ onUnmounted(() => { setPetMode('active') })
         </div>
 
         <!-- ====== RESULTS ====== -->
-        <div v-if="submitted && results" class="max-w-5xl mx-auto">
+        <div v-if="submitted && results" class="max-w-7xl mx-auto">
           <div class="bg-white rounded-2xl shadow-sm border p-8 text-center mb-6">
             <div class="w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center text-3xl font-bold" :class="results.score_percent >= 80 ? 'bg-green-100 text-green-600' : results.score_percent >= 60 ? 'bg-amber-100 text-amber-600' : 'bg-red-100 text-red-600'">{{ results.score_percent }}%</div>
             <h3 class="text-2xl font-bold text-gray-800 mb-1">{{ results.score_percent >= 80 ? '优秀！' : results.score_percent >= 60 ? '良好' : '继续加油' }}</h3>

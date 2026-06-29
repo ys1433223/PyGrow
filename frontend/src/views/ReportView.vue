@@ -49,7 +49,6 @@ function statCards(summaryData) {
     { label: '错题数', value: summaryData.wrong_count, icon: 'fas fa-triangle-exclamation', accent: '#ef4444', soft: '#fff1f2' },
     { label: '学习中课程', value: summaryData.in_progress_courses, icon: 'fas fa-route', accent: '#6366f1', soft: '#eef2ff' },
     { label: '总经验值', value: summaryData.experience, icon: 'fas fa-bolt', accent: '#f59e0b', soft: '#fff7e6' },
-    { label: '总积分', value: summaryData.points, icon: 'fas fa-star', accent: '#14b8a6', soft: '#ecfeff' },
   ]
 }
 
@@ -236,7 +235,7 @@ onMounted(async () => {
           <div class="level-card mb-6">
             <div class="level-title">
               <span><i class="fas fa-trophy"></i> 当前等级</span>
-              <span class="point-pill"><i class="fas fa-star"></i>{{ summary.points }} 积分</span>
+              <span class="point-pill"><i class="fas fa-bolt"></i>{{ summary.experience }} 经验</span>
             </div>
             <div class="level-body">
               <div class="level-avatar">
@@ -272,7 +271,7 @@ onMounted(async () => {
           <div v-if="radar && radar.dimensions" class="radar-card mb-6">
             <div class="card-heading">
               <div>
-                <span class="section-kicker">Profile</span>
+                <span class="section-kicker">能力画像</span>
                 <h3><i class="fas fa-chart-radar"></i> 学习能力画像</h3>
               </div>
               <span class="knowledge-count">{{ radar.dimensions.length }} 个维度</span>
@@ -285,7 +284,7 @@ onMounted(async () => {
           <div v-if="knowledge.length > 0" class="knowledge-card mb-6">
             <div class="card-heading">
               <div>
-                <span class="section-kicker">Mastery</span>
+                <span class="section-kicker">知识点掌握</span>
                 <h3><i class="fas fa-chart-bar"></i> 知识点掌握度</h3>
               </div>
               <span class="knowledge-count">{{ knowledge.length }} 个知识点</span>
@@ -310,7 +309,7 @@ onMounted(async () => {
           <div class="ai-suggestion-card mb-8" @click="openAiMentor">
             <div class="ai-icon"><i class="fas fa-robot"></i></div>
             <div class="flex-1 min-w-0">
-              <span class="section-kicker">AI Mentor</span>
+              <span class="section-kicker">AI学习建议</span>
               <h3>{{ suggestionTitle(summary) }}</h3>
               <p v-if="summary.accuracy >= 80">
               你的正确率非常优秀！建议挑战更高难度的练习题目，尝试完成项目挑战，进一步提升实战能力。
