@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { courseLevels } from '../data/courseData.js'
@@ -79,6 +79,39 @@ function parseTimestamp(val) {
 function deleteTimestampNote(id) {
   timestampNotes.value = timestampNotes.value.filter(n => n.id !== id)
   saveTimestampNotes()
+}
+
+// Edit state
+const editingNoteId = ref(null)
+const editTimestamp = ref('')
+const editContent = ref('')
+
+function startEditNote(note) {
+  editingNoteId.value = note.id
+  editTimestamp.value = note.timestamp || ''
+  editContent.value = note.content || ''
+}
+
+function saveEditNote() {
+  if (!editingNoteId.value) return
+  const text = editContent.value.trim()
+  if (!text) return
+  const note = timestampNotes.value.find(n => n.id === editingNoteId.value)
+  if (note) {
+    note.timestamp = editTimestamp.value.trim()
+    note.seconds = parseTimestamp(editTimestamp.value.trim())
+    note.content = text
+  }
+  editingNoteId.value = null
+  editTimestamp.value = ''
+  editContent.value = ''
+  saveTimestampNotes()
+}
+
+function cancelEditNote() {
+  editingNoteId.value = null
+  editTimestamp.value = ''
+  editContent.value = ''
 }
 
 // Computed
@@ -323,9 +356,10 @@ async function loadAiNotesForLesson() {
   aiNote.value = null
   aiError.value = ''
   if (!aiCourseId.value) return
-  if (!aiLessonId.value) return  // Can't determine which lesson; don't fetch wrong notes
+  const bvid = selectedChapter.value?.bvid || ''
+  const bp = selectedLesson.value?.page
   try {
-    const res = await aiNotesApi.getNotes(aiCourseId.value, aiLessonId.value)
+    const res = await aiNotesApi.getNotes(aiCourseId.value, aiLessonId.value, bvid, bp)
     if (res.data.code === 200 && res.data.data?.has_note) {
       aiHasNote.value = true
       aiNote.value = res.data.data
@@ -341,16 +375,16 @@ async function handleGenerateAINotes() {
       return
     }
   }
-  if (!aiLessonId.value) {
-    aiError.value = '无法确定课时信息，请先选择具体课时'
+  const bvid = selectedChapter.value?.bvid || ''
+  const bp = selectedLesson.value?.page || 1
+  if (!bvid) {
+    aiError.value = '无法获取视频信息，请先选择课时'
     return
   }
   aiError.value = ''
   aiGenerating.value = true
   triggerPetState('thinking')
   try {
-    const bvid = selectedChapter.value?.bvid || ''
-    const bp = selectedLesson.value?.page || 1
     const res = await aiNotesApi.generate(aiCourseId.value, aiLessonId.value, bvid, bp)
     if (res.data.code === 200) {
       const d = res.data.data
@@ -478,6 +512,31 @@ async function submitReview() {
   }
 }
 
+// Handle deep-link query params: ?level=初级&chapter=3&page=5
+function applyRouteQuery(qLevel, qChapter, qPage) {
+  if (qLevel && levels.find(l => l.level === qLevel)) {
+    activeLevel.value = qLevel
+    if (qChapter) {
+      const targetCh = chapters.value.find(ch => ch.num === qChapter)
+      if (targetCh) {
+        selectChapter(targetCh)
+        expandedChapters.value = new Set([`ch-${qLevel}-${qChapter}`])
+        if (qPage && targetCh) {
+          for (const sec of targetCh.sections) {
+            const match = sec.lessons.find(l => l.page === qPage)
+            if (match) {
+              selectedLesson.value = match
+              break
+            }
+          }
+        }
+        return true
+      }
+    }
+  }
+  return false
+}
+
 // Init
 onMounted(() => {
   try {
@@ -488,34 +547,21 @@ onMounted(() => {
   loadReviews()
   loadFavorites()
 
-  // Handle deep-link query params: ?level=初级&chapter=3&page=5
   const qLevel = route.query.level
   const qChapter = parseInt(route.query.chapter)
   const qPage = parseInt(route.query.page)
-  if (qLevel && levels.find(l => l.level === qLevel)) {
-    activeLevel.value = qLevel
-    if (qChapter) {
-      const targetCh = chapters.value.find(ch => ch.num === qChapter)
-      if (targetCh) {
-        selectChapter(targetCh)
-        expandedChapters.value = new Set([`ch-${qLevel}-${qChapter}`])
-        // Select specific lesson if page param provided
-        if (qPage && targetCh) {
-          for (const sec of targetCh.sections) {
-            const match = sec.lessons.find(l => l.page === qPage)
-            if (match) {
-              selectedLesson.value = match
-              break
-            }
-          }
-        }
-        return
-      }
-    }
+  if (!applyRouteQuery(qLevel, qChapter, qPage)) {
+    const firstCh = chapters.value[0]
+    if (firstCh) expandedChapters.value = new Set([`ch-初级-${firstCh.num}`])
   }
+})
 
-  const firstCh = chapters.value[0]
-  if (firstCh) expandedChapters.value = new Set([`ch-初级-${firstCh.num}`])
+// Watch for route query changes (e.g. pet panel click while already on /courses)
+watch(() => route.query, (q) => {
+  const qLevel = q.level
+  const qChapter = parseInt(q.chapter)
+  const qPage = parseInt(q.page)
+  applyRouteQuery(qLevel, qChapter, qPage)
 })
 </script>
 
@@ -711,10 +757,10 @@ onMounted(() => {
                 </div>
               </template>
 
-              <!-- No lesson resolved -->
-              <template v-else-if="!aiLessonId">
+              <!-- No lesson selected at all (shouldn't happen when panel is open, but guard anyway) -->
+              <template v-else-if="!selectedLesson">
                 <p class="text-gray-500 leading-relaxed text-[10px]">
-                  <i class="fas fa-info-circle mr-1"></i>当前课时暂不支持 AI 笔记功能，请切换到其他课时后再试。
+                  <i class="fas fa-info-circle mr-1"></i>请先选择具体课时后再使用 AI 笔记功能。
                 </p>
               </template>
 
@@ -756,7 +802,25 @@ onMounted(() => {
             <div v-if="timestampNotes.length === 0 && selectedLesson" class="text-sm text-gray-400 text-center py-2">暂无笔记，添加第一条吧</div>
             <div class="space-y-2">
               <div v-for="note in timestampNotes" :key="note.id" class="bg-gray-50 rounded-lg p-2.5 group">
-                <div class="flex items-start justify-between gap-2">
+                <!-- Edit mode -->
+                <div v-if="editingNoteId === note.id" class="space-y-2">
+                  <div class="flex gap-1.5">
+                    <input v-model="editTimestamp" placeholder="00:00" class="w-16 text-xs px-2 py-1 border border-blue-300 rounded-lg focus:outline-none focus:border-blue-500 text-center">
+                    <input v-model="editContent" placeholder="修改笔记内容..."
+                           class="flex-grow text-xs px-2 py-1 border border-blue-300 rounded-lg focus:outline-none focus:border-blue-500"
+                           @keyup.enter="saveEditNote">
+                    <button @click="saveEditNote"
+                            class="px-2 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition flex-shrink-0">
+                      <i class="fas fa-check"></i>
+                    </button>
+                    <button @click="cancelEditNote"
+                            class="px-2 py-1 bg-gray-200 text-gray-500 text-xs rounded-lg hover:bg-gray-300 transition flex-shrink-0">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                </div>
+                <!-- Display mode -->
+                <div v-else class="flex items-start justify-between gap-2">
                   <div class="flex-grow min-w-0">
                     <div class="flex items-center gap-1.5 mb-1">
                       <span class="text-xs font-bold text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded">{{ note.timestamp || '--:--' }}</span>
@@ -764,9 +828,14 @@ onMounted(() => {
                     </div>
                     <p class="text-sm text-gray-700">{{ note.content }}</p>
                   </div>
-                  <button @click="deleteTimestampNote(note.id)" class="text-gray-300 hover:text-red-400 transition opacity-0 group-hover:opacity-100 flex-shrink-0">
-                    <i class="fas fa-times text-[10px]"></i>
-                  </button>
+                  <div class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
+                    <button @click="startEditNote(note)" class="text-gray-300 hover:text-blue-400 transition">
+                      <i class="fas fa-pen text-[10px]"></i>
+                    </button>
+                    <button @click="deleteTimestampNote(note.id)" class="text-gray-300 hover:text-red-400 transition">
+                      <i class="fas fa-times text-[10px]"></i>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

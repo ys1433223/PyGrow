@@ -83,7 +83,7 @@ const websites = [
           <h2 class="text-2xl font-bold text-gray-900">推荐社区</h2>
         </div>
         <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-[2rem] p-8 md:p-12 text-center">
-          <p class="text-xl font-bold text-gray-800 mb-3">🤝 加入 PyGrow 学习社区</p>
+          <p class="text-xl font-bold text-gray-800 mb-3">🤝 加入 Python学习营地 学习社区</p>
           <p class="text-gray-500 mb-6 max-w-lg mx-auto">在社区中讨论问题、分享学习心得、参与项目协作</p>
           <router-link to="/community" class="inline-block bg-blue-600 text-white px-8 py-3 rounded-full font-bold hover:bg-blue-700 transition shadow-lg">
             进入社区

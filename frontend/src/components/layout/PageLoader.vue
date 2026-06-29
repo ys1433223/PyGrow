@@ -22,7 +22,7 @@ onMounted(() => {
         <span class="text-3xl font-bold">@</span>
       </div>
     </div>
-    <h2 class="text-3xl font-bold mb-2 tracking-widest">启航教育</h2>
+    <h2 class="text-3xl font-bold mb-2 tracking-widest">Python学习营地</h2>
     <p class="text-blue-100 mb-8 text-sm">正在前往知识宇宙...</p>
     <div class="w-64 h-2 bg-blue-800 rounded-full overflow-hidden relative">
       <div class="h-full bg-white transition-all duration-100 ease-out shadow-[0_0_10px_rgba(255,255,255,0.5)]" :style="{ width: progress + '%' }"></div>

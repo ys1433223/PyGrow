@@ -18,17 +18,21 @@ router = APIRouter()
 async def get_ai_notes(
     course_id: int,
     lesson_id: int | None = None,
+    bvid: str | None = None,
+    bilibili_page: int | None = None,
     db: AsyncSession = Depends(get_db),
 ):
     """Check if a course (or specific lesson) already has AI notes."""
     stmt = select(AINote).where(AINote.course_id == course_id)
     if lesson_id is not None:
         stmt = stmt.where(AINote.lesson_id == lesson_id)
+    elif bvid and bilibili_page is not None:
+        stmt = stmt.where(AINote.bvid == bvid, AINote.bilibili_page == bilibili_page)
     stmt = stmt.order_by(AINote.created_at.desc())
     result = await db.execute(stmt)
     notes = result.scalars().all()
 
-    if lesson_id is not None:
+    if lesson_id is not None or (bvid and bilibili_page is not None):
         # Specific lesson — return the first match (should be at most one)
         note = notes[0] if notes else None
         if note:
@@ -47,7 +51,7 @@ async def get_ai_notes(
             })
         return api_response(data={"has_note": False})
 
-    # No lesson_id — return all notes for this course
+    # No lesson_id or bvid+page — return all notes for this course
     if not notes:
         return api_response(data={"has_note": False, "notes": []})
     return api_response(data={
@@ -80,9 +84,29 @@ async def generate_ai_notes(
     bilibili_page: int | None = None,
 ):
     """Start an AI note generation task for a specific lesson. Returns immediately with task_id."""
-    # 1. Check if notes already exist for THIS lesson (only if lesson_id is known)
+    # 1. Check if notes already exist — by lesson_id first, then by bvid+page
     if lesson_id is not None:
         stmt = select(AINote).where(AINote.course_id == course_id, AINote.lesson_id == lesson_id)
+        stmt = stmt.order_by(AINote.created_at.desc()).limit(1)
+        existing = await db.execute(stmt)
+        note = existing.scalars().first()
+        if note:
+            return api_response(data={
+                "task_id": note.task_id,
+                "status": "completed",
+                "note": {
+                    "lesson_id": note.lesson_id,
+                    "summary": note.summary,
+                    "notes": note.notes or [],
+                    "highlights": note.highlights or [],
+                    "transcript": note.transcript or "",
+                    "errors": note.errors or [],
+                    "suggestions": note.suggestions or [],
+                    "source_type": note.source_type,
+                },
+            })
+    elif bvid and bilibili_page is not None:
+        stmt = select(AINote).where(AINote.course_id == course_id, AINote.bvid == bvid, AINote.bilibili_page == bilibili_page)
         stmt = stmt.order_by(AINote.created_at.desc()).limit(1)
         existing = await db.execute(stmt)
         note = existing.scalars().first()
@@ -110,6 +134,8 @@ async def generate_ai_notes(
     )
     if lesson_id is not None:
         task_stmt = task_stmt.where(AINoteTask.lesson_id == lesson_id)
+    elif bvid and bilibili_page is not None:
+        task_stmt = task_stmt.where(AINoteTask.bvid == bvid, AINoteTask.bilibili_page == bilibili_page)
     task_stmt = task_stmt.order_by(AINoteTask.created_at.desc()).limit(1)
     active_task_result = await db.execute(task_stmt)
     active_task = active_task_result.scalars().first()
@@ -124,6 +150,8 @@ async def generate_ai_notes(
     task = AINoteTask(
         course_id=course_id,
         lesson_id=lesson_id,
+        bvid=bvid,
+        bilibili_page=bilibili_page,
         status="not_started",
         progress=0,
         message=STATUS_MESSAGES["not_started"],

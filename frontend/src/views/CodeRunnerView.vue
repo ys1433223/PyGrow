@@ -11,7 +11,7 @@ const mode = ref('python') // 'python' | 'web' | 'flask'
 // ---- Flask project files ----
 const flaskFiles = ref({
   'app.py': `from flask import Flask, render_template\n\napp = Flask(__name__)\n\n@app.route("/")\ndef index():\n    return render_template("index.html")\n`,
-  'templates/index.html': `<!DOCTYPE html>\n<html>\n<head>\n    <meta charset="UTF-8">\n    <title>PyGrow Flask Demo</title>\n    <link rel="stylesheet" href="static/style.css">\n</head>\n<body>\n    <h1>Hello, Flask!</h1>\n    <p>这是我的第一个 Flask 小项目。</p>\n</body>\n</html>\n`,
+  'templates/index.html': `<!DOCTYPE html>\n<html>\n<head>\n    <meta charset="UTF-8">\n    <title>Python学习营地 Flask Demo</title>\n    <link rel="stylesheet" href="static/style.css">\n</head>\n<body>\n    <h1>Hello, Flask!</h1>\n    <p>这是我的第一个 Flask 小项目。</p>\n</body>\n</html>\n`,
   'static/style.css': `body {\n    font-family: sans-serif;\n    background: #f5f7ff;\n    padding: 40px;\n}\n\nh1 {\n    color: #4f46e5;\n}\n`
 })
 const flaskActiveFile = ref('app.py')
@@ -132,7 +132,7 @@ const FLASK_FILE_LABELS = {
 
 const FLASK_DEFAULT_CONTENT = {
   'app.py': `from flask import Flask, render_template\n\napp = Flask(__name__)\n\n@app.route("/")\ndef index():\n    return render_template("index.html")\n`,
-  'templates/index.html': `<!DOCTYPE html>\n<html>\n<head>\n    <meta charset="UTF-8">\n    <title>PyGrow Flask Demo</title>\n    <link rel="stylesheet" href="static/style.css">\n</head>\n<body>\n    <h1>Hello, Flask!</h1>\n    <p>这是我的第一个 Flask 小项目。</p>\n</body>\n</html>\n`,
+  'templates/index.html': `<!DOCTYPE html>\n<html>\n<head>\n    <meta charset="UTF-8">\n    <title>Python学习营地 Flask Demo</title>\n    <link rel="stylesheet" href="static/style.css">\n</head>\n<body>\n    <h1>Hello, Flask!</h1>\n    <p>这是我的第一个 Flask 小项目。</p>\n</body>\n</html>\n`,
   'static/style.css': `body {\n    font-family: sans-serif;\n    background: #f5f7ff;\n    padding: 40px;\n}\n\nh1 {\n    color: #4f46e5;\n}\n`
 }
 
@@ -204,9 +204,9 @@ function confirmNewProject() {
   if (newProjectType.value === 'flask') {
     resetFlaskFiles()
   } else if (newProjectType.value === 'python') {
-    code.value = `# 在这里编写你的 Python 代码\nprint("Hello, PyGrow!")\n\nfor i in range(5):\n    print(f"第 {i+1} 次循环")\n`
+    code.value = `# 在这里编写你的 Python 代码\nprint("Hello, Python学习营地!")\n\nfor i in range(5):\n    print(f"第 {i+1} 次循环")\n`
   } else if (newProjectType.value === 'web') {
-    htmlCode.value = `<!-- HTML -->\n<h1>Hello, PyGrow!</h1>\n<p>欢迎来到网页开发练习模式</p>\n<button onclick="document.getElementById('msg').textContent = '你点击了按钮！'">点击试试</button>\n<p id="msg"></p>\n`
+    htmlCode.value = `<!-- HTML -->\n<h1>Hello, Python学习营地!</h1>\n<p>欢迎来到网页开发练习模式</p>\n<button onclick="document.getElementById('msg').textContent = '你点击了按钮！'">点击试试</button>\n<p id="msg"></p>\n`
     cssCode.value = `/* CSS */\nbody {\n  font-family: 'Microsoft YaHei', sans-serif;\n  max-width: 600px;\n  margin: 40px auto;\n  padding: 20px;\n  background: #f0f4f8;\n}\nh1 { color: #3b82f6; }\nbutton {\n  background: #3b82f6; color: white; border: none;\n  padding: 10px 20px; border-radius: 8px; cursor: pointer;\n  font-size: 14px;\n}\nbutton:hover { background: #2563eb; }\n#msg { margin-top: 15px; font-weight: bold; color: #10b981; }\n`
     jsCode.value = `// JavaScript\nconsole.log('网页开发模式已就绪');\n`
   }
@@ -267,7 +267,7 @@ function formatProjDate(iso) {
 
 // ---- Python mode ----
 const code = ref(`# 在这里编写你的 Python 代码
-print("Hello, PyGrow!")
+print("Hello, Python学习营地!")
 
 for i in range(5):
     print(f"第 {i+1} 次循环")
@@ -306,7 +306,7 @@ async function handleRun() {
 // ---- Web Dev mode ----
 const webTab = ref('html') // 'html' | 'css' | 'js'
 const htmlCode = ref(`<!-- HTML -->
-<h1>Hello, PyGrow!</h1>
+<h1>Hello, Python学习营地!</h1>
 <p>欢迎来到网页开发练习模式</p>
 <button onclick="document.getElementById('msg').textContent = '你点击了按钮！'">点击试试</button>
 <p id="msg"></p>

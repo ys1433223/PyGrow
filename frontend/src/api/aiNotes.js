@@ -2,9 +2,11 @@ import client from './client'
 
 export const aiNotesApi = {
   // Check if course (or specific lesson) has AI notes
-  getNotes(courseId, lessonId) {
+  getNotes(courseId, lessonId, bvid, bilibiliPage) {
     const params = {}
     if (lessonId != null) params.lesson_id = lessonId
+    if (bvid) params.bvid = bvid
+    if (bilibiliPage != null) params.bilibili_page = bilibiliPage
     return client.get(`/courses/${courseId}/ai-notes`, { params })
   },
 

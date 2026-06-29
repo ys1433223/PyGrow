@@ -191,7 +191,7 @@ function goToCourse(course) {
               人生苦短，<br />
               <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">我用 Python。</span>
             </h1>
-            <p class="text-gray-500 text-lg mb-8 max-w-lg">从语法基础到人工智能，启航教育带你掌握这门"万能语言"，解锁数据时代的无限可能。</p>
+            <p class="text-gray-500 text-lg mb-8 max-w-lg">从语法基础到人工智能，Python学习营地带你掌握这门"万能语言"，解锁数据时代的无限可能。</p>
             <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
               <a href="/courses" @click.prevent="$router.push('/courses')" class="flex items-center justify-center bg-blue-600 text-white px-8 py-3.5 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg hover:-translate-y-1">
                 开始学习 <i data-lucide="arrow-right" width="18" class="ml-2"></i>

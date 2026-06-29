@@ -8,6 +8,8 @@ class AINoteTask(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
     lesson_id = Column(Integer, ForeignKey("lessons.id"), nullable=True)
+    bvid = Column(String(20), nullable=True)
+    bilibili_page = Column(Integer, nullable=True)
     status = Column(String(30), default="not_started")  # not_started/queued/downloading/extracting_audio/transcribing/summarizing/completed/failed
     progress = Column(Integer, default=0)
     message = Column(String(255), default="")
@@ -23,6 +25,8 @@ class AINote(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
     lesson_id = Column(Integer, ForeignKey("lessons.id"), nullable=True)
+    bvid = Column(String(20), nullable=True)
+    bilibili_page = Column(Integer, nullable=True)
     task_id = Column(Integer, ForeignKey("ai_note_tasks.id"), nullable=False)
     summary = Column(Text)
     notes = Column(JSON)

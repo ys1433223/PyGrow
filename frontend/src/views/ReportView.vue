@@ -93,7 +93,7 @@ async function openAiMentor() {
   const courseList = buildCourseList()
   const weakPoints = buildWeakPoints()
 
-  const systemPrompt = `你是一个专业的Python学习规划导师，名叫"PyGrow AI导师"。你的任务是根据学生的学习数据，给出个性化的学习建议和课程推荐。
+  const systemPrompt = `你是一个专业的Python学习规划导师，名叫"Python学习营地 AI导师"。你的任务是根据学生的学习数据，给出个性化的学习建议和课程推荐。
 
 回复格式要求（用Markdown）：
 1. 先给出学习情况总结（2-3句话，鼓励性语气）
@@ -322,7 +322,7 @@ onMounted(async () => {
               建议多花时间在基础练习上，特别是错题本中的知识点。每天坚持"每日一练"可以有效提升正确率。
               </p>
               <p v-else>
-              欢迎来到 PyGrow！建议先从能力测评开始，了解自己的水平，然后按照推荐课程系统地学习 Python。
+              欢迎来到 Python学习营地！建议先从能力测评开始，了解自己的水平，然后按照推荐课程系统地学习 Python。
               </p>
               <div class="mt-3 flex items-center gap-1 text-xs text-purple-600 font-bold">
                 <i class="fas fa-magic"></i> 点击让AI深度分析你的学习数据

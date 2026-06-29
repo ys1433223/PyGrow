@@ -106,7 +106,7 @@ async function handleLogin() {
 
     <footer class="bg-white border-t border-gray-200 py-8 mt-auto">
       <div class="container mx-auto px-4 text-center text-gray-500 text-sm">
-        <p class="mb-2">&copy; 2025 启航教育在线. 保留所有权利.</p>
+        <p class="mb-2">&copy; 2025 Python学习营地. 保留所有权利.</p>
         <div class="flex justify-center space-x-6 mt-4">
           <a href="#" class="hover:text-blue-600">关于我们</a>
           <a href="#" class="hover:text-blue-600">联系我们</a>

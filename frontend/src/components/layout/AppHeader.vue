@@ -64,7 +64,7 @@ function goTo(path) {
         <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white group-hover:rotate-12 transition-transform duration-300">
           <i class="fas fa-compass text-sm"></i>
         </div>
-        <span class="text-xl font-bold text-gray-800 tracking-wide group-hover:text-blue-600 transition-colors">启航教育在线</span>
+        <span class="text-xl font-bold text-gray-800 tracking-wide group-hover:text-blue-600 transition-colors">Python学习营地</span>
       </a>
 
       <nav class="hidden md:flex space-x-8 text-gray-600 font-medium text-sm">

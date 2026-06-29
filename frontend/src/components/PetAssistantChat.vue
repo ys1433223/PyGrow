@@ -47,7 +47,7 @@ function onSaveSettings() {
   showSettings.value = false
 }
 
-const SYSTEM_INSTRUCTION = `你是 PyGrow 学习平台的 Python AI 助教，专门帮助大学本科生学习 Python 编程。
+const SYSTEM_INSTRUCTION = `你是 Python学习营地 学习平台的 Python AI 助教，专门帮助大学本科生学习 Python 编程。
 
 你的特点：
 - 耐心友好，用通俗易懂的语言解释复杂概念

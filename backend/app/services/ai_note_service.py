@@ -112,10 +112,12 @@ async def run_ai_note_pipeline(task_id: int, course_id: int, lesson_id: int | No
                     await _update_task(db, task_id, status, progress, STATUS_MESSAGES[status])
                     await asyncio.sleep(duration)
 
-            # Save AI note with lesson_id
+            # Save AI note with lesson_id and bvid/page for flexible lookup
             note = AINote(
                 course_id=course_id,
                 lesson_id=lesson_id,
+                bvid=effective_bvid,
+                bilibili_page=bilibili_page,
                 task_id=task_id,
                 summary=note_data["summary"],
                 notes=note_data["notes"],
