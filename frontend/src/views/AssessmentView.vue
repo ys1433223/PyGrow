@@ -1,11 +1,13 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 import { assessmentApi } from '../api/assessment'
 import AppHeader from '../components/layout/AppHeader.vue'
 import AppFooter from '../components/layout/AppFooter.vue'
 import PageLoader from '../components/layout/PageLoader.vue'
 
+const auth = useAuthStore()
 const router = useRouter()
 const questions = ref([])
 const currentIndex = ref(0)
@@ -48,11 +50,16 @@ async function skipAssessment() {
   try {
     const res = await assessmentApi.skipAssessment()
     if (res.data.code === 200) {
+      const data = res.data.data
       localStorage.setItem('lastAssessmentResult', JSON.stringify({
         score_percent: 0,
-        assigned_rank: res.data.data.assigned_rank,
+        assigned_rank: data.assigned_rank,
         skip: true,
       }))
+      // Sync rank to auth store so header shows updated rank immediately
+      if (data.assigned_rank) {
+        auth.updateUser({ level: data.assigned_rank, current_rank: data.assigned_rank })
+      }
       router.push('/assessment/result')
     }
   } catch { /* ignore */ }
@@ -100,7 +107,12 @@ async function submitAssessment() {
   try {
     const res = await assessmentApi.submitAnswers(userAnswers.value)
     if (res.data.code === 200) {
-      localStorage.setItem('lastAssessmentResult', JSON.stringify(res.data.data))
+      const data = res.data.data
+      localStorage.setItem('lastAssessmentResult', JSON.stringify(data))
+      // Sync rank to auth store so header shows updated rank immediately
+      if (data.assigned_rank) {
+        auth.updateUser({ level: data.assigned_rank, current_rank: data.assigned_rank })
+      }
       router.push('/assessment/result')
     }
   } catch (e) {

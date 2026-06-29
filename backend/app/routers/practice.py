@@ -67,13 +67,24 @@ def judge_answer(question, user_answer: str) -> bool:
         return actual.lower().strip() == expected.lower().strip()
 
     elif q_type == "code":
-        # For code questions, we can't auto-judge without running test cases
-        # If test_cases exist, they'll be used; otherwise mark for manual review
-        return None  # None = needs manual review / test case execution
+        # Code questions can't be reliably auto-graded without running them.
+        # Accept any non-empty answer and show the reference answer for self-comparison.
+        return None  # None = accepted (cannot auto-judge source code)
 
     else:
         # single_choice, short_answer: exact match
         return actual.strip().upper() == expected.strip().upper()
+
+
+def _format_answer_display(q_type: str, answer: str) -> str:
+    """Normalize answer display: for multi-select, convert 'ABC' to 'A,B,C'."""
+    if not answer:
+        return answer
+    if q_type == "multiple_choice" and "," not in answer:
+        # "ABC" → "A,B,C"
+        chars = [c for c in answer.replace(" ", "").replace("\n", "").upper() if c]
+        return ",".join(chars)
+    return answer
 
 
 async def get_user_stage(user: User) -> str:
@@ -287,9 +298,8 @@ async def submit_answer(
 
     is_correct = judge_answer(question, req.answer)
 
-    # For code questions, check test_cases if available
-    if is_correct is None and question.test_cases:
-        # Mock: assume correct if test_cases exist (real execution would happen in code runner)
+    # Code questions can't be auto-graded without execution; accept any non-empty answer
+    if is_correct is None:
         is_correct = True
 
     # Save record
@@ -300,7 +310,7 @@ async def submit_answer(
         user_id=user.id,
         question_id=question.id,
         user_answer=req.answer,
-        is_correct=is_correct if is_correct is not None else False,
+        is_correct=is_correct,
         score=score,
         hints_used=hints_used,
     )
@@ -355,7 +365,7 @@ async def submit_answer(
 
     return api_response(data={
         "is_correct": is_correct,
-        "correct_answer": question.answer if not is_correct else None,
+        "correct_answer": _format_answer_display(question.type, question.answer or "") if not is_correct else None,
         "analysis": question.analysis,
         "experience_gained": xp_gained,
         "cookies_gained": cookie_gained,
@@ -413,7 +423,7 @@ async def batch_submit(
         details.append({
             "question_id": q.id,
             "is_correct": is_correct,
-            "correct_answer": q.answer if not is_correct else None,
+            "correct_answer": _format_answer_display(q.type, q.answer or "") if not is_correct else None,
             "analysis": q.analysis,
             "knowledge_tag": q.knowledge_tag or q.knowledge_point,
         })
@@ -738,7 +748,7 @@ async def submit_promotion_test(
         details.append({
             "question_id": q.id,
             "is_correct": is_correct,
-            "correct_answer": q.answer if not is_correct else None,
+            "correct_answer": _format_answer_display(q.type, q.answer or "") if not is_correct else None,
             "analysis": q.analysis,
             "knowledge_tag": q.knowledge_tag or q.knowledge_point,
             "difficulty": q.difficulty,

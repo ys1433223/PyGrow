@@ -30,9 +30,11 @@ onMounted(() => {
   }
 })
 
+const displayRank = computed(() => auth.user?.current_rank || auth.user?.level || '')
+
 const majorLevel = computed(() => {
-  if (!auth.user?.level) return null
-  return calcMajorLevel(auth.user.level)
+  if (!displayRank.value) return null
+  return calcMajorLevel(displayRank.value)
 })
 
 const levelBadgeClass = computed(() => {
@@ -84,8 +86,8 @@ function goTo(path) {
         <!-- Logged in -->
         <div v-if="auth.isLoggedIn && auth.user" class="relative group flex items-center space-x-3 cursor-pointer">
           <!-- Rank badge -->
-          <span v-if="auth.user.level" :class="['hidden sm:inline-block text-xs font-bold px-2 py-0.5 rounded-full border', levelBadgeClass]">
-            {{ auth.user.level }}
+          <span v-if="displayRank" :class="['hidden sm:inline-block text-xs font-bold px-2 py-0.5 rounded-full border', levelBadgeClass]">
+            {{ displayRank }}
           </span>
           <div class="text-right hidden sm:block">
             <p class="text-xs text-gray-500">欢迎回来,</p>
@@ -93,8 +95,8 @@ function goTo(path) {
           </div>
           <div class="relative">
             <img :src="auth.user.avatar" class="w-9 h-9 rounded-full border-2 border-blue-100 shadow-sm">
-            <span v-if="auth.user.level" :class="['absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border border-white text-[8px] font-bold flex items-center justify-center', levelBadgeClass.replace('border-', '')]">
-              {{ auth.user.level.charAt(0) }}
+            <span v-if="displayRank" :class="['absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border border-white text-[8px] font-bold flex items-center justify-center', levelBadgeClass.replace('border-', '')]">
+              {{ displayRank.charAt(0) }}
             </span>
           </div>
 

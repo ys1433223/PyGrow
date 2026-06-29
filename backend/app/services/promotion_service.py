@@ -637,10 +637,14 @@ def grade_promotion_exam(
             if source in ("question_bank", "wrong_question"):
                 core_total += 1
 
+        # Normalize multi-select answer display: "ABC" → "A,B,C"
+        display_answer = correct_answer
+        if q.get("type") == "multiple_choice" and correct_answer and "," not in correct_answer:
+            display_answer = ",".join(c for c in correct_answer.replace(" ", "").upper() if c)
         graded.append({
             "question_id": q_id,
             "user_answer": user_answer,
-            "correct_answer": correct_answer,
+            "correct_answer": display_answer,
             "is_correct": is_correct,
             "score_awarded": q_score if is_correct else 0,
             "knowledge_tag": tag,
@@ -683,8 +687,9 @@ def _is_answer_correct(user_answer: str, correct: str, q_type: str) -> bool:
     ca = correct.strip().upper()
 
     if q_type == "code":
-        # Code questions: check if output is equivalent (simple normalize)
-        return ua.replace(" ", "") == ca.replace(" ", "")
+        # Code questions can't be reliably auto-graded without execution.
+        # Accept any non-empty answer; reference answer shown for self-comparison.
+        return bool(ua)
     if q_type == "fill_blank":
         return ua == ca
     if q_type == "multiple_choice":

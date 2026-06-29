@@ -83,26 +83,30 @@ async function startExam() {
 function selectAnswer(qId, answer) {
   const key = String(qId)
   const q = questions.value.find(q => String(q.question_id) === key)
+  // Normalize: if answer is an option object, extract label
+  const val = (typeof answer === 'object' && answer !== null) ? (answer.label || '') : String(answer)
   if (q?.type === 'multiple_choice') {
     // Toggle option on/off for multi-select
     const current = (answers.value[key] || '').split(/[,，]\s*/).filter(Boolean)
-    const idx = current.indexOf(answer)
+    const idx = current.indexOf(val)
     if (idx >= 0) current.splice(idx, 1)
-    else current.push(answer)
+    else current.push(val)
     answers.value[key] = current.join(',')
   } else {
-    answers.value[key] = answer
+    answers.value[key] = val
   }
 }
 
 function isOptionSelected(qId, opt) {
   const key = String(qId)
   const q = questions.value.find(q => String(q.question_id) === key)
+  // Normalize: if opt is an option object, extract label
+  const val = (typeof opt === 'object' && opt !== null) ? (opt.label || '') : String(opt)
   if (q?.type === 'multiple_choice') {
     const current = (answers.value[key] || '').split(/[,，]\s*/).filter(Boolean)
-    return current.includes(opt)
+    return current.includes(val)
   }
-  return answers.value[key] === opt
+  return answers.value[key] === val
 }
 
 function nextQuestion() {
@@ -118,6 +122,7 @@ function prevQuestion() {
 }
 
 async function submitExam() {
+  if (submitting.value || examSubmitted.value) return
   const q = questions.value[currentIndex.value]
   const qId = String(q?.question_id || '')
   // Warn if current question unanswered
@@ -136,8 +141,21 @@ async function submitExam() {
     if (res.data.code === 200) {
       result.value = res.data.data
       examSubmitted.value = true
+      // Sync rank to auth store so header shows updated rank immediately
+      if (res.data.data.new_rank) {
+        auth.updateUser({ level: res.data.data.new_rank, current_rank: res.data.data.new_rank })
+      }
     } else {
       alert(res.data.message || '提交失败')
+      // If exam no longer exists (e.g., already submitted), reset state
+      if (res.data.code === 404) {
+        examStarted.value = false
+        examId.value = null
+        questions.value = []
+        answers.value = {}
+        currentIndex.value = 0
+        await loadStatus()
+      }
     }
   } catch { alert('提交失败，请稍后重试') }
   submitting.value = false
@@ -282,20 +300,21 @@ function goBack() {
             </p>
             <button
               v-for="(opt, oi) in (questions[currentIndex].options || [])" :key="oi"
-              @click="selectAnswer(questions[currentIndex].question_id, opt)"
+              @click="selectAnswer(questions[currentIndex].question_id, opt.label || opt)"
               :class="[
                 'w-full text-left px-4 py-3 rounded-xl border transition font-medium text-sm',
-                isOptionSelected(questions[currentIndex].question_id, opt)
+                isOptionSelected(questions[currentIndex].question_id, opt.label || opt)
                   ? 'border-blue-500 bg-blue-50 text-blue-700'
                   : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
               ]"
             >
               <span class="flex items-center gap-2">
                 <span v-if="questions[currentIndex].type === 'multiple_choice'" class="w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center"
-                  :class="isOptionSelected(questions[currentIndex].question_id, opt) ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-300'">
-                  <i v-if="isOptionSelected(questions[currentIndex].question_id, opt)" class="fas fa-check text-[8px]"></i>
+                  :class="isOptionSelected(questions[currentIndex].question_id, opt.label || opt) ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-300'">
+                  <i v-if="isOptionSelected(questions[currentIndex].question_id, opt.label || opt)" class="fas fa-check text-[8px]"></i>
                 </span>
-                <span>{{ opt }}</span>
+                <span v-if="typeof opt === 'object'">{{ opt.label }}. {{ opt.text }}</span>
+                <span v-else>{{ opt }}</span>
               </span>
             </button>
           </div>
