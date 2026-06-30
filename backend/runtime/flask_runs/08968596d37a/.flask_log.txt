@@ -1,0 +1,38 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\³Âì½ì»\AppData\Roaming\Python\Python314\site-packages\flask\__main__.py", line 3, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\³Âì½ì»\AppData\Roaming\Python\Python314\site-packages\flask\cli.py", line 1131, in main
+    cli.main()
+    ~~~~~~~~^^
+  File "C:\Users\³Âì½ì»\AppData\Roaming\Python\Python314\site-packages\click\core.py", line 1445, in main
+    rv = self.invoke(ctx)
+  File "C:\Users\³Âì½ì»\AppData\Roaming\Python\Python314\site-packages\click\core.py", line 1912, in invoke
+    return _process_result(sub_ctx.command.invoke(sub_ctx))
+                           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\³Âì½ì»\AppData\Roaming\Python\Python314\site-packages\click\core.py", line 1308, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\³Âì½ì»\AppData\Roaming\Python\Python314\site-packages\click\core.py", line 877, in invoke
+    return callback(*args, **kwargs)
+  File "C:\Users\³Âì½ì»\AppData\Roaming\Python\Python314\site-packages\click\decorators.py", line 93, in new_func
+    return ctx.invoke(f, obj, *args, **kwargs)
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\³Âì½ì»\AppData\Roaming\Python\Python314\site-packages\click\core.py", line 877, in invoke
+    return callback(*args, **kwargs)
+  File "C:\Users\³Âì½ì»\AppData\Roaming\Python\Python314\site-packages\flask\cli.py", line 979, in run_command
+    raise e from None
+  File "C:\Users\³Âì½ì»\AppData\Roaming\Python\Python314\site-packages\flask\cli.py", line 963, in run_command
+    app: WSGIApplication = info.load_app()  # pyright: ignore
+                           ~~~~~~~~~~~~~^^
+  File "C:\Users\³Âì½ì»\AppData\Roaming\Python\Python314\site-packages\flask\cli.py", line 349, in load_app
+    app = locate_app(import_name, name)
+  File "C:\Users\³Âì½ì»\AppData\Roaming\Python\Python314\site-packages\flask\cli.py", line 245, in locate_app
+    __import__(module_name)
+    ~~~~~~~~~~^^^^^^^^^^^^^
+  File "D:\My_Program\codex\PyGrow\backend\runtime\flask_runs\08968596d37a\app.py", line 5
+    return render_template("index.html"  # missing closing paren
+                          ^
+SyntaxError: '(' was never closed
