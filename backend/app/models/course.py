@@ -27,6 +27,7 @@ class Lesson(Base):
     chapter = Column(String(200))
     duration = Column(String(20))
     bilibili_page = Column(Integer)
+    bvid = Column(String(20))
     sort_order = Column(Integer, default=0)
 
 

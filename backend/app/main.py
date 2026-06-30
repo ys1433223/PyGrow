@@ -7,6 +7,7 @@ from pathlib import Path
 
 from app.routers import auth, courses, users, assessment, practice, gamification, reports, home, code_runner, code_flask, ai_mentor, projects, notes, community, leaderboard, admin, reviews, favorites, ai_notes, debug, pet, promotion
 from app.database import engine, Base
+from app.services.download_queue import start_worker
 from sqlalchemy import text
 
 
@@ -34,6 +35,7 @@ async def lifespan(app: FastAPI):
     from app.seed import seed
     import asyncio
     await seed()
+    start_worker()
     yield
 
 

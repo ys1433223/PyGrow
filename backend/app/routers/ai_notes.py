@@ -10,6 +10,7 @@ from app.models.ai_note import AINoteTask, AINote
 from app.models.user import User
 from app.schemas.common import api_response
 from app.services.ai_note_service import STATUS_MESSAGES, run_ai_note_pipeline
+from app.services.download_queue import get_queue_position
 
 router = APIRouter()
 
@@ -187,6 +188,7 @@ async def get_task_status(
         "progress": task.progress,
         "message": task.message,
         "error_message": task.error_message,
+        "queue_position": get_queue_position(task_id),
     })
 
 

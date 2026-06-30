@@ -11,7 +11,6 @@ from app.services.llm_service import generate_ai_notes
 from app.services.speech_service import transcribe_audio
 from app.services.video_service import extract_audio
 from app.services.download_service import (
-    download_bilibili_video,
     find_existing_video,
     get_video_duration,
     cleanup_temp_files,
@@ -50,7 +49,6 @@ async def run_ai_note_pipeline(task_id: int, course_id: int, lesson_id: int | No
 
             lesson = None
             bilibili_page = page_override or None
-            effective_bvid = bvid_override or (course.bvid if course else None)
             if lesson_id:
                 lr = await db.execute(select(Lesson).where(Lesson.id == lesson_id))
                 lesson = lr.scalar_one_or_none()
@@ -58,6 +56,8 @@ async def run_ai_note_pipeline(task_id: int, course_id: int, lesson_id: int | No
                     if not bilibili_page:
                         bilibili_page = lesson.bilibili_page
                     course_title = f"{course_title} - {lesson.title}" if course else lesson.title
+
+            effective_bvid = bvid_override or (lesson.bvid if lesson and lesson.bvid else (course.bvid if course else None))
 
             # File paths keyed by task_id to avoid collisions
             video_path = f"temp/video/c{course_id}_l{lesson_id or 0}_p{bilibili_page or 1}_t{task_id}.mp4"
@@ -77,15 +77,33 @@ async def run_ai_note_pipeline(task_id: int, course_id: int, lesson_id: int | No
                         if existing != video_path:
                             shutil.copy2(existing, video_path)
                     elif effective_bvid and bilibili_page:
-                        # Construct B站 single-P URL and download
-                        bv_url = f"https://www.bilibili.com/video/{effective_bvid}?p={bilibili_page}"
-                        download_bilibili_video(
-                            video_url=bv_url,
+                        from app.services.download_queue import enqueue_download, get_queue_position
+
+                        future = await enqueue_download(
                             task_id=task_id,
                             course_id=course_id,
                             lesson_id=lesson_id,
                             page=bilibili_page,
+                            bvid=effective_bvid,
+                            video_path=video_path,
                         )
+
+                        # Poll until download completes, updating DB with queue position
+                        while True:
+                            try:
+                                await asyncio.wait_for(asyncio.shield(future), timeout=2.0)
+                                break
+                            except asyncio.TimeoutError:
+                                pos = get_queue_position(task_id)
+                                if pos == 0:
+                                    msg = "正在下载视频..."
+                                elif pos is not None:
+                                    msg = f"排队中，前面还有 {pos} 个任务"
+                                else:
+                                    msg = "正在获取视频"
+                                await _update_task(db, task_id, status, progress, msg)
+
+                        future.result()  # re-raise if download failed
                     else:
                         # No B站 BV ID or no page — skip download, keep mock flow
                         await asyncio.sleep(duration)
