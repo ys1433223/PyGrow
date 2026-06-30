@@ -5,7 +5,6 @@ import { useAuthStore } from './stores/auth'
 import { initThemeSystem } from './utils/core'
 import AssessmentModal from './components/common/AssessmentModal.vue'
 import LoginPromptModal from './components/common/LoginPromptModal.vue'
-import PasswordGate from './components/common/PasswordGate.vue'
 import PetCompanion from './components/PetCompanion.vue'
 
 const router = useRouter()
@@ -63,7 +62,6 @@ onUpdated(() => {
 </script>
 
 <template>
-  <PasswordGate />
   <router-view />
   <AssessmentModal v-if="showAssessment" />
   <PetCompanion v-if="auth.isLoggedIn" />
